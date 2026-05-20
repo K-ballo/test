@@ -7,9 +7,10 @@
 
 #pragma once
 
+#include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
 
-#include <print>
+#include <cstdio>
 #include <source_location>
 #include <stacktrace>
 
@@ -20,15 +21,17 @@ inline void do_check_failed(
 )
 {
     ++s.assertions_failed;
-    std::println("  FAILED: {}  [{}:{}]", expr, loc.file_name(), loc.line());
+    detail::println(
+        stdout, "  FAILED: {}  [{}:{}]", expr, loc.file_name(), loc.line()
+    );
 
     // Directly in test body:  st.size() == s.entry_depth + 1
     // Inside a helper:        st.size() >  s.entry_depth + 1
     if (st.size() > s.entry_depth + 1) {
-        std::println("  Stacktrace (innermost first):");
+        detail::println(stdout, "  Stacktrace (innermost first):");
         std::size_t const user_frames = st.size() - s.entry_depth - 1;
         for (std::size_t i = 0; i < user_frames; ++i)
-            std::println("    #{} {}", i, st[i].description());
+            detail::println(stdout, "    #{} {}", i, st[i].description());
     }
 }
 

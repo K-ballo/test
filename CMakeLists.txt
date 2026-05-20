@@ -40,6 +40,7 @@ target_sources(
                 include/eggs/test.hpp
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/checks.hpp
+                include/eggs/test/detail/print.hpp
                 include/eggs/test/detail/runner.hpp
 )
 set_target_properties(
