@@ -56,13 +56,15 @@ add_lib_test(registration  SOURCES registration.cpp)
 # The .pass test exercises the non-failure path (no stacktrace printed).
 # The .check.fail/.require.fail tests exercise the failure path, verifying that
 # the specific helper function name appears in the printed stacktrace frames.
-add_lib_test(stacktrace.pass         SOURCES stacktrace.pass.cpp)
-add_lib_test(stacktrace.check.fail   SOURCES stacktrace.check.fail.cpp
-    PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,Stacktrace>"
-)
-add_lib_test(stacktrace.require.fail SOURCES stacktrace.require.fail.cpp
-    PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,Stacktrace>"
-)
+add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
+if(EGGS_HAS_CXX23_STACKTRACE)
+    add_lib_test(stacktrace.check.fail   SOURCES stacktrace.check.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
+    )
+    add_lib_test(stacktrace.require.fail SOURCES stacktrace.require.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
+    )
+endif()
 
 # Test cases defined across two translation units both register and run.
 add_lib_test(multi_tu      SOURCES multi_tu.a.cpp multi_tu.b.cpp)

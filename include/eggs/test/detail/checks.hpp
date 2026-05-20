@@ -9,15 +9,16 @@
 
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstdio>
 #include <source_location>
-#include <stacktrace>
 
 namespace eggs::test::detail {
 
 inline void do_check_failed(
-    run_state& s, const char* expr, std::source_location loc, std::stacktrace st
+    run_state& s, const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st
 )
 {
     ++s.assertions_failed;
@@ -25,6 +26,7 @@ inline void do_check_failed(
         stdout, "  FAILED: {}  [{}:{}]", expr, loc.file_name(), loc.line()
     );
 
+#ifdef __cpp_lib_stacktrace
     // Directly in test body:  st.size() == s.entry_depth + 1
     // Inside a helper:        st.size() >  s.entry_depth + 1
     if (st.size() > s.entry_depth + 1) {
@@ -33,10 +35,14 @@ inline void do_check_failed(
         for (std::size_t i = 0; i < user_frames; ++i)
             detail::println(stdout, "    #{} {}", i, st[i].description());
     }
+#else
+    (void)st;
+#endif
 }
 
 inline void do_require_failed(
-    run_state& s, const char* expr, std::source_location loc, std::stacktrace st
+    run_state& s, const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st
 )
 {
     do_check_failed(s, expr, loc, std::move(st));

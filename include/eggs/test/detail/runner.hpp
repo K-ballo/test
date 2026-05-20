@@ -10,9 +10,11 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/stacktrace.hpp>
 
+#include <cstddef>
+#include <cstdio>
 #include <exception>
-#include <stacktrace>
 #include <string_view>
 #include <vector>
 
@@ -24,7 +26,7 @@ namespace eggs::test::detail {
 // 1 if any failed.
 inline int registry::run_all()
 {
-    std::size_t const entry_depth = std::stacktrace::current().size();
+    std::size_t const entry_depth = detail::stacktrace::current().size();
 
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;

@@ -8,6 +8,8 @@
 cmake_minimum_required(VERSION 3.24)
 project(Eggs.Test DESCRIPTION "A C++23 test library" LANGUAGES CXX)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(GNUInstallDirs)
 
 # Options (two spellings: short when top-level, prefixed when a subdirectory)
@@ -42,6 +44,7 @@ target_sources(
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/print.hpp
                 include/eggs/test/detail/runner.hpp
+                include/eggs/test/detail/stacktrace.hpp
 )
 set_target_properties(
     _eggs_test
@@ -51,10 +54,8 @@ set_target_properties(
 )
 target_compile_features(_eggs_test INTERFACE cxx_std_23)
 
-# GCC needs libstdc++_libbacktrace for std::stacktrace
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(_eggs_test INTERFACE stdc++_libbacktrace)
-endif()
+include(Cxx23Stacktrace)
+target_link_libraries(_eggs_test INTERFACE ${EGGS_CXX23_STACKTRACE_LIB})
 
 add_library(Eggs::Test ALIAS _eggs_test)
 
