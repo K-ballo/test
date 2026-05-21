@@ -19,12 +19,12 @@ add_test(
 #             (exit code is ignored).  Use this for tests that are expected
 #             to fail or crash and whose output must contain a specific pattern.
 function(add_lib_test name)
-    cmake_parse_arguments(ARG "WILL_FAIL" "PASS_REGEX" "SOURCES" ${ARGN})
+    cmake_parse_arguments(ARG "WILL_FAIL" "PASS_REGEX" "ARGS;SOURCES" ${ARGN})
 
     add_executable(_eggs_test.${name} ${ARG_SOURCES})
     target_link_libraries(_eggs_test.${name} PRIVATE Eggs::Test Eggs::TestMain)
 
-    add_test(NAME eggs.test.${name} COMMAND _eggs_test.${name})
+    add_test(NAME eggs.test.${name} COMMAND _eggs_test.${name} ${ARG_ARGS})
 
     set_tests_properties(
         eggs.test.${name}
@@ -70,10 +70,10 @@ add_lib_test(
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.
-add_lib_test(check.pass    SOURCES check.pass.cpp)
+add_lib_test(check.pass SOURCES check.pass.cpp)
 
 # REQUIRE with true expressions must exit 0 and not stop execution.
-add_lib_test(require.pass  SOURCES require.pass.cpp)
+add_lib_test(require.pass SOURCES require.pass.cpp)
 
 # CHECK/REQUIRE called from a helper function must compile and run correctly.
 # The .pass test exercises the non-failure path (no stacktrace printed).
@@ -81,10 +81,14 @@ add_lib_test(require.pass  SOURCES require.pass.cpp)
 # the specific helper function name appears in the printed stacktrace frames.
 add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
 if(EGGS_HAS_CXX23_STACKTRACE)
-    add_lib_test(stacktrace.check.fail   SOURCES stacktrace.check.fail.cpp
+    add_lib_test(
+        stacktrace.check.fail
+        SOURCES stacktrace.check.fail.cpp
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
     )
-    add_lib_test(stacktrace.require.fail SOURCES stacktrace.require.fail.cpp
+    add_lib_test(
+        stacktrace.require.fail
+        SOURCES stacktrace.require.fail.cpp
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
     )
 endif()
@@ -93,17 +97,57 @@ endif()
 
 # CHECK with a false expression must cause the test case to be reported as
 # failed, and the stringified expression must appear in the output.
-add_lib_test(check.fail    SOURCES check.fail.cpp
+add_lib_test(
+    check.fail
+    SOURCES check.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
 )
 
 # REQUIRE with a false expression must fail the test case and stop executing
 # the rest of it; the stringified expression must appear in the output.
-add_lib_test(require.fail  SOURCES require.fail.cpp
+add_lib_test(
+    require.fail
+    SOURCES require.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
 )
 
 # An exception leaked from a test case must be caught and reported as a failure.
-add_lib_test(exceptions    SOURCES exceptions.fail.cpp
+add_lib_test(
+    exceptions
+    SOURCES exceptions.fail.cpp
     PASS_REGEX "EXCEPTION: deliberate failure"
+)
+
+# --- cli tests -----------------------------------------------------------
+
+# --help must print usage.
+add_lib_test(
+    cli.help.pass
+    SOURCES check.pass.cpp
+    ARGS "--help"
+    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+)
+
+# -h must print usage.
+add_lib_test(
+    cli.help_alias.pass
+    SOURCES check.pass.cpp
+    ARGS "-h"
+    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+)
+
+# --unknown must print unknown argument.
+add_lib_test(
+    cli.unknown.fail
+    SOURCES check.pass.cpp
+    ARGS "--unknown"
+    PASS_REGEX "unknown argument '--unknown'"
+)
+
+# -u must print unknown argument.
+add_lib_test(
+    cli.unknown_alias.fail
+    SOURCES check.pass.cpp
+    ARGS "-u"
+    PASS_REGEX "unknown argument '-u'"
 )

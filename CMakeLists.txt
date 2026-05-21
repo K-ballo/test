@@ -64,8 +64,9 @@ add_library(Eggs::Test ALIAS _eggs_test)
 # Eggs::TestMain — object library that provides main().
 # Link it into any test executable instead of writing your own main.
 #
-add_library(_eggs_test_main STATIC src/test_main.cpp)
+add_library(_eggs_test_main STATIC src/test_main.cpp src/cli.cpp src/cli.hpp)
 target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
+set_target_properties(_eggs_test_main PROPERTIES EXPORT_NAME TestMain)
 
 add_library(Eggs::TestMain ALIAS _eggs_test_main)
 

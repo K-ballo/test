@@ -78,8 +78,12 @@
 
 namespace eggs::test {
 
+// Options passed to run()
+struct run_options
+{};
+
 // Public entry point — call this from main().
-inline int run()
+inline int run(run_options opts = {})
 {
     return ::eggs::test::detail::registry::run_all();
 }
