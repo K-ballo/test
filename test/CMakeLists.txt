@@ -151,3 +151,11 @@ add_lib_test(
     ARGS "-u"
     PASS_REGEX "unknown argument '-u'"
 )
+
+# --list must print all registered test cases.
+add_lib_test(
+    cli.list.pass
+    SOURCES registration.cpp
+    ARGS "--list"
+    PASS_REGEX "registration_first\nregistration_second\nregistration_third"
+)

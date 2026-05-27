@@ -33,6 +33,7 @@ struct opt_spec
 
 constexpr opt_spec k_opts[] = {
     // {flag, also, desc}
+    {"--list", {}, "list all registered test case names and exit"},
     {"--help", "-h", "show this help"},
     {"-h", {}, {}},
 };
@@ -89,6 +90,14 @@ parse_result parse_args(int argc, char const* const argv[])
 
         if (arg == "--help" || arg == "-h") {
             print_help();
+
+            pr.action = parse_action::exit_success;
+            return pr;
+        } else if (arg == "--list") {
+            auto const& all_cases = detail::registry::cases();
+            for (auto const& e : all_cases) {
+                detail::println(stdout, "{}", e.name);
+            }
 
             pr.action = parse_action::exit_success;
             return pr;
