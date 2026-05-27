@@ -41,6 +41,32 @@ function(add_lib_test name)
     endif()
 endfunction()
 
+# --- registration tests ------------------------------------------------------
+
+# Multiple TEST_CASEs in one TU all run in definition order.
+string(
+    CONCAT _reg_regex
+    "\\[ RUN  \\] registration_first[^\n]*"
+    "(\n[^\n]+)+\n"
+    "\\[ RUN  \\] registration_second[^\n]*"
+    "(\n[^\n]+)+\n"
+    "\\[ RUN  \\] registration_third"
+)
+add_lib_test(registration SOURCES registration.cpp PASS_REGEX "${_reg_regex}")
+
+# Multiple TEST_CASEs across two TUs both register and run (order indeterminate).
+string(
+    CONCAT _multi_tu_regex
+    "\\[ RUN  \\] multi_tu_case_a[^\n]*(\n[^\n]+)+\n\\[ RUN  \\] multi_tu_case_b"
+    "|"
+    "\\[ RUN  \\] multi_tu_case_b[^\n]*(\n[^\n]+)+\n\\[ RUN  \\] multi_tu_case_a"
+)
+add_lib_test(
+    registration.multi_tu
+    SOURCES registration.multi_tu.a.cpp registration.multi_tu.b.cpp
+    PASS_REGEX "${_multi_tu_regex}"
+)
+
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.
@@ -48,9 +74,6 @@ add_lib_test(check.pass    SOURCES check.pass.cpp)
 
 # REQUIRE with true expressions must exit 0 and not stop execution.
 add_lib_test(require.pass  SOURCES require.pass.cpp)
-
-# Multiple TEST_CASEs in one TU all run.
-add_lib_test(registration  SOURCES registration.cpp)
 
 # CHECK/REQUIRE called from a helper function must compile and run correctly.
 # The .pass test exercises the non-failure path (no stacktrace printed).
@@ -65,9 +88,6 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
     )
 endif()
-
-# Test cases defined across two translation units both register and run.
-add_lib_test(multi_tu      SOURCES multi_tu.a.cpp multi_tu.b.cpp)
 
 # --- failing tests -----------------------------------------------------------
 
