@@ -10,6 +10,7 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstddef>
@@ -34,20 +35,21 @@ inline int registry::run_all()
     for (test_entry& e : cases()) {
         detail::println(stdout, "[ RUN  ] {} -- {}", e.name, e.desc);
 
-        e.state.entry_depth = entry_depth;
+        run_state state;
+        state.entry_depth = entry_depth;
 
-        tl_current_state = &e.state;
+        run_state::set_current(&state);
         bool passed = false;
         try {
             e.run();
-            passed = !e.state.assertions_failed;
+            passed = !state.assertions_failed;
         } catch (require_failed const&) {
         } catch (std::exception const& ex) {
             detail::println(stdout, "  EXCEPTION: {}", ex.what());
         } catch (...) {
             detail::println(stdout, "  UNKNOWN EXCEPTION");
         }
-        tl_current_state = nullptr;
+        run_state::set_current(nullptr);
 
         if (passed) {
             detail::println(stdout, "[ PASS ] {}", e.name);
@@ -58,9 +60,9 @@ inline int registry::run_all()
         }
 
         auto const assertions_total =
-            e.state.assertions_passed + e.state.assertions_failed;
+            state.assertions_passed + state.assertions_failed;
         detail::println(
-            stdout, "{} of {} assertions passed", e.state.assertions_passed,
+            stdout, "{} of {} assertions passed", state.assertions_passed,
             assertions_total
         );
     }
