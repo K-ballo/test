@@ -11,6 +11,7 @@
 
 #include <cstdio>
 #include <format>
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -20,6 +21,7 @@ namespace {
 // ── Option table ─────────────────────────────────────────────────────────────
 //
 // flag    — the flag text
+// value   - the flag value
 // also    — extra form shown alongside in --help:
 //             short alias (-x)   → listed before the flag: "-v, --verbose"
 // desc    — --help right-column text; empty = hidden from --help (alias or internal flag)
@@ -27,21 +29,40 @@ namespace {
 struct opt_spec
 {
     std::string_view flag;
+    std::string_view value;
     std::string_view also;
-    std::string_view desc;
+    std::span<std::string_view const> desc;
 };
 
+#define EGGS_TEST_MAKE_STRING_VIEW_SPAN(...)                     \
+    []() -> std::span<std::string_view const> {                  \
+        static constexpr std::string_view arr[] = {__VA_ARGS__}; \
+        return arr;                                              \
+    }()
+
 constexpr opt_spec k_opts[] = {
-    // {flag, also, desc}
-    {"--list", {}, "list all registered test case names and exit"},
-    {"--help", "-h", "show this help"},
-    {"-h", {}, {}},
+    // {flag, value, also, desc}
+    {"--list",
+     {},
+     {},
+     EGGS_TEST_MAKE_STRING_VIEW_SPAN(
+         "list all registered test case names and exit"
+     )},
+    {"--run=",
+     "<test_case>",
+     {},
+     EGGS_TEST_MAKE_STRING_VIEW_SPAN(
+         "run only the specified test cases (repeatable).",
+         "all test cases will run if omitted"
+     )},
 };
+
+#undef EGGS_TEST_MAKE_SPAN
 
 // ── Help printing ────────────────────────────────────────────────────────────
 
 // description starts at this column (0-based)
-static constexpr int k_desc_col = 29;
+static constexpr std::size_t k_desc_col = 29u;
 
 void print_help()
 {
@@ -54,24 +75,32 @@ void print_help()
     for (opt_spec const& opt : k_opts) {
         if (opt.desc.empty()) continue;
 
-        // Build left-column display string from flag + also.
-        std::string disp;
-        if (opt.also.empty()) {
-            disp = opt.flag;
-        } else {
+        // Build left-column display string from flag + value + also.
+        auto disp = std::string(opt.flag) += opt.value;
+        if (!opt.also.empty()) {
             // "-h, --help"
-            disp = std::format("{}, {}", opt.also, opt.flag);
+            disp = std::format("{}, {}", opt.also, disp);
         }
 
-        // Print left column + description.
-        if (2 + static_cast<int>(disp.size()) <= k_desc_col) {
-            detail::print(
-                stdout, "  {:<{}}{}\n", disp, k_desc_col - 2, opt.desc
-            );
-        } else {
-            detail::print(
-                stdout, "  {}\n{:>{}}{}\n", disp, "", k_desc_col, opt.desc
-            );
+        bool first = true;
+        for (auto const& line : opt.desc) {
+            if (first) {
+                // Print left column + description.
+                if (2 + disp.size() <= k_desc_col) {
+                    // Fits on one line. Pad left column to (k_desc_col - 2)
+                    detail::println(
+                        stdout, "  {:<{}} {}", disp, k_desc_col - 2, line
+                    );
+                } else {
+                    // Too long. Print option name, wrap to next line, pad description
+                    detail::println(stdout, "  {}", disp);
+                    detail::println(stdout, "{:>{}} {}", "", k_desc_col, line);
+                }
+                first = false;
+            } else {
+                // Subsequent lines are always padded to match the description column
+                detail::println(stdout, "{:>{}} {}", "", k_desc_col, line);
+            }
         }
     }
 }
@@ -101,6 +130,10 @@ parse_result parse_args(int argc, char const* const argv[])
 
             pr.action = parse_action::exit_success;
             return pr;
+        } else if (arg.starts_with("--run=")) {
+            auto const name = arg.substr(6);
+
+            pr.opts.run.push_back(name);
         } else {
             detail::println(stderr, "error: unknown argument '{}'", arg);
 

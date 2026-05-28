@@ -15,24 +15,24 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <string_view>
 #include <vector>
 
 namespace eggs::test::detail {
 
-// Out-of-class inline definition of registry::run_all().
-// Runs every registered test case in registration order, catches all
-// exceptions, and prints a final summary.  Returns 0 if all cases passed,
-// 1 if any failed.
-inline int registry::run_all()
+// Out-of-class inline definition of registry::run().
+// Runs test cases in the order given by `run`.
+// Returns EXIT_SUCCESS if all cases passed, EXIT_FAILURE if any failed.
+inline int registry::run(std::vector<test_entry> const& run)
 {
     std::size_t const entry_depth = detail::stacktrace::current().size();
 
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
 
-    for (test_entry const& e : cases()) {
+    for (test_entry const& e : run) {
         detail::println(stdout, "[ RUN  ] {} -- {}", e.name, e.desc);
 
         run_state state;
@@ -73,12 +73,12 @@ inline int registry::run_all()
     );
     if (!cases_failed.empty()) {
         detail::println(stdout, "Failed test cases:");
-        for (const auto& e : cases_failed) {
+        for (auto const& e : cases_failed) {
             detail::println(stdout, "- {}", e);
         }
     }
 
-    return cases_failed.empty() ? 0 : 1;
+    return cases_failed.empty() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 } // namespace eggs::test::detail

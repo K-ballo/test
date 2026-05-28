@@ -19,7 +19,13 @@ add_test(
 #             (exit code is ignored).  Use this for tests that are expected
 #             to fail or crash and whose output must contain a specific pattern.
 function(add_lib_test name)
-    cmake_parse_arguments(ARG "WILL_FAIL" "PASS_REGEX" "ARGS;SOURCES" ${ARGN})
+    cmake_parse_arguments(
+        ARG
+        "WILL_FAIL"
+        "FAIL_REGEX;PASS_REGEX"
+        "ARGS;SOURCES"
+        ${ARGN}
+    )
 
     add_executable(_eggs_test.${name} ${ARG_SOURCES})
     target_link_libraries(_eggs_test.${name} PRIVATE Eggs::Test Eggs::TestMain)
@@ -30,6 +36,12 @@ function(add_lib_test name)
         eggs.test.${name}
         PROPERTIES FOLDER "test" LABELS "unit"
     )
+    if(ARG_FAIL_REGEX)
+        set_tests_properties(
+            eggs.test.${name}
+            PROPERTIES FAIL_REGULAR_EXPRESSION "${ARG_FAIL_REGEX}"
+        )
+    endif()
     if(ARG_PASS_REGEX)
         set_tests_properties(
             eggs.test.${name}
@@ -103,9 +115,16 @@ add_lib_test(
 
 # An exception leaked from a test case must be caught and reported as a failure.
 add_lib_test(
-    exceptions
+    exceptions.std
     SOURCES exceptions.fail.cpp
+    ARGS "--run=leaked_std_exception"
     PASS_REGEX "EXCEPTION: deliberate failure"
+)
+add_lib_test(
+    exceptions.unknown
+    SOURCES exceptions.fail.cpp
+    ARGS "--run=leaked_unknown_exception"
+    PASS_REGEX "UNKNOWN EXCEPTION"
 )
 
 # --- cli tests -----------------------------------------------------------
@@ -155,4 +174,52 @@ add_lib_test(
     SOURCES registration.cpp
     ARGS "--list"
     PASS_REGEX "${_list_regex}"
+)
+
+# --run=<name> must not run other test cases.
+add_lib_test(
+    cli.run.pass
+    SOURCES registration.cpp
+    ARGS "--run=registration_one"
+    PASS_REGEX "registration_one"
+    FAIL_REGEX "registration_two;registration_three"
+)
+
+# --run=<a> --run=<b> must run cases in the given order.
+string(
+    CONCAT _run_order_regex
+    "\\[ RUN  \\] registration_three[^\n]*"
+    "(\n[^\n]+)+\n"
+    "\\[ RUN  \\] registration_one"
+)
+add_lib_test(
+    cli.run.order.pass
+    SOURCES registration.cpp
+    ARGS "--run=registration_three" "--run=registration_one"
+    PASS_REGEX "${_run_order_regex}"
+    FAIL_REGEX "registration_two"
+)
+
+# --run=<unknown> must print an error.
+add_lib_test(
+    cli.run.unknown.fail
+    SOURCES registration.cpp
+    ARGS "--run=unknown"
+    PASS_REGEX "error: unknown test case 'unknown'"
+    FAIL_REGEX "\\[ RUN  \\]"
+)
+
+# --run=<unknown_a> --run=<unknown_b> must report all invalid names.
+string(
+    CONCAT _run_unknown_multi_regex
+    "^"
+    "error: unknown test case 'unknown_a'\n"
+    "error: unknown test case 'unknown_b'\n?$"
+)
+add_lib_test(
+    cli.run.unknown_multi.fail
+    SOURCES registration.cpp
+    ARGS "--run=unknown_a" "--run=unknown_b"
+    PASS_REGEX "${_run_unknown_multi_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
 )

@@ -75,7 +75,7 @@ struct registry
 
     static void add(test_entry e) { cases().insert(e); }
 
-    static int run_all(); // defined in runner.hpp
+    static int run(std::vector<test_entry> const& run); // defined in runner.hpp
 };
 
 } // namespace eggs::test::detail

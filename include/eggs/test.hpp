@@ -13,7 +13,11 @@
 #include <eggs/test/detail/runner.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
+#include <cstdio>
+#include <cstdlib>
 #include <source_location>
+#include <string_view>
+#include <vector>
 
 // TEST_CASE(name, "description")
 //
@@ -80,12 +84,38 @@ namespace eggs::test {
 
 // Options passed to run()
 struct run_options
-{};
+{
+    // ordered test case names; empty = run all
+    std::vector<std::string_view> run;
+};
 
 // Public entry point — call this from main().
 inline int run(run_options opts = {})
 {
-    return ::eggs::test::detail::registry::run_all();
+    auto const& all_cases = detail::registry::cases();
+
+    std::vector<detail::test_entry> selected_cases;
+    selected_cases.reserve(opts.run.size());
+    if (opts.run.empty()) {
+        selected_cases.assign(all_cases.begin(), all_cases.end());
+    } else {
+        bool any_unknown = false;
+
+        for (auto const& name : opts.run) {
+            auto const it = all_cases.find(name);
+            if (it == all_cases.end()) {
+                detail::println(stderr, "error: unknown test case '{}'", name);
+                any_unknown = true;
+            } else {
+                selected_cases.push_back(*it);
+            }
+        }
+
+        // TODO: consider executing known test cases instead of failing
+        if (any_unknown) return EXIT_FAILURE;
+    }
+
+    return detail::registry::run(selected_cases);
 }
 
 } // namespace eggs::test
