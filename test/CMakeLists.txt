@@ -48,7 +48,18 @@ function(add_lib_test name)
             PROPERTIES PASS_REGULAR_EXPRESSION "${ARG_PASS_REGEX}"
         )
     endif()
-    if(ARG_WILL_FAIL)
+    if(ARG_PASS_REGEX OR ARG_FAIL_REGEX)
+        # PASS/FAIL_REGEX ignore exit code; add a companion test that only
+        # checks the exit code.
+        add_test(
+            NAME eggs.test.${name}.exit
+            COMMAND _eggs_test.${name} ${ARG_ARGS}
+        )
+        set_tests_properties(
+            eggs.test.${name}.exit
+            PROPERTIES FOLDER "test" LABELS "unit" WILL_FAIL "${ARG_WILL_FAIL}"
+        )
+    elseif(ARG_WILL_FAIL)
         set_tests_properties(eggs.test.${name} PROPERTIES WILL_FAIL TRUE)
     endif()
 endfunction()
@@ -87,11 +98,13 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         stacktrace.check.fail
         SOURCES stacktrace.check.fail.cpp
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
+        WILL_FAIL
     )
     add_lib_test(
         stacktrace.require.fail
         SOURCES stacktrace.require.fail.cpp
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
+        WILL_FAIL
     )
 endif()
 
@@ -103,6 +116,7 @@ add_lib_test(
     check.fail
     SOURCES check.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    WILL_FAIL
 )
 
 # REQUIRE with a false expression must fail the test case and stop executing
@@ -111,6 +125,7 @@ add_lib_test(
     require.fail
     SOURCES require.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    WILL_FAIL
 )
 
 # An exception leaked from a test case must be caught and reported as a failure.
@@ -119,12 +134,14 @@ add_lib_test(
     SOURCES exceptions.fail.cpp
     ARGS "--run=leaked_std_exception"
     PASS_REGEX "EXCEPTION: deliberate failure"
+    WILL_FAIL
 )
 add_lib_test(
     exceptions.unknown
     SOURCES exceptions.fail.cpp
     ARGS "--run=leaked_unknown_exception"
     PASS_REGEX "UNKNOWN EXCEPTION"
+    WILL_FAIL
 )
 
 # --- cli tests -----------------------------------------------------------
@@ -151,6 +168,7 @@ add_lib_test(
     SOURCES check.pass.cpp
     ARGS "--unknown"
     PASS_REGEX "unknown argument '--unknown'"
+    WILL_FAIL
 )
 
 # -u must print unknown argument.
@@ -159,6 +177,7 @@ add_lib_test(
     SOURCES check.pass.cpp
     ARGS "-u"
     PASS_REGEX "unknown argument '-u'"
+    WILL_FAIL
 )
 
 # --list must print exactly the registered test case names, one per line.
@@ -207,6 +226,7 @@ add_lib_test(
     ARGS "--run=unknown"
     PASS_REGEX "error: unknown test case 'unknown'"
     FAIL_REGEX "\\[ RUN  \\]"
+    WILL_FAIL
 )
 
 # --run=<unknown_a> --run=<unknown_b> must report all invalid names.
@@ -222,4 +242,5 @@ add_lib_test(
     ARGS "--run=unknown_a" "--run=unknown_b"
     PASS_REGEX "${_run_unknown_multi_regex}"
     FAIL_REGEX "\\[ RUN  \\]"
+    WILL_FAIL
 )
