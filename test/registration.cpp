@@ -10,17 +10,17 @@
 // Verify that multiple TEST_CASEs in a single translation unit all register
 // and run without interfering with each other.
 
-TEST_CASE(registration_first, "first test case registers")
+TEST_CASE(registration_one, "first test case registers")
 {
     CHECK(true);
 }
 
-TEST_CASE(registration_second, "second test case registers independently")
+TEST_CASE(registration_two, "second test case registers independently")
 {
     CHECK(1 + 1 == 2);
 }
 
-TEST_CASE(registration_third, "third test case also registers")
+TEST_CASE(registration_three, "third test case also registers")
 {
     CHECK('a' != 'b');
 }

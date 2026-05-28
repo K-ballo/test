@@ -43,28 +43,18 @@ endfunction()
 
 # --- registration tests ------------------------------------------------------
 
-# Multiple TEST_CASEs in one TU all run in definition order.
-string(
-    CONCAT _reg_regex
-    "\\[ RUN  \\] registration_first[^\n]*"
-    "(\n[^\n]+)+\n"
-    "\\[ RUN  \\] registration_second[^\n]*"
-    "(\n[^\n]+)+\n"
-    "\\[ RUN  \\] registration_third"
+# Multiple TEST_CASEs in one TU all run.
+add_lib_test(
+    registration
+    SOURCES registration.cpp
+    PASS_REGEX "3 of 3 test cases passed"
 )
-add_lib_test(registration SOURCES registration.cpp PASS_REGEX "${_reg_regex}")
 
-# Multiple TEST_CASEs across two TUs both register and run (order indeterminate).
-string(
-    CONCAT _multi_tu_regex
-    "\\[ RUN  \\] multi_tu_case_a[^\n]*(\n[^\n]+)+\n\\[ RUN  \\] multi_tu_case_b"
-    "|"
-    "\\[ RUN  \\] multi_tu_case_b[^\n]*(\n[^\n]+)+\n\\[ RUN  \\] multi_tu_case_a"
-)
+# Test cases defined across two translation units both register and run.
 add_lib_test(
     registration.multi_tu
     SOURCES registration.multi_tu.a.cpp registration.multi_tu.b.cpp
-    PASS_REGEX "${_multi_tu_regex}"
+    PASS_REGEX "2 of 2 test cases passed"
 )
 
 # --- passing tests -----------------------------------------------------------
@@ -152,10 +142,17 @@ add_lib_test(
     PASS_REGEX "unknown argument '-u'"
 )
 
-# --list must print all registered test cases.
+# --list must print exactly the registered test case names, one per line.
+string(
+    CONCAT _list_regex
+    "^"
+    "registration_(one|two|three)\n"
+    "registration_(one|two|three)\n"
+    "registration_(one|two|three)\n?$"
+)
 add_lib_test(
     cli.list.pass
     SOURCES registration.cpp
     ARGS "--list"
-    PASS_REGEX "registration_first\nregistration_second\nregistration_third"
+    PASS_REGEX "${_list_regex}"
 )

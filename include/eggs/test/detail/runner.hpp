@@ -32,7 +32,7 @@ inline int registry::run_all()
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
 
-    for (test_entry& e : cases()) {
+    for (test_entry const& e : cases()) {
         detail::println(stdout, "[ RUN  ] {} -- {}", e.name, e.desc);
 
         run_state state;
