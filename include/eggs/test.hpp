@@ -17,6 +17,7 @@
 #include <cstdlib>
 #include <source_location>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 // TEST_CASE(name, "description")
@@ -101,11 +102,17 @@ inline int run(run_options opts = {})
     } else {
         bool any_unknown = false;
 
+        std::unordered_set<std::string_view> seen;
+        seen.reserve(opts.run.size());
         for (auto const& name : opts.run) {
             auto const it = all_cases.find(name);
             if (it == all_cases.end()) {
                 detail::println(stderr, "error: unknown test case '{}'", name);
                 any_unknown = true;
+            } else if (!seen.insert(name).second) {
+                detail::println(
+                    stderr, "warning: duplicate test case '{}'", name
+                );
             } else {
                 selected_cases.push_back(*it);
             }

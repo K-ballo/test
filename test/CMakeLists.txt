@@ -204,6 +204,20 @@ add_lib_test(
     FAIL_REGEX "registration_two;registration_three"
 )
 
+# --run=<name> --run=<name> must warn and run the case only once.
+string(
+    CONCAT _run_dedup_regex
+    "warning: duplicate test case 'registration_one'"
+    "(\n[^\n]*)*\n"
+    "1 of 1 test cases passed"
+)
+add_lib_test(
+    cli.run.dedup.pass
+    SOURCES registration.cpp
+    ARGS "--run=registration_one" "--run=registration_one"
+    PASS_REGEX "${_run_dedup_regex}"
+)
+
 # --run=<a> --run=<b> must run cases in the given order.
 string(
     CONCAT _run_order_regex
