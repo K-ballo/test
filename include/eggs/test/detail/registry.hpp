@@ -7,7 +7,11 @@
 
 #pragma once
 
+#include <eggs/test/detail/run_state.hpp>
+
 #include <cstddef>
+#include <functional>
+#include <string>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
@@ -16,9 +20,9 @@ namespace eggs::test::detail {
 
 struct test_entry
 {
-    std::string_view name;
+    std::string name;
     std::string_view desc;
-    void (*run)();
+    std::function<void(run_state&)> run;
 };
 
 // Exception thrown by REQUIRE to unwind the current test case without

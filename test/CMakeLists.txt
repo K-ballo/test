@@ -99,6 +99,39 @@ add_lib_test(
 # CHECK with true expressions must exit 0.
 add_lib_test(check.pass SOURCES check.pass.cpp EXITS 0)
 
+# Parameterized test cases registered via REGISTER_P and REGISTER_R.
+add_lib_test(parameterized SOURCES parameterized.pass.cpp)
+
+# Name display: verify each registration mechanism produces the expected name in
+# the [ RUN ] line.  Reuse the already-built parameterized executable.
+
+# TEST_CASE (no params) — auto-registered as the bare name.
+add_lib_test(
+    parameterized.name.simple
+    SOURCES parameterized.pass.cpp
+    ARGS "--run=stateless"
+    PASS_REGEX "\\[ RUN  \\] stateless -- "
+    EXITS 0
+)
+
+# REGISTER_P — name is base/instance.
+add_lib_test(
+    parameterized.name.register_p
+    SOURCES parameterized.pass.cpp
+    ARGS "--run=stateless/first"
+    PASS_REGEX "\\[ RUN  \\] stateless/first -- "
+    EXITS 0
+)
+
+# REGISTER_R — name is base/instance/_N.
+add_lib_test(
+    parameterized.name.register_r
+    SOURCES parameterized.pass.cpp
+    ARGS "--run=square/small/_0"
+    PASS_REGEX "\\[ RUN  \\] square/small/_0 -- "
+    EXITS 0
+)
+
 # REQUIRE with true expressions must exit 0 and not stop execution.
 add_lib_test(require.pass SOURCES require.pass.cpp EXITS 0)
 
@@ -727,6 +760,25 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         ARGS "--run=stacktrace_nothrow_two_levels"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_nothrow_helper,FAILED:>"
         FAIL_REGEX "check_nothrow<"
+        EXITS 1
+    )
+
+    # CHECK failure directly in a REGISTER_P body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.check.zero_levels.register_p.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_check_zero_levels_registered/p"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
+        EXITS 1
+    )
+    # CHECK failure directly in a REGISTER_R body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.check.zero_levels.register_r.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_check_zero_levels_registered/r/_0"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
         EXITS 1
     )
 endif()

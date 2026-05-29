@@ -270,3 +270,14 @@ TEST_CASE(
 {
     outer_nothrow_helper();
 }
+
+TEST_CASE(
+    stacktrace_check_zero_levels_registered,
+    "failed CHECK directly in a registered test body prints no stacktrace", int
+)
+{
+    CHECK(false);
+}
+
+REGISTER_P(stacktrace_check_zero_levels_registered, "p", 0);
+REGISTER_R(stacktrace_check_zero_levels_registered, "r", {0});
