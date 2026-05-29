@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test/detail/cartesian_product.hpp>
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -125,7 +126,7 @@ void make_ranges(std::initializer_list<T>, Rest&&...)
         auto _rngs_ = ::eggs::test::detail::make_ranges(__VA_ARGS__);         \
         for (auto const& _v_ : std::apply(                                    \
                  [](auto const&... _rs_) {                                    \
-                     return std::views::cartesian_product(_rs_...);           \
+                     return ::eggs::test::detail::cartesian_product(_rs_...); \
                  },                                                           \
                  _rngs_                                                       \
              )) {                                                             \

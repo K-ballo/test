@@ -17,6 +17,9 @@ if(PROJECT_IS_TOP_LEVEL)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
+    add_compile_options(
+        $<$<CXX_COMPILER_ID:Clang,AppleClang>:-Wno-c++26-extensions>
+    )
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
         "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>"
     )
@@ -55,9 +58,10 @@ target_sources(
             FILES
                 include/eggs/test.hpp
                 include/eggs/test/cli.hpp
-                include/eggs/test/detail/registry.hpp
+                include/eggs/test/detail/cartesian_product.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/noinline.hpp
+                include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/run_state.hpp
     PRIVATE
         FILE_SET private_headers
