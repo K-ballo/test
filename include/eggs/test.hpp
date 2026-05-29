@@ -10,36 +10,153 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
+#include <eggs/test/detail/stacktrace.hpp>
 
 #include <exception>
+#include <ranges>
 #include <source_location>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
-// TEST_CASE(name, "description")
+namespace eggs::test::detail {
+
+template <typename T>
+bool auto_register(char const* name, char const* desc, std::source_location loc)
+{
+    if constexpr (requires { T::run(); }) {
+        registry::add({
+            name,
+            desc,
+            [](run_state& state) {
+                state.entry_depth = stacktrace::current().size();
+                T::run();
+            },
+            loc,
+        });
+    }
+    return true;
+}
+
+} // namespace eggs::test::detail
+
+// Internal helpers
+#define _EGGS_CAT_(a, b) a##b
+#define _EGGS_CAT(a, b) _EGGS_CAT_(a, b)
+
+// TEST_CASE(name, "description" [, params...])
 //
-// Defines a struct named `name` with a static run() member and an inline
-// static data member whose initialiser registers the test case before main().
-// Follow the macro with a function body:
+// Defines a struct named `name` with a static run() member.
 //
-//   TEST_CASE(my_test, "adds two integers") {
-//       CHECK(1 + 1 == 2);
-//   }
-#define TEST_CASE(name_, desc_)                            \
-    struct name_                                           \
-    {                                                      \
-      private:                                             \
-        static void run();                                 \
-        inline static bool const registered_ =             \
-            (::eggs::test::detail::registry::add({         \
-                 .name = #name_,                           \
-                 .desc = desc_,                            \
-                 .run = &name_::run,                       \
-                 .loc = ::std::source_location::current(), \
-             }),                                           \
-             true);                                        \
-    };                                                     \
-    void name_::run()
+// Without required params the test auto-registers as a single case:
+//   TEST_CASE(my_test, "adds two integers") { CHECK(1 + 1 == 2); }
+//
+// With required params no auto-registration happens; use REGISTER_P / REGISTER_R:
+//   TEST_CASE(add, "adds two integers", int const& a, int const& b) { CHECK(a + b == b + a); }
+//   REGISTER_P(add, "one-two", 1, 2);
+#define TEST_CASE(name_, desc_, ...)                             \
+    struct name_                                                 \
+    {                                                            \
+        static constexpr const char* case_desc_ = desc_;         \
+        static void run(__VA_ARGS__);                            \
+        inline static bool const registered_ =                   \
+            ::eggs::test::detail::auto_register<name_>(          \
+                #name_, desc_, ::std::source_location::current() \
+            );                                                   \
+    };                                                           \
+    void name_::run(__VA_ARGS__)
+
+// REGISTER_P(name, "instance", args...)
+//
+// Registers one instance of the parameterized test case `name`, passing args
+// directly to run().  Appears in the registry as "name/instance".
+//
+//   REGISTER_P(add, "small",    1,  2);
+//   REGISTER_P(add, "negative", -3, 5);
+#define REGISTER_P(name_, instance_, ...)                                \
+    static bool const _EGGS_CAT(_eggs_reg_, __LINE__) = [] {             \
+        ::eggs::test::detail::registry::add({                            \
+            #name_ "/" instance_,                                        \
+            name_::case_desc_,                                           \
+            [](::eggs::test::detail::run_state& state) {                 \
+                state.entry_depth =                                      \
+                    ::eggs::test::detail::stacktrace ::current().size(); \
+                return name_::run(__VA_ARGS__);                          \
+            },                                                           \
+            ::std::source_location::current(),                           \
+        });                                                              \
+        return true;                                                     \
+    }()
+
+namespace eggs::test::detail {
+
+template <std::ranges::range... Rs>
+auto make_ranges(Rs&&... rs)
+{
+    return std::make_tuple(std::forward<Rs>(rs)...);
+}
+
+template <typename T>
+auto make_ranges(std::initializer_list<T> il)
+{
+    return std::make_tuple(std::vector<T>(il));
+}
+
+template <typename T, typename... Rest>
+void make_ranges(std::initializer_list<T>, Rest&&...)
+#if __cpp_deleted_function >= 202403L
+    = delete ("only a single braced-init-list is supported; use "
+              "std::vector{...} for multiple ranges");
+#else
+    = delete;
+#endif
+
+} // namespace eggs::test::detail
+
+// REGISTER_R(name, "instance", range1 [, range2, ...])
+//
+// Registers one instance per element of the Cartesian product of all ranges,
+// naming them "name/instance/_0", "name/instance/_1", etc.  For a single range the
+// element is passed directly; for multiple ranges each tuple is unpacked via
+// std::apply.  Ranges may be braced-init-lists ({1, 4, 9}), std::array,
+// std::vector, or any other range; different ranges may have different types.
+//
+//   REGISTER_R(square, "small",  {1, 4, 9});
+//   REGISTER_R(add,    "grid",   {0, 1, 2}, {0, 1, 2});
+#define REGISTER_R(name_, instance_, ...)                                     \
+    static bool const _EGGS_CAT(_eggs_reg_, __LINE__) = [] {                  \
+        std::size_t _i_ = 0;                                                  \
+        auto _rngs_ = ::eggs::test::detail::make_ranges(__VA_ARGS__);         \
+        for (auto const& _v_ : std::apply(                                    \
+                 [](auto const&... _rs_) {                                    \
+                     return std::views::cartesian_product(_rs_...);           \
+                 },                                                           \
+                 _rngs_                                                       \
+             )) {                                                             \
+            auto _vals_ = std::apply(                                         \
+                [](auto const&... _xs_) { return std::make_tuple(_xs_...); }, \
+                _v_                                                           \
+            );                                                                \
+            ::eggs::test::detail::registry::add({                             \
+                #name_ "/" instance_ "/_" + std::to_string(_i_),              \
+                name_::case_desc_,                                            \
+                [_vals_](::eggs::test::detail::run_state& state) {            \
+                    return std::apply(                                        \
+                        [&state](auto const&... _vs_) {                       \
+                            state.entry_depth =                               \
+                                ::eggs::test::detail::stacktrace ::current()  \
+                                    .size();                                  \
+                            return name_::run(_vs_...);                       \
+                        },                                                    \
+                        _vals_                                                \
+                    );                                                        \
+                },                                                            \
+                ::std::source_location::current(),                            \
+            });                                                               \
+            ++_i_;                                                            \
+        }                                                                     \
+        return true;                                                          \
+    }()
 
 // CHECK(expr)
 //
