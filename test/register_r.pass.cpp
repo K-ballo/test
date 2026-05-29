@@ -19,9 +19,8 @@ TEST_CASE(square, "n squared is non-negative", int const& n)
 // Registers square/small/_0 .. square/small/_3.
 REGISTER_R(square, "small", std::vector<int>{1, 4, 9, 16});
 
-// Braced-init-list: make_ranges deduces std::initializer_list<int> and
-// materializes it into a vector, avoiding the cartesian_product deduction
-// failure.  Registers square/brace/_0 .. square/brace/_3.
+// Braced-init-list: REGISTER_R accepts {1, 4, 9, 16} directly, no
+// std::vector{...} needed.  Registers square/brace/_0 .. square/brace/_3.
 REGISTER_R(square, "brace", {1, 4, 9, 16});
 
 // Registers no instances: the range is empty, so the cartesian product has

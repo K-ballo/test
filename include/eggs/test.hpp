@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test/detail/cartesian_product.hpp>
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
@@ -14,13 +15,10 @@
 
 #include <cstddef>
 #include <exception>
-#include <initializer_list>
-#include <ranges>
 #include <source_location>
 #include <string>
 #include <string_view>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 namespace eggs::test::detail {
@@ -99,31 +97,6 @@ inline constexpr bool is_parameterized = !requires { T::run(); };
         return true;                                                     \
     }()
 
-namespace eggs::test::detail {
-
-template <std::ranges::range... Rs>
-auto make_ranges(Rs&&... rs)
-{
-    return std::make_tuple(std::forward<Rs>(rs)...);
-}
-
-template <typename T>
-auto make_ranges(std::initializer_list<T> il)
-{
-    return std::make_tuple(std::vector<T>(il));
-}
-
-template <typename T, typename... Rest>
-void make_ranges(std::initializer_list<T>, Rest&&...)
-#if __cpp_deleted_function >= 202403L && __cplusplus > 202302L
-    = delete ("only a single braced-init-list is supported; use "
-              "std::vector{...} for multiple ranges");
-#else
-    = delete;
-#endif
-
-} // namespace eggs::test::detail
-
 // REGISTER_R(name, "instance", range1 [, range2, ...])
 //
 // Registers one instance per element of the Cartesian product of all ranges,
@@ -144,13 +117,8 @@ void make_ranges(std::initializer_list<T>, Rest&&...)
             "REGISTER_R can only be used with a parameterized TEST_CASE"    \
         );                                                                  \
         std::size_t _i_ = 0;                                                \
-        auto _rngs_ = ::eggs::test::detail::make_ranges(__VA_ARGS__);       \
-        for (auto const& _v_ : std::apply(                                  \
-                 [](auto const&... _rs_) {                                  \
-                     return std::views::cartesian_product(_rs_...);         \
-                 },                                                         \
-                 _rngs_                                                     \
-             )) {                                                           \
+        for (auto const& _v_ :                                              \
+             ::eggs::test::detail::cartesian_product(__VA_ARGS__)) {        \
             std::apply(                                                     \
                 [&](auto const&... _xs_) {                                  \
                     ::eggs::test::detail::registry::add({                   \

@@ -16,7 +16,7 @@ TEST_CASE(not_a_range, "n squared is non-negative", int const& n)
     CHECK(n * n >= 0);
 }
 
-// make_ranges requires every argument to satisfy std::ranges::range; a plain
+// REGISTER_R requires every argument to satisfy std::ranges::range; a plain
 // int is not iterable.
 REGISTER_R(not_a_range, "bad", 42);
 
