@@ -195,6 +195,30 @@ add_lib_test(
     PASS_REGEX "${_list_regex}"
 )
 
+# --list --run=<name> must list only the matching test case.
+add_lib_test(
+    cli.list.run.pass
+    SOURCES registration.cpp
+    ARGS "--list" "--run=registration_one"
+    PASS_REGEX "^registration_one\n?$"
+    FAIL_REGEX "registration_two;registration_three"
+)
+
+# --list --run=<a> --run=<b> must list names in --run order.
+string(
+    CONCAT _list_run_order_regex
+    "^"
+    "registration_three\n"
+    "registration_one\n?$"
+)
+add_lib_test(
+    cli.list.run.order.pass
+    SOURCES registration.cpp
+    ARGS "--list" "--run=registration_three" "--run=registration_one"
+    PASS_REGEX "${_list_run_order_regex}"
+    FAIL_REGEX "registration_two"
+)
+
 # --run=<name> must not run other test cases.
 add_lib_test(
     cli.run.pass

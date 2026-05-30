@@ -46,7 +46,7 @@ constexpr opt_spec k_opts[] = {
      {},
      {},
      EGGS_TEST_MAKE_STRING_VIEW_SPAN(
-         "list all registered test case names and exit"
+         "list selected test case names and exit;", "respects --run filters"
      )},
     {"--run=",
      "<test_case>",
@@ -123,13 +123,7 @@ parse_result parse_args(int argc, char const* const argv[])
             pr.action = parse_action::exit_success;
             return pr;
         } else if (arg == "--list") {
-            auto const& all_cases = detail::registry::cases();
-            for (auto const& e : all_cases) {
-                detail::println(stdout, "{}", e.name);
-            }
-
-            pr.action = parse_action::exit_success;
-            return pr;
+            pr.opts.list = true;
         } else if (arg.starts_with("--run=")) {
             auto const name = arg.substr(6);
 

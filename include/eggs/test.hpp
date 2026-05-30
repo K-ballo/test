@@ -88,6 +88,8 @@ struct run_options
 {
     // ordered test case names; empty = run all
     std::vector<std::string_view> run;
+    // list matching test case names instead of running them
+    bool list = false;
 };
 
 // Public entry point — call this from main().
@@ -120,6 +122,13 @@ inline int run(run_options opts = {})
 
         // TODO: consider executing known test cases instead of failing
         if (any_unknown) return EXIT_FAILURE;
+    }
+
+    if (opts.list) {
+        for (auto const& e : selected_cases) {
+            detail::println(stdout, "{}", e.name);
+        }
+        return EXIT_SUCCESS;
     }
 
     return detail::registry::run(selected_cases);
