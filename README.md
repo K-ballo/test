@@ -1,6 +1,6 @@
 # Eggs.Test
 
-A minimal, header-only C++ test framework. Requires C++23.
+A minimal C++ test framework. Requires C++23.
 
 ## Usage
 
@@ -43,8 +43,11 @@ See `CMakePresets.json` for the full list of presets (GCC, Clang, Clang+libc++, 
 
 ```cmake
 find_package(eggs.test REQUIRED)
-target_link_libraries(my_tests PRIVATE Eggs::Test Eggs::TestMain)
+target_link_libraries(my_tests PRIVATE Eggs::TestMain)
 ```
+
+`Eggs::Test` provides the test macros and the `eggs::test::run()` entry point.  
+`Eggs::TestMain` additionally supplies a `main()` with CLI argument parsing.
 
 ## License
 

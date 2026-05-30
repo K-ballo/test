@@ -5,27 +5,35 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#pragma once
-
-#include <eggs/test/detail/checks.hpp>
+#include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
-#include <eggs/test/detail/registry.hpp>
-#include <eggs/test/detail/run_state.hpp>
-#include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace eggs::test::detail {
 
-// Out-of-class inline definition of registry::run().
-// Runs test cases in the order given by `run`.
-// Returns EXIT_SUCCESS if all cases passed, EXIT_FAILURE if any failed.
-inline int registry::run(std::vector<test_entry> const& run)
+run_state*& run_state::_current_ptr() noexcept
+{
+    static thread_local run_state* tl_current_state = nullptr;
+    return tl_current_state;
+}
+
+registry::cases_type& registry::cases()
+{
+    // Meyers singleton — guaranteed to be constructed before first use,
+    // which avoids the static-initialisation-order fiasco when test_entry
+    // instances in different translation units register before main().
+    static registry::cases_type v;
+    return v;
+}
+
+int registry::run(std::vector<test_entry> const& run)
 {
     std::size_t const entry_depth = stacktrace::current().size();
 
@@ -82,3 +90,48 @@ inline int registry::run(std::vector<test_entry> const& run)
 }
 
 } // namespace eggs::test::detail
+
+namespace eggs::test {
+
+int run(run_options opts)
+{
+    auto const& all_cases = detail::registry::cases();
+
+    std::vector<detail::test_entry> selected_cases;
+    selected_cases.reserve(opts.run.size());
+    if (opts.run.empty()) {
+        selected_cases.assign(all_cases.begin(), all_cases.end());
+    } else {
+        bool any_unknown = false;
+
+        std::unordered_set<std::string_view> seen;
+        seen.reserve(opts.run.size());
+        for (auto const& name : opts.run) {
+            auto const it = all_cases.find(name);
+            if (it == all_cases.end()) {
+                detail::println(stderr, "error: unknown test case '{}'", name);
+                any_unknown = true;
+            } else if (!seen.insert(name).second) {
+                detail::println(
+                    stderr, "warning: duplicate test case '{}'", name
+                );
+            } else {
+                selected_cases.push_back(*it);
+            }
+        }
+
+        // TODO: consider executing known test cases instead of failing
+        if (any_unknown) return EXIT_FAILURE;
+    }
+
+    if (opts.list) {
+        for (auto const& e : selected_cases) {
+            detail::println(stdout, "{}", e.name);
+        }
+        return EXIT_SUCCESS;
+    }
+
+    return detail::registry::run(selected_cases);
+}
+
+} // namespace eggs::test

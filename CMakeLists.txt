@@ -29,13 +29,13 @@ else()
 endif()
 
 #
-# Library target — header-only INTERFACE library.
+# Library target.
 # Internal name _eggs_test; downstream CMake code uses the alias Eggs::Test.
 #
-add_library(_eggs_test INTERFACE)
+add_library(_eggs_test STATIC src/checks.cpp src/runner.cpp)
 target_sources(
     _eggs_test
-    INTERFACE
+    PUBLIC
         FILE_SET HEADERS
             BASE_DIRS include
             FILES
@@ -43,10 +43,13 @@ target_sources(
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/noinline.hpp
-                include/eggs/test/detail/print.hpp
                 include/eggs/test/detail/run_state.hpp
-                include/eggs/test/detail/runner.hpp
                 include/eggs/test/detail/stacktrace.hpp
+    PRIVATE
+        FILE_SET private_headers
+            TYPE HEADERS
+            BASE_DIRS include
+            FILES include/eggs/test/detail/print.hpp
 )
 set_target_properties(
     _eggs_test
@@ -54,10 +57,10 @@ set_target_properties(
         EXPORT_NAME Eggs::Test
         VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
 )
-target_compile_features(_eggs_test INTERFACE cxx_std_23)
+target_compile_features(_eggs_test PUBLIC cxx_std_23)
 
 include(Cxx23Stacktrace)
-target_link_libraries(_eggs_test INTERFACE ${EGGS_CXX23_STACKTRACE_LIB})
+target_link_libraries(_eggs_test PUBLIC ${EGGS_CXX23_STACKTRACE_LIB})
 
 add_library(Eggs::Test ALIAS _eggs_test)
 
@@ -65,7 +68,12 @@ add_library(Eggs::Test ALIAS _eggs_test)
 # Eggs::TestMain — object library that provides main().
 # Link it into any test executable instead of writing your own main.
 #
-add_library(_eggs_test_main STATIC src/test_main.cpp src/cli.cpp src/cli.hpp)
+add_library(_eggs_test_main STATIC src/test_main.cpp src/cli.cpp)
+target_sources(
+    _eggs_test_main
+    PRIVATE
+        FILE_SET private_headers TYPE HEADERS BASE_DIRS src FILES src/cli.hpp
+)
 target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
 set_target_properties(_eggs_test_main PROPERTIES EXPORT_NAME TestMain)
 

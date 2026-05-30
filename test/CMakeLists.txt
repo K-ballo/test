@@ -28,7 +28,7 @@ function(add_lib_test name)
     )
 
     add_executable(_eggs_test.${name} ${ARG_SOURCES})
-    target_link_libraries(_eggs_test.${name} PRIVATE Eggs::Test Eggs::TestMain)
+    target_link_libraries(_eggs_test.${name} PRIVATE Eggs::TestMain)
 
     add_test(NAME eggs.test.${name} COMMAND _eggs_test.${name} ${ARG_ARGS})
 
