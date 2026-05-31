@@ -29,6 +29,10 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
+      },
+      "environment": {
+        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
+        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=."
       }
     },
     {
@@ -38,15 +42,23 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "environment": {
+        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
+        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=."
       }
     },
     {
       "name": "dev-clang-libcxx",
       "displayName": "Clang + libc++",
       "inherits": "dev-clang",
-      "cacheVariables": {},
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
       "environment": {
-        "CXXFLAGS": "-stdlib=libc++",
+        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
+        "CXXFLAGS": "-stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=.",
         "LDFLAGS": "-stdlib=libc++"
       }
     },
@@ -57,6 +69,23 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
+      },
+      "environment": {
+        "CFLAGS": "/d1trimfile:\"${sourceDir}\"",
+        "CXXFLAGS": "/d1trimfile:\"${sourceDir}\""
+      }
+    },
+    {
+      "name": "dev-clang-cl",
+      "displayName": "Clang-CL x64",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "clang-cl",
+        "CMAKE_CXX_COMPILER": "clang-cl"
+      },
+      "environment": {
+        "CFLAGS": "/clang:-ffile-prefix-map=${sourceDir}=.",
+        "CXXFLAGS": "/clang:-ffile-prefix-map=${sourceDir}=."
       }
     },
     {
@@ -199,6 +228,20 @@
       "displayName": "MSVC x64 (Release)",
       "inherits": "base-test",
       "configurePreset": "dev-msvc",
+      "configuration": "Release"
+    },
+    {
+      "name": "dev-clang-cl-debug",
+      "displayName": "Clang-CL x64 (Debug)",
+      "inherits": "base-test",
+      "configurePreset": "dev-clang-cl",
+      "configuration": "Debug"
+    },
+    {
+      "name": "dev-clang-cl-release",
+      "displayName": "Clang-CL x64 (Release)",
+      "inherits": "base-test",
+      "configurePreset": "dev-clang-cl",
       "configuration": "Release"
     },
     {
