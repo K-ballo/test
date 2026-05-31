@@ -7,8 +7,6 @@
 
 #include <eggs/test.hpp>
 
-// This executable exits 1.
-
 TEST_CASE(
     require_false_stops, "REQUIRE with false expression stops the test case"
 )

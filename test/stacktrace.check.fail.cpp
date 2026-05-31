@@ -6,15 +6,10 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
+#include <eggs/test/detail/noinline.hpp>
 
 // Verify that CHECK fired from helper functions produces a stacktrace in its
-// diagnostic.  Every test case here fails, so the executable exits 1.
-
-#ifdef _MSC_VER
-#    define EGGS_TEST_NOINLINE __declspec(noinline)
-#else
-#    define EGGS_TEST_NOINLINE __attribute__((noinline))
-#endif
+// diagnostic.
 
 namespace {
 

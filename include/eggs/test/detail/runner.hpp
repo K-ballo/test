@@ -27,7 +27,7 @@ namespace eggs::test::detail {
 // Returns EXIT_SUCCESS if all cases passed, EXIT_FAILURE if any failed.
 inline int registry::run(std::vector<test_entry> const& run)
 {
-    std::size_t const entry_depth = detail::stacktrace::current().size();
+    std::size_t const entry_depth = stacktrace::current().size();
 
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;

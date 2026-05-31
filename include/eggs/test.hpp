@@ -8,6 +8,7 @@
 #pragma once
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/noinline.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/runner.hpp>
@@ -15,6 +16,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <source_location>
 #include <string_view>
 #include <unordered_set>
@@ -50,35 +52,128 @@
 // check is inside a helper function (not directly in the TEST_CASE body) the
 // diagnostic also includes a stacktrace of the user frames above it.
 //
+// Returns bool: true if the check passed, false if it failed.
+//
 // Uses #__VA_ARGS__ so that expressions containing commas (e.g. template
 // arguments) stringify correctly.
 #define CHECK(...)                                                          \
-    do {                                                                    \
-        if (static_cast<bool>(__VA_ARGS__))                                 \
-            ++::eggs::test::detail::run_state::current().assertions_passed; \
-        else                                                                \
-            ::eggs::test::detail::do_check_failed(                          \
-                ::eggs::test::detail::run_state::current(), #__VA_ARGS__,   \
-                ::std::source_location::current(),                          \
-                ::eggs::test::detail::stacktrace::current()                 \
-            );                                                              \
-    } while (false)
+    (static_cast<bool>(__VA_ARGS__)                                         \
+         ? (++::eggs::test::detail::run_state::current().assertions_passed, \
+            true)                                                           \
+         : (++::eggs::test::detail::run_state::current().assertions_failed, \
+            ::eggs::test::detail::check_failed(                             \
+                #__VA_ARGS__, ::std::source_location::current(),            \
+                ::eggs::test::detail::run_state::current().entry_depth      \
+            ),                                                              \
+            false))
 
 // REQUIRE(expr)
 //
 // Identical to CHECK but also throws eggs::test::detail::require_failed on
 // failure, which is caught by the runner to stop execution of the current test
 // case while allowing subsequent cases to continue.
-#define REQUIRE(...)                                                        \
-    do {                                                                    \
-        if (static_cast<bool>(__VA_ARGS__))                                 \
-            ++::eggs::test::detail::run_state::current().assertions_passed; \
-        else                                                                \
-            ::eggs::test::detail::do_require_failed(                        \
-                ::eggs::test::detail::run_state::current(), #__VA_ARGS__,   \
-                ::std::source_location::current(),                          \
-                ::eggs::test::detail::stacktrace::current()                 \
-            );                                                              \
+#define REQUIRE(...)                                                           \
+    do {                                                                       \
+        if (!CHECK(__VA_ARGS__)) throw ::eggs::test::detail::require_failed{}; \
+    } while (false)
+
+// CHECK_THROWS(expr)
+//
+// Evaluates expr and passes if it throws any exception.  Fails with a
+// diagnostic if expr completes without throwing.  Returns bool.
+#define CHECK_THROWS(...)                             \
+    ::eggs::test::detail::check_throws(               \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
+        ::eggs::test::detail::run_state::current(),   \
+        ::std::source_location::current()             \
+    )
+
+// REQUIRE_THROWS(expr)
+//
+// Identical to CHECK_THROWS but also throws eggs::test::detail::require_failed
+// on failure to stop the current test case.
+#define REQUIRE_THROWS(...)                               \
+    do {                                                  \
+        if (!CHECK_THROWS(__VA_ARGS__))                   \
+            throw ::eggs::test::detail::require_failed{}; \
+    } while (false)
+
+// CHECK_THROWS_AS(ExcType, expr)
+//
+// Evaluates expr and passes if it throws an exception of type ExcType (or a
+// type derived from it).  Fails if nothing is thrown or the thrown type does
+// not match.  ExcType is a single argument; template types containing commas
+// require a using-alias.  Returns std::exception_ptr.
+#define CHECK_THROWS_AS(ExcType_, ...)                         \
+    ::eggs::test::detail::check_throws_as<ExcType_>(           \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__,          \
+        ::eggs::test::detail::run_state::current(), #ExcType_, \
+        ::std::source_location::current()                      \
+    )
+
+// REQUIRE_THROWS_AS(ExcType, expr)
+//
+// Identical to CHECK_THROWS_AS but also throws eggs::test::detail::require_failed
+// on failure to stop the current test case.
+#define REQUIRE_THROWS_AS(ExcType_, ...)                  \
+    do {                                                  \
+        if (!CHECK_THROWS_AS(ExcType_, __VA_ARGS__))      \
+            throw ::eggs::test::detail::require_failed{}; \
+    } while (false)
+
+// CHECK_CATCHES_AS(ExcType, expr)
+//
+// Evaluates expr and passes if it throws an exception of type ExcType (or a
+// type derived from it).  On success the macro is followed by a catch body in
+// which the caught exception is accessible as `exc`:
+//
+//   CHECK_CATCHES_AS(std::runtime_error, f()) {
+//       CHECK(std::string_view(exc.what()) == "expected message");
+//   }
+//
+// Fails if nothing is thrown or the type does not match; in those cases the
+// body is not executed.
+#define CHECK_CATCHES_AS(ExcType_, ...)                      \
+    try {                                                    \
+        if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
+            ::std::rethrow_exception(e);                     \
+    } catch (::eggs::test::detail::require_failed const&) {  \
+        throw;                                               \
+    } catch ([[maybe_unused]] ExcType_ const& exc)
+
+// REQUIRE_CATCHES_AS(ExcType, expr)
+//
+// Identical to CHECK_CATCHES_AS but throws eggs::test::detail::require_failed on
+// failure to stop the current test case.  The caught exception is accessible
+// as `exc` in the body when the check passes.
+#define REQUIRE_CATCHES_AS(ExcType_, ...)                    \
+    try {                                                    \
+        if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
+            ::std::rethrow_exception(e);                     \
+        throw ::eggs::test::detail::require_failed{};        \
+    } catch (::eggs::test::detail::require_failed const&) {  \
+        throw;                                               \
+    } catch ([[maybe_unused]] ExcType_ const& exc)
+
+// CHECK_NOTHROW(expr)
+//
+// Evaluates expr and passes if it does not throw.  Fails with a diagnostic if
+// any exception escapes.  Returns bool.
+#define CHECK_NOTHROW(...)                            \
+    ::eggs::test::detail::check_nothrow(              \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
+        ::eggs::test::detail::run_state::current(),   \
+        ::std::source_location::current()             \
+    )
+
+// REQUIRE_NOTHROW(expr)
+//
+// Identical to CHECK_NOTHROW but also throws eggs::test::detail::require_failed
+// on failure to stop the current test case.
+#define REQUIRE_NOTHROW(...)                              \
+    do {                                                  \
+        if (!CHECK_NOTHROW(__VA_ARGS__))                  \
+            throw ::eggs::test::detail::require_failed{}; \
     } while (false)
 
 namespace eggs::test {

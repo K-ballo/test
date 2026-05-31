@@ -88,26 +88,6 @@ add_lib_test(check.pass SOURCES check.pass.cpp)
 # REQUIRE with true expressions must exit 0 and not stop execution.
 add_lib_test(require.pass SOURCES require.pass.cpp)
 
-# CHECK/REQUIRE called from a helper function must compile and run correctly.
-# The .pass test exercises the non-failure path (no stacktrace printed).
-# The .check.fail/.require.fail tests exercise the failure path, verifying that
-# the specific helper function name appears in the printed stacktrace frames.
-add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
-if(EGGS_HAS_CXX23_STACKTRACE)
-    add_lib_test(
-        stacktrace.check.fail
-        SOURCES stacktrace.check.fail.cpp
-        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
-        WILL_FAIL
-    )
-    add_lib_test(
-        stacktrace.require.fail
-        SOURCES stacktrace.require.fail.cpp
-        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
-        WILL_FAIL
-    )
-endif()
-
 # --- failing tests -----------------------------------------------------------
 
 # CHECK with a false expression must cause the test case to be reported as
@@ -125,10 +105,11 @@ add_lib_test(
     require.fail
     SOURCES require.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    FAIL_REGEX "FAILED: false"
     WILL_FAIL
 )
 
-# An exception leaked from a test case must be caught and reported as a failure.
+# std::exception leaked from a test case: caught and reported as "EXCEPTION: message".
 add_lib_test(
     exceptions.std
     SOURCES exceptions.fail.cpp
@@ -136,6 +117,7 @@ add_lib_test(
     PASS_REGEX "EXCEPTION: deliberate failure"
     WILL_FAIL
 )
+# Non-std exception leaked from a test case: caught and reported as "UNKNOWN EXCEPTION".
 add_lib_test(
     exceptions.unknown
     SOURCES exceptions.fail.cpp
@@ -282,3 +264,246 @@ add_lib_test(
     FAIL_REGEX "\\[ RUN  \\]"
     WILL_FAIL
 )
+
+# --- exception tests ---------------------------------------------------------
+
+# CHECK_THROWS / REQUIRE_THROWS pass for any thrown type (int, std::exception, custom).
+add_lib_test(throws.pass SOURCES throws.pass.cpp)
+# CHECK_THROWS_AS / REQUIRE_THROWS_AS pass for exact and derived exception types.
+add_lib_test(throws_as.pass SOURCES throws_as.pass.cpp)
+# CHECK_CATCHES_AS / REQUIRE_CATCHES_AS pass and bind the caught exception to exc.
+add_lib_test(catches_as.pass SOURCES catches_as.pass.cpp)
+# CHECK_NOTHROW / REQUIRE_NOTHROW pass when the expression does not throw.
+add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp)
+
+# CHECK_THROWS when nothing is thrown: 'did not throw' appears.
+add_lib_test(
+    throws.no_throw.check.fail
+    SOURCES throws.fail.cpp
+    ARGS "--run=check_throws_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    WILL_FAIL
+)
+# REQUIRE_THROWS when nothing is thrown: 'did not throw' appears; execution stops.
+add_lib_test(
+    throws.no_throw.require.fail
+    SOURCES throws.fail.cpp
+    ARGS "--run=require_throws_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+# REQUIRE inside CHECK_THROWS propagates out: require_failed is not swallowed as a throw.
+add_lib_test(
+    throws.require_propagated.fail
+    SOURCES throws.fail.cpp
+    ARGS "--run=check_throws_require_propagated"
+    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+
+# CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
+add_lib_test(
+    throws_as.no_throw.check.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=check_throws_as_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    WILL_FAIL
+)
+# REQUIRE_THROWS_AS when nothing is thrown: 'did not throw' appears; execution stops.
+add_lib_test(
+    throws_as.no_throw.require.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=require_throws_as_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+# CHECK_THROWS_AS when the wrong std exception type is thrown: type and message appear.
+add_lib_test(
+    throws_as.wrong_type.check.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=check_throws_as_wrong_type"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
+    WILL_FAIL
+)
+# REQUIRE_THROWS_AS with wrong std exception type: type and message appear; execution stops.
+add_lib_test(
+    throws_as.wrong_type.require.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=require_throws_as_wrong_type"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+# CHECK_THROWS_AS when a unknown wrong type is thrown: no type name or message appears.
+add_lib_test(
+    throws_as.wrong_unknown.check.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=check_throws_as_wrong_unknown"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*expected std::runtime_error"
+    FAIL_REGEX ": \""
+    WILL_FAIL
+)
+# REQUIRE_THROWS_AS with unknown wrong type: no type or message appear; execution stops.
+add_lib_test(
+    throws_as.wrong_unknown.require.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=require_throws_as_wrong_unknown"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*expected std::runtime_error"
+    FAIL_REGEX "FAILED: false;: \""
+    WILL_FAIL
+)
+# REQUIRE inside CHECK_THROWS_AS propagates out: require_failed is not swallowed as a throw.
+add_lib_test(
+    throws_as.require_propagated.fail
+    SOURCES throws_as.fail.cpp
+    ARGS "--run=check_throws_as_require_propagated"
+    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    FAIL_REGEX "FAILED: false;threw unexpected exception"
+    WILL_FAIL
+)
+
+# CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
+add_lib_test(
+    catches_as.no_throw.check.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=check_catches_as_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    WILL_FAIL
+)
+# REQUIRE_CATCHES_AS when nothing is thrown: 'did not throw' appears; execution stops.
+add_lib_test(
+    catches_as.no_throw.require.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=require_catches_as_no_throw"
+    PASS_REGEX "FAILED:.*did not throw"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+# CHECK_CATCHES_AS when the wrong std exception type is thrown: type and message appear.
+add_lib_test(
+    catches_as.wrong_type.check.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=check_catches_as_wrong_type"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
+    WILL_FAIL
+)
+# REQUIRE_CATCHES_AS with wrong std exception type: type and message appear; execution stops.
+add_lib_test(
+    catches_as.wrong_type.require.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=require_catches_as_wrong_type"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+
+# CHECK_NOTHROW when a std exception is thrown: 'threw unexpectedly' with message appears.
+add_lib_test(
+    nothrow.throws.check.fail
+    SOURCES nothrow.fail.cpp
+    ARGS "--run=check_nothrow_throws_std_exception"
+    PASS_REGEX "FAILED:.*threw unexpectedly.*\"oops\""
+    WILL_FAIL
+)
+# REQUIRE_NOTHROW when a std exception is thrown: message appears; execution stops.
+add_lib_test(
+    nothrow.throws.require.fail
+    SOURCES nothrow.fail.cpp
+    ARGS "--run=require_nothrow_throws_std_exception"
+    PASS_REGEX "FAILED:.*threw unexpectedly.*\"oops\""
+    FAIL_REGEX "FAILED: false"
+    WILL_FAIL
+)
+# CHECK_NOTHROW when a unknown exception is thrown: 'threw unexpectedly' without type or message.
+add_lib_test(
+    nothrow.throws_unknown.check.fail
+    SOURCES nothrow.fail.cpp
+    ARGS "--run=check_nothrow_throws_unknown"
+    PASS_REGEX "FAILED:.*threw unexpectedly"
+    FAIL_REGEX ": \""
+    WILL_FAIL
+)
+# REQUIRE_NOTHROW when a unknown exception is thrown: no type or message appear; execution stops.
+add_lib_test(
+    nothrow.throws_unknown.require.fail
+    SOURCES nothrow.fail.cpp
+    ARGS "--run=require_nothrow_throws_unknown"
+    PASS_REGEX "FAILED:.*threw unexpectedly"
+    FAIL_REGEX "FAILED: false;: \""
+    WILL_FAIL
+)
+# REQUIRE inside CHECK_NOTHROW propagates out: require_failed is not swallowed as a throw.
+add_lib_test(
+    nothrow.require_propagated.fail
+    SOURCES nothrow.fail.cpp
+    ARGS "--run=check_nothrow_require_propagated"
+    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    FAIL_REGEX "FAILED: false;threw unexpectedly"
+    WILL_FAIL
+)
+
+# --- stacktrace tests --------------------------------------------------------
+
+# All assertion macros called from a helper function: no eggs:: internal frames appear.
+# In Debug, the helper function name appears in the stacktrace.
+# The .pass test exercises the non-failure path (no stacktrace is printed).
+add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
+if(EGGS_HAS_CXX23_STACKTRACE)
+    # CHECK failure from a helper: in Debug, 'failing_check_helper' appears in stacktrace.
+    add_lib_test(
+        stacktrace.check.fail
+        SOURCES stacktrace.check.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+    # REQUIRE failure from a helper: in Debug, 'failing_require_helper' appears in stacktrace.
+    add_lib_test(
+        stacktrace.require.fail
+        SOURCES stacktrace.require.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+    # CHECK_THROWS failure from a helper: in Debug, 'failing_throws_helper' appears in stacktrace.
+    add_lib_test(
+        stacktrace.throws.fail
+        SOURCES stacktrace.throws.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+    # CHECK_THROWS_AS failure from a helper: in Debug, 'failing_throws_as_helper' appears.
+    add_lib_test(
+        stacktrace.throws_as.fail
+        SOURCES stacktrace.throws_as.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_as_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+    # CHECK_CATCHES_AS failure from a helper: in Debug, 'failing_catches_helper' appears.
+    add_lib_test(
+        stacktrace.catches_as.fail
+        SOURCES stacktrace.catches_as.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_catches_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+    # CHECK_NOTHROW failure from a helper: in Debug, 'failing_nothrow_helper' appears.
+    add_lib_test(
+        stacktrace.nothrow.fail
+        SOURCES stacktrace.nothrow.fail.cpp
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_nothrow_helper,FAILED:>"
+        FAIL_REGEX "eggs::"
+        WILL_FAIL
+    )
+endif()
