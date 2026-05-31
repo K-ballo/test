@@ -11,7 +11,7 @@
 
 #include <cstdio>
 #include <format>
-#include <span>
+#include <initializer_list>
 #include <string>
 #include <string_view>
 
@@ -31,33 +31,26 @@ struct opt_spec
     std::string_view flag;
     std::string_view value;
     std::string_view also;
-    std::span<std::string_view const> desc;
+    std::initializer_list<std::string_view> desc;
 };
-
-#define EGGS_TEST_MAKE_STRING_VIEW_SPAN(...)                     \
-    []() -> std::span<std::string_view const> {                  \
-        static constexpr std::string_view arr[] = {__VA_ARGS__}; \
-        return arr;                                              \
-    }()
 
 constexpr opt_spec k_opts[] = {
     // {flag, value, also, desc}
     {"--list",
      {},
      {},
-     EGGS_TEST_MAKE_STRING_VIEW_SPAN(
-         "list selected test case names and exit;", "respects --run filters"
-     )},
+     {
+         "list selected test case names and exit;",
+         "respects --run filters",
+     }},
     {"--run=",
      "<test_case>",
      {},
-     EGGS_TEST_MAKE_STRING_VIEW_SPAN(
+     {
          "run only the specified test cases (repeatable).",
-         "all test cases will run if omitted"
-     )},
+         "all test cases will run if omitted",
+     }},
 };
-
-#undef EGGS_TEST_MAKE_SPAN
 
 // ── Help printing ────────────────────────────────────────────────────────────
 
@@ -73,7 +66,7 @@ void print_help()
     );
 
     for (opt_spec const& opt : k_opts) {
-        if (opt.desc.empty()) continue;
+        if (opt.desc.size() == 0) continue;
 
         // Build left-column display string from flag + value + also.
         auto disp = std::string(opt.flag) += opt.value;
