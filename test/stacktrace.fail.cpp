@@ -6,15 +6,12 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
+#include <eggs/test/detail/noinline.hpp>
 
-// Verify that CHECK/REQUIRE fired from helper functions produce a stacktrace
+#include <stdexcept>
+
+// Verify that assertion macros fired from helper functions produce a stacktrace
 // in their diagnostic.
-
-#ifdef _MSC_VER
-#    define EGGS_TEST_NOINLINE __declspec(noinline)
-#else
-#    define EGGS_TEST_NOINLINE __attribute__((noinline))
-#endif
 
 namespace {
 
@@ -82,4 +79,143 @@ TEST_CASE(
 )
 {
     outer_require_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void failing_throws_helper()
+{
+    CHECK_THROWS(1 + 1);
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_throws_one_level,
+    "failed CHECK_THROWS one level deep prints a stacktrace"
+)
+{
+    failing_throws_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void outer_throws_helper()
+{
+    failing_throws_helper();
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_throws_two_levels,
+    "failed CHECK_THROWS two levels deep prints all user frames"
+)
+{
+    outer_throws_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void failing_throws_as_helper()
+{
+    CHECK_THROWS_AS(std::runtime_error, 1 + 1);
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_throws_as_one_level,
+    "failed CHECK_THROWS_AS one level deep prints a stacktrace"
+)
+{
+    failing_throws_as_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void outer_throws_as_helper()
+{
+    failing_throws_as_helper();
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_throws_as_two_levels,
+    "failed CHECK_THROWS_AS two levels deep prints all user frames"
+)
+{
+    outer_throws_as_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void failing_catches_helper()
+{
+    CHECK_CATCHES_AS(std::runtime_error, 1 + 1)
+    {
+        // unreachable: expression does not throw
+    }
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_catches_one_level,
+    "failed CHECK_CATCHES_AS one level deep prints a stacktrace"
+)
+{
+    failing_catches_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void outer_catches_helper()
+{
+    failing_catches_helper();
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_catches_two_levels,
+    "failed CHECK_CATCHES_AS two levels deep prints all user frames"
+)
+{
+    outer_catches_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void failing_nothrow_helper()
+{
+    CHECK_NOTHROW(throw 42);
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_nothrow_one_level,
+    "failed CHECK_NOTHROW one level deep prints a stacktrace"
+)
+{
+    failing_nothrow_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void outer_nothrow_helper()
+{
+    failing_nothrow_helper();
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_nothrow_two_levels,
+    "failed CHECK_NOTHROW two levels deep prints all user frames"
+)
+{
+    outer_nothrow_helper();
 }

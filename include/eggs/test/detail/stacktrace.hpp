@@ -21,7 +21,7 @@ using stacktrace = std::stacktrace;
 #else
 struct stacktrace
 {
-    static stacktrace current() { return {}; }
+    static stacktrace current(std::size_t = 0, std::size_t = 0) { return {}; }
 
     std::size_t size() const noexcept { return 0; }
 };
