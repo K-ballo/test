@@ -12,14 +12,12 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  format:
+  clang-format:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
-      # clang-format
       - name: Run clang-format check
         uses: jidicula/clang-format-action@v4.16.0
         with:
@@ -27,7 +25,12 @@ jobs:
           check-path: "."
           exclude-regex: 'test/catch2/'
 
-      # gersemi
+  gersemi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
@@ -39,4 +42,4 @@ jobs:
           pip install gersemi[color]
 
       - name: Run Gersemi check
-        run: gersemi --check --diff --color .
+        run: gersemi --definitions . --check --diff --color .
