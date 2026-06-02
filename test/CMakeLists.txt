@@ -11,7 +11,38 @@ add_test(
     NAME eggs.test.verify_headers
     COMMAND
         ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
-        all_verify_interface_header_sets
+        all_verify_interface_header_sets --config $<CONFIG>
+)
+set_tests_properties(
+    eggs.test.verify_headers
+    PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
+)
+
+# ── Verify definitions in headers ─────────────────────────────────────────--
+
+include(AddMultipleDefinitionsTest)
+
+add_multiple_definitions_test(eggs.test.verify_definitions.test Eggs::Test)
+set_target_properties(
+    eggs.test.verify_definitions.test
+    PROPERTIES FOLDER "header"
+)
+set_tests_properties(
+    eggs.test.verify_definitions.test
+    PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
+)
+
+add_multiple_definitions_test(
+    eggs.test.verify_definitions.test_main
+    Eggs::TestMain
+)
+set_target_properties(
+    eggs.test.verify_definitions.test_main
+    PROPERTIES FOLDER "header"
+)
+set_tests_properties(
+    eggs.test.verify_definitions.test_main
+    PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
 # Helper — creates a test executable and registers it with CTest.
