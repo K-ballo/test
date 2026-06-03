@@ -7,8 +7,6 @@
 
 #include <eggs/test.hpp>
 
-// This test case is intentionally failing.
-
 TEST_CASE(check_false, "CHECK with a false expression is reported as a failure")
 {
     CHECK(1 + 2 == 4);

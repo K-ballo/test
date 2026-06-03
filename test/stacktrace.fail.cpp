@@ -7,8 +7,8 @@
 
 #include <eggs/test.hpp>
 
-// Verify that CHECK fired from helper functions produces a stacktrace in its
-// diagnostic.  Every test case here fails, so the executable exits 1.
+// Verify that CHECK/REQUIRE fired from helper functions produce a stacktrace
+// in their diagnostic.
 
 #ifdef _MSC_VER
 #    define EGGS_TEST_NOINLINE __declspec(noinline)
@@ -23,16 +23,6 @@ EGGS_TEST_NOINLINE void failing_check_helper()
     CHECK(false);
 }
 
-EGGS_TEST_NOINLINE void outer_helper()
-{
-    failing_check_helper();
-
-    // Prevent tail-call elimination: optimizer must preserve this frame
-    // because the volatile read is observable after the call returns.
-    volatile bool done = true;
-    (void)done;
-}
-
 } // namespace
 
 TEST_CASE(
@@ -43,10 +33,53 @@ TEST_CASE(
     failing_check_helper();
 }
 
+namespace {
+
+EGGS_TEST_NOINLINE void outer_check_helper()
+{
+    failing_check_helper();
+}
+
+} // namespace
+
 TEST_CASE(
     stacktrace_check_two_levels,
     "failed CHECK two levels deep prints all user frames"
 )
 {
-    outer_helper();
+    outer_check_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void failing_require_helper()
+{
+    REQUIRE(false);
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_require_one_level,
+    "failed REQUIRE one level deep prints a stacktrace"
+)
+{
+    failing_require_helper();
+}
+
+namespace {
+
+EGGS_TEST_NOINLINE void outer_require_helper()
+{
+    failing_require_helper();
+}
+
+} // namespace
+
+TEST_CASE(
+    stacktrace_require_two_levels,
+    "failed REQUIRE two levels deep prints all user frames"
+)
+{
+    outer_require_helper();
 }

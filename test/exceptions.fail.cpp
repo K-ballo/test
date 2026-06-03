@@ -9,8 +9,6 @@
 
 #include <stdexcept>
 
-// This executable exits 1.
-
 TEST_CASE(
     leaked_std_exception,
     "std::exception leaked from a test case is caught and reported"
