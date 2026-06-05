@@ -142,8 +142,13 @@ jobs:
       - name: Configure
         run: cmake --preset ${{ matrix.preset }} -B build/${{ matrix.preset }}
 
-      - name: Build (Debug)
+      - name: Build library (Debug)
         run: cmake --build build/${{ matrix.preset }} --config Debug
+               --target _eggs_test_main
+
+      - name: Build tests (Debug)
+        continue-on-error: true
+        run: cmake --build build/${{ matrix.preset }} --config Debug -- -k 0
 
       - name: Test (Debug)
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
@@ -151,8 +156,13 @@ jobs:
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-debug.xml
 
-      - name: Build (Release)
+      - name: Build library (Release)
         run: cmake --build build/${{ matrix.preset }} --config Release
+               --target _eggs_test_main
+
+      - name: Build tests (Release)
+        continue-on-error: true
+        run: cmake --build build/${{ matrix.preset }} --config Release -- -k 0
 
       - name: Test (Release)
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
