@@ -17,13 +17,16 @@ if(PROJECT_IS_TOP_LEVEL)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
+    option(BUILD_EXAMPLES "Build the examples" ON)
     include(CTest) # option(BUILD_TESTING ...)
     option(ENABLE_INSTALL "Generate install rules" ON)
 else()
+    option(EGGS_TEST_BUILD_EXAMPLES "Build the examples" OFF)
     option(EGGS_TEST_BUILD_TESTING "Build the test suite" OFF)
     option(EGGS_TEST_ENABLE_INSTALL "Generate install rules" OFF)
 
     # Map prefixed options back to the canonical names used below
+    set(BUILD_EXAMPLES ${EGGS_TEST_BUILD_EXAMPLES})
     set(BUILD_TESTING ${EGGS_TEST_BUILD_TESTING})
     set(ENABLE_INSTALL ${EGGS_TEST_ENABLE_INSTALL})
 endif()
@@ -74,6 +77,13 @@ target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
 set_target_properties(_eggs_test_main PROPERTIES EXPORT_NAME TestMain)
 
 add_library(Eggs::TestMain ALIAS _eggs_test_main)
+
+#
+# Examples
+#
+if(BUILD_EXAMPLES)
+    add_subdirectory(example)
+endif()
 
 #
 # Test suite
