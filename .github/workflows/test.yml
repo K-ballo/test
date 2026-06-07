@@ -147,28 +147,68 @@ jobs:
                --target _eggs_test_main
 
       - name: Build tests (Debug)
+        id: build_debug
         continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Debug -- -k 0
 
-      - name: Test (Debug)
+      - name: Run header tests (Debug)
+        if: steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
+               --label-regex header
                --output-on-failure
                --no-compress-output
-               --output-junit test-results-${{ matrix.compiler }}-debug.xml
+               --output-junit test-results-${{ matrix.compiler }}-debug-header.xml
+
+      - name: Run unit tests (Debug)
+        if: steps.build_debug.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
+               --label-regex unit
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-debug-unit.xml
+
+      - name: Run examples (Debug)
+        if: steps.build_debug.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
+               --label-regex example
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-debug-example.xml
 
       - name: Build library (Release)
+        if: always()
         run: cmake --build build/${{ matrix.preset }} --config Release
                --target _eggs_test_main
 
       - name: Build tests (Release)
+        id: build_release
+        if: always()
         continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Release -- -k 0
 
-      - name: Test (Release)
+      - name: Run header tests (Release)
+        if: steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
+               --label-regex header
                --output-on-failure
                --no-compress-output
-               --output-junit test-results-${{ matrix.compiler }}-release.xml
+               --output-junit test-results-${{ matrix.compiler }}-release-header.xml
+
+      - name: Run unit tests (Release)
+        if: steps.build_release.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
+               --label-regex unit
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-release-unit.xml
+
+      - name: Run examples (Release)
+        if: steps.build_release.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
+               --label-regex example
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-release-example.xml
 
       - name: Upload test results
         if: always()
