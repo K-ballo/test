@@ -17,6 +17,10 @@ if(PROJECT_IS_TOP_LEVEL)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
+        "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>"
+    )
+
     option(BUILD_EXAMPLES "Build the examples" ON)
     include(CTest) # option(BUILD_TESTING ...)
     option(ENABLE_INSTALL "Generate install rules" ON)
@@ -76,6 +80,14 @@ target_sources(
 )
 target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
 set_target_properties(_eggs_test_main PROPERTIES EXPORT_NAME TestMain)
+if(MSVC)
+    set_target_properties(
+        _eggs_test_main
+        PROPERTIES
+            COMPILE_PDB_NAME "_eggs_test_main"
+            COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+    )
+endif()
 
 add_library(Eggs::TestMain ALIAS _eggs_test_main)
 
@@ -106,6 +118,15 @@ if(ENABLE_INSTALL)
         FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
+
+    if(MSVC)
+        install(
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test_main.pdb"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            CONFIGURATIONS Debug RelWithDebInfo
+            OPTIONAL
+        )
+    endif()
 
     install(
         EXPORT EggsTestTargets
