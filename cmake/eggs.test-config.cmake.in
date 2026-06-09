@@ -3,3 +3,4 @@
 include("${CMAKE_CURRENT_LIST_DIR}/eggs.test-targets.cmake")
 
 check_required_components(Eggs.Test)
+check_required_components(Eggs.TestMain)

@@ -57,9 +57,7 @@ target_sources(
 )
 set_target_properties(
     _eggs_test
-    PROPERTIES
-        EXPORT_NAME Eggs::Test
-        VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
+    PROPERTIES EXPORT_NAME Test VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
 )
 target_compile_features(_eggs_test INTERFACE cxx_std_23)
 
@@ -79,7 +77,10 @@ target_sources(
         FILE_SET private_headers TYPE HEADERS BASE_DIRS src FILES src/cli.hpp
 )
 target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
-set_target_properties(_eggs_test_main PROPERTIES EXPORT_NAME TestMain)
+set_target_properties(
+    _eggs_test_main
+    PROPERTIES EXPORT_NAME TestMain DEBUG_POSTFIX d
+)
 if(MSVC)
     set_target_properties(
         _eggs_test_main
