@@ -148,7 +148,6 @@ jobs:
 
       - name: Build tests (Debug)
         id: build_debug
-        continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Debug -- -k 0
 
       - name: Run header tests (Debug)
@@ -183,7 +182,6 @@ jobs:
       - name: Build tests (Release)
         id: build_release
         if: always()
-        continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Release -- -k 0
 
       - name: Run header tests (Release)
