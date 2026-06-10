@@ -180,6 +180,18 @@ struct run_options
     bool list = false;
 };
 
+// Parse known test-runner flags from argv, removing them in-place.
+// Unrecognised tokens remain in argv[1..argc-1]; argc is updated accordingly.
+run_options parse_cli(int& argc, char const* argv[]);
+
+inline run_options parse_cli(int& argc, char* argv[])
+{
+    return parse_cli(argc, const_cast<char const**>(argv));
+}
+
+// Print the built-in options table to stdout, aligning descriptions at desc_col.
+void print_options(std::size_t desc_col = 29u);
+
 // Public entry point — call this from main().
 int run(run_options opts = {});
 
