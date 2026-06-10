@@ -36,13 +36,13 @@ else()
 endif()
 
 #
-# Library target — header-only INTERFACE library.
+# Library target.
 # Internal name _eggs_test; downstream CMake code uses the alias Eggs::Test.
 #
-add_library(_eggs_test INTERFACE)
+add_library(_eggs_test STATIC src/checks.cpp src/runner.cpp)
 target_sources(
     _eggs_test
-    INTERFACE
+    PUBLIC
         FILE_SET HEADERS
             BASE_DIRS include
             FILES
@@ -50,19 +50,34 @@ target_sources(
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/noinline.hpp
-                include/eggs/test/detail/print.hpp
                 include/eggs/test/detail/run_state.hpp
-                include/eggs/test/detail/runner.hpp
+    PRIVATE
+        FILE_SET private_headers
+            TYPE HEADERS
+            BASE_DIRS include
+            FILES
+                include/eggs/test/detail/print.hpp
                 include/eggs/test/detail/stacktrace.hpp
 )
 set_target_properties(
     _eggs_test
-    PROPERTIES EXPORT_NAME Test VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
+    PROPERTIES
+        EXPORT_NAME Test
+        DEBUG_POSTFIX d
+        VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
 )
-target_compile_features(_eggs_test INTERFACE cxx_std_23)
+if(MSVC)
+    set_target_properties(
+        _eggs_test
+        PROPERTIES
+            COMPILE_PDB_NAME "_eggs_test"
+            COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
+    )
+endif()
+target_compile_features(_eggs_test PUBLIC cxx_std_23)
 
 include(Cxx23Stacktrace)
-target_link_libraries(_eggs_test INTERFACE ${EGGS_CXX23_STACKTRACE_LIB})
+target_link_libraries(_eggs_test PUBLIC ${EGGS_CXX23_STACKTRACE_LIB})
 
 add_library(Eggs::Test ALIAS _eggs_test)
 
@@ -122,7 +137,9 @@ if(ENABLE_INSTALL)
 
     if(MSVC)
         install(
-            FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test_main.pdb"
+            FILES
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test.pdb"
+                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test_main.pdb"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}
             CONFIGURATIONS Debug RelWithDebInfo
             OPTIONAL

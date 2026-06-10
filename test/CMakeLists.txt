@@ -73,10 +73,7 @@ function(add_lib_test name)
 
     if(NOT TARGET _eggs_test.${_stem})
         add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
-        target_link_libraries(
-            _eggs_test.${_stem}
-            PRIVATE Eggs::Test Eggs::TestMain
-        )
+        target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::TestMain)
         set_target_properties(_eggs_test.${_stem} PROPERTIES FOLDER "test")
     endif()
 

@@ -63,19 +63,14 @@ struct test_entry_equal
 
 struct registry
 {
-    static auto& cases()
-    {
-        // Meyers singleton — guaranteed to be constructed before first use,
-        // which avoids the static-initialisation-order fiasco when test_entry
-        // instances in different translation units register before main().
-        static std::unordered_set<test_entry, test_entry_hash, test_entry_equal>
-            v;
-        return v;
-    }
+    using cases_type =
+        std::unordered_set<test_entry, test_entry_hash, test_entry_equal>;
+
+    static cases_type& cases();
 
     static void add(test_entry e) { cases().insert(e); }
 
-    static int run(std::vector<test_entry> const& run); // defined in runner.hpp
+    static int run(std::vector<test_entry> const& run);
 };
 
 } // namespace eggs::test::detail

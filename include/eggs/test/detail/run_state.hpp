@@ -38,11 +38,7 @@ class run_state
     }
 
   private:
-    [[nodiscard]] static run_state*& _current_ptr() noexcept
-    {
-        static thread_local run_state* tl_current_state = nullptr;
-        return tl_current_state;
-    }
+    [[nodiscard]] static run_state*& _current_ptr() noexcept;
 };
 
 } // namespace eggs::test::detail

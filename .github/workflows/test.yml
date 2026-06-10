@@ -144,7 +144,7 @@ jobs:
 
       - name: Build library (Debug)
         run: cmake --build build/${{ matrix.preset }} --config Debug
-               --target _eggs_test_main
+               --target _eggs_test _eggs_test_main
 
       - name: Build tests (Debug)
         id: build_debug
@@ -178,7 +178,7 @@ jobs:
       - name: Build library (Release)
         if: always()
         run: cmake --build build/${{ matrix.preset }} --config Release
-               --target _eggs_test_main
+               --target _eggs_test _eggs_test_main
 
       - name: Build tests (Release)
         id: build_release

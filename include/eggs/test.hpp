@@ -8,18 +8,12 @@
 #pragma once
 
 #include <eggs/test/detail/checks.hpp>
-#include <eggs/test/detail/noinline.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
-#include <eggs/test/detail/runner.hpp>
-#include <eggs/test/detail/stacktrace.hpp>
 
-#include <cstdio>
-#include <cstdlib>
 #include <exception>
 #include <source_location>
 #include <string_view>
-#include <unordered_set>
 #include <vector>
 
 // TEST_CASE(name, "description")
@@ -187,45 +181,6 @@ struct run_options
 };
 
 // Public entry point — call this from main().
-inline int run(run_options opts = {})
-{
-    auto const& all_cases = detail::registry::cases();
-
-    std::vector<detail::test_entry> selected_cases;
-    selected_cases.reserve(opts.run.size());
-    if (opts.run.empty()) {
-        selected_cases.assign(all_cases.begin(), all_cases.end());
-    } else {
-        bool any_unknown = false;
-
-        std::unordered_set<std::string_view> seen;
-        seen.reserve(opts.run.size());
-        for (auto const& name : opts.run) {
-            auto const it = all_cases.find(name);
-            if (it == all_cases.end()) {
-                detail::println(stderr, "error: unknown test case '{}'", name);
-                any_unknown = true;
-            } else if (!seen.insert(name).second) {
-                detail::println(
-                    stderr, "warning: duplicate test case '{}'", name
-                );
-            } else {
-                selected_cases.push_back(*it);
-            }
-        }
-
-        // TODO: consider executing known test cases instead of failing
-        if (any_unknown) return EXIT_FAILURE;
-    }
-
-    if (opts.list) {
-        for (auto const& e : selected_cases) {
-            detail::println(stdout, "{}", e.name);
-        }
-        return EXIT_SUCCESS;
-    }
-
-    return detail::registry::run(selected_cases);
-}
+int run(run_options opts = {});
 
 } // namespace eggs::test
