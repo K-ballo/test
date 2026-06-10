@@ -39,7 +39,7 @@ endif()
 # Library target.
 # Internal name _eggs_test; downstream CMake code uses the alias Eggs::Test.
 #
-add_library(_eggs_test STATIC src/checks.cpp src/runner.cpp)
+add_library(_eggs_test STATIC src/lib/checks.cpp src/lib/runner.cpp)
 target_sources(
     _eggs_test
     PUBLIC
@@ -85,11 +85,14 @@ add_library(Eggs::Test ALIAS _eggs_test)
 # Eggs::TestMain — object library that provides main().
 # Link it into any test executable instead of writing your own main.
 #
-add_library(_eggs_test_main STATIC src/test_main.cpp src/cli.cpp)
+add_library(_eggs_test_main STATIC src/main/test_main.cpp src/main/cli.cpp)
 target_sources(
     _eggs_test_main
     PRIVATE
-        FILE_SET private_headers TYPE HEADERS BASE_DIRS src FILES src/cli.hpp
+        FILE_SET private_headers
+            TYPE HEADERS
+            BASE_DIRS src/main
+            FILES src/main/cli.hpp
 )
 target_link_libraries(_eggs_test_main PUBLIC _eggs_test)
 set_target_properties(
