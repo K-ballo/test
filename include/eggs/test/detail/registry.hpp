@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <eggs/test-export.h>
+
 #include <cstddef>
 #include <string_view>
 #include <unordered_set>
@@ -66,11 +68,11 @@ struct registry
     using cases_type =
         std::unordered_set<test_entry, test_entry_hash, test_entry_equal>;
 
-    static cases_type& cases();
+    EGGS_TEST_EXPORT static cases_type& cases();
 
     static void add(test_entry e) { cases().insert(e); }
 
-    static int run(std::vector<test_entry> const& run);
+    EGGS_TEST_EXPORT static int run(std::vector<test_entry> const& run);
 };
 
 } // namespace eggs::test::detail

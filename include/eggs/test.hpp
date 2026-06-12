@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test-export.h>
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -181,6 +182,6 @@ struct run_options
 };
 
 // Public entry point — call this from main().
-int run(run_options opts = {});
+EGGS_TEST_EXPORT int run(run_options opts = {});
 
 } // namespace eggs::test

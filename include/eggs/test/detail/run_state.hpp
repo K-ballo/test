@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <eggs/test-export.h>
+
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -38,7 +40,7 @@ class run_state
     }
 
   private:
-    [[nodiscard]] static run_state*& _current_ptr() noexcept;
+    EGGS_TEST_EXPORT [[nodiscard]] static run_state*& _current_ptr() noexcept;
 };
 
 } // namespace eggs::test::detail

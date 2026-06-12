@@ -16,21 +16,31 @@ include(GNUInstallDirs)
 if(PROJECT_IS_TOP_LEVEL)
     set_property(GLOBAL PROPERTY USE_FOLDERS ON)
     set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+    set(CMAKE_C_VISIBILITY_PRESET hidden)
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+    set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 
     set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
         "$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>"
     )
 
     option(BUILD_EXAMPLES "Build the examples" ON)
+    option(BUILD_SHARED_LIBS "Build as a shared library" OFF)
     include(CTest) # option(BUILD_TESTING ...)
     option(ENABLE_INSTALL "Generate install rules" ON)
 else()
     option(EGGS_TEST_BUILD_EXAMPLES "Build the examples" OFF)
+    option(
+        EGGS_TEST_BUILD_SHARED_LIBS
+        "Build as a shared library"
+        ${BUILD_SHARED_LIBS}
+    )
     option(EGGS_TEST_BUILD_TESTING "Build the test suite" OFF)
     option(EGGS_TEST_ENABLE_INSTALL "Generate install rules" OFF)
 
     # Map prefixed options back to the canonical names used below
     set(BUILD_EXAMPLES ${EGGS_TEST_BUILD_EXAMPLES})
+    set(BUILD_SHARED_LIBS ${EGGS_TEST_BUILD_SHARED_LIBS})
     set(BUILD_TESTING ${EGGS_TEST_BUILD_TESTING})
     set(ENABLE_INSTALL ${EGGS_TEST_ENABLE_INSTALL})
 endif()
@@ -39,18 +49,19 @@ endif()
 # Library target.
 # Internal name _eggs_test; downstream CMake code uses the alias Eggs::Test.
 #
-add_library(_eggs_test STATIC src/lib/checks.cpp src/lib/runner.cpp)
+add_library(_eggs_test src/lib/checks.cpp src/lib/runner.cpp)
 target_sources(
     _eggs_test
     PUBLIC
         FILE_SET HEADERS
-            BASE_DIRS include
+            BASE_DIRS include "${CMAKE_CURRENT_BINARY_DIR}/include"
             FILES
                 include/eggs/test.hpp
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/noinline.hpp
                 include/eggs/test/detail/run_state.hpp
+                "${CMAKE_CURRENT_BINARY_DIR}/include/eggs/test-export.h"
     PRIVATE
         FILE_SET private_headers
             TYPE HEADERS
@@ -63,6 +74,7 @@ set_target_properties(
     _eggs_test
     PROPERTIES
         EXPORT_NAME Test
+        OUTPUT_NAME eggs_test
         DEBUG_POSTFIX d
         VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
 )
@@ -70,11 +82,21 @@ if(MSVC)
     set_target_properties(
         _eggs_test
         PROPERTIES
-            COMPILE_PDB_NAME "_eggs_test"
+            COMPILE_PDB_NAME "eggs_test"
             COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>"
     )
 endif()
 target_compile_features(_eggs_test PUBLIC cxx_std_23)
+
+include(GenerateExportHeader)
+generate_export_header(
+    _eggs_test
+    BASE_NAME EGGS_TEST
+    EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/include/eggs/test-export.h"
+)
+if(NOT BUILD_SHARED_LIBS)
+    target_compile_definitions(_eggs_test PUBLIC EGGS_TEST_STATIC_DEFINE)
+endif()
 
 include(Cxx23Stacktrace)
 target_link_libraries(_eggs_test PUBLIC ${EGGS_CXX23_STACKTRACE_LIB})
@@ -136,13 +158,28 @@ if(ENABLE_INSTALL)
         EXPORT EggsTestTargets
         FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
 
     if(MSVC)
+        if(BUILD_SHARED_LIBS)
+            install(
+                FILES "$<TARGET_PDB_FILE:_eggs_test>"
+                DESTINATION ${CMAKE_INSTALL_BINDIR}
+                CONFIGURATIONS Debug RelWithDebInfo
+                OPTIONAL
+            )
+        else()
+            install(
+                FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/eggs_test.pdb"
+                DESTINATION ${CMAKE_INSTALL_LIBDIR}
+                CONFIGURATIONS Debug RelWithDebInfo
+                OPTIONAL
+            )
+        endif()
         install(
-            FILES
-                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test.pdb"
-                "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test_main.pdb"
+            FILES "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/_eggs_test_main.pdb"
             DESTINATION ${CMAKE_INSTALL_LIBDIR}
             CONFIGURATIONS Debug RelWithDebInfo
             OPTIONAL

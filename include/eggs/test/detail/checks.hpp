@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test-export.h>
 #include <eggs/test/detail/noinline.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -17,20 +18,20 @@
 
 namespace eggs::test::detail {
 
-EGGS_TEST_NOINLINE void check_failed(
+EGGS_TEST_EXPORT EGGS_TEST_NOINLINE void check_failed(
     const char* expr, std::source_location const& loc, std::size_t entry_depth
 );
 
-EGGS_TEST_NOINLINE void throws_failed(
+EGGS_TEST_EXPORT EGGS_TEST_NOINLINE void throws_failed(
     const char* expr, std::source_location const& loc, std::size_t entry_depth
 );
 
-EGGS_TEST_NOINLINE void throws_as_failed(
+EGGS_TEST_EXPORT EGGS_TEST_NOINLINE void throws_as_failed(
     const char* expr, const char* exc_type, std::exception_ptr threw,
     std::source_location const& loc, std::size_t entry_depth
 );
 
-EGGS_TEST_NOINLINE void nothrow_failed(
+EGGS_TEST_EXPORT EGGS_TEST_NOINLINE void nothrow_failed(
     const char* expr, std::exception_ptr threw, std::source_location const& loc,
     std::size_t entry_depth
 );
