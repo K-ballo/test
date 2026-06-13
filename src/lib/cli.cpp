@@ -19,8 +19,10 @@ namespace eggs::test {
 namespace {
 
 void print_option(
-    std::string_view const disp, std::size_t const desc_col,
-    std::initializer_list<std::string_view> const desc
+    std::string_view const disp,
+    std::initializer_list<std::string_view> const desc,
+    std::size_t const desc_col
+
 )
 {
     // FIXME(C++26): !desc.empty()
@@ -46,6 +48,20 @@ void print_option(
 
 // ── Public interface ─────────────────────────────────────────────────────────
 
+void print_options(std::size_t const desc_col, std::string_view const ns)
+{
+    for (opt_spec const& opt : k_opts) {
+        // FIXME(C++26): desc.empty()
+        if (opt.desc.size() == 0) continue;
+
+        // --[ns:]flag[=<value>]
+        auto const disp = std::format(
+            "--{}{}{}{}", ns, ns.empty() ? "" : ":", opt.flag, opt.value
+        );
+        print_option(disp, opt.desc, desc_col);
+    }
+}
+
 void print_help(std::string_view const usage)
 {
     static constexpr std::size_t k_desc_col = 29u;
@@ -55,33 +71,30 @@ void print_help(std::string_view const usage)
         usage.empty() ? "<test-executable>" : usage
     );
     print_option(
-        "-h, --help", k_desc_col, {"print this help message and exit"}
+        "-h, --help", {"print this help message and exit"}, k_desc_col
     );
     print_options(k_desc_col);
 }
 
-void print_options(std::size_t const desc_col)
+run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
 {
-    for (opt_spec const& opt : k_opts) {
-        // FIXME(C++26): desc.empty()
-        if (opt.desc.size() == 0) continue;
+    auto const extract_stem = [&](std::string_view arg) -> std::string_view {
+        if (!arg.starts_with("--")) return {};
+        arg.remove_prefix(2);
 
-        print_option(
-            std::format("--{}{}", opt.flag, opt.value), desc_col, opt.desc
-        );
-    }
-}
+        if (!ns.empty()) {
+            if (!arg.starts_with(ns)) return {};
+            if (arg.size() <= ns.size() || arg[ns.size()] != ':') return {};
+            arg.remove_prefix(ns.size() + 1);
+        }
 
-run_options parse_cli(int& argc, char const* argv[])
-{
-    run_options opts;
+        return arg;
+    };
 
     int outc = 1;
+    run_options opts;
     for (int i = 1; i < argc; ++i) {
-        std::string_view stem(argv[i]);
-        if (stem.starts_with("--")) {
-            stem.remove_prefix(2);
-        }
+        auto const stem = extract_stem(argv[i]);
 
         if (stem == "list") {
             opts.list = true;
