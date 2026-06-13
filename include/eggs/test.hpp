@@ -183,4 +183,14 @@ struct run_options
 // Public entry point — call this from main().
 int run(run_options opts = {});
 
+// Full default main: parse_cli + --help handling + run.
+// Link Eggs::TestMain to get this wired up automatically, or
+// call it from your own main() to add setup before tests run.
+int main(int argc, char const* argv[]);
+
+inline int main(int argc, char* argv[])
+{
+    return main(argc, const_cast<char const**>(argv));
+}
+
 } // namespace eggs::test

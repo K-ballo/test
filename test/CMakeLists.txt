@@ -22,26 +22,10 @@ set_tests_properties(
 
 include(AddMultipleDefinitionsTest)
 
-add_multiple_definitions_test(eggs.test.verify_definitions.test Eggs::Test)
-set_target_properties(
-    eggs.test.verify_definitions.test
-    PROPERTIES FOLDER "header"
-)
+add_multiple_definitions_test(eggs.test.verify_definitions Eggs::Test)
+set_target_properties(eggs.test.verify_definitions PROPERTIES FOLDER "header")
 set_tests_properties(
-    eggs.test.verify_definitions.test
-    PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
-)
-
-add_multiple_definitions_test(
-    eggs.test.verify_definitions.test_main
-    Eggs::TestMain
-)
-set_target_properties(
-    eggs.test.verify_definitions.test_main
-    PROPERTIES FOLDER "header"
-)
-set_tests_properties(
-    eggs.test.verify_definitions.test_main
+    eggs.test.verify_definitions
     PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
@@ -183,12 +167,15 @@ add_lib_test(
 
 # --- cli tests -----------------------------------------------------------
 
+add_subdirectory(cli)
+
 # --help must print usage.
 add_lib_test(
     cli.help.pass
     SOURCES check.pass.cpp
     ARGS "--help"
-    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+    PASS_REGEX
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
     EXITS 0
 )
 
@@ -197,7 +184,8 @@ add_lib_test(
     cli.help_alias.pass
     SOURCES check.pass.cpp
     ARGS "-h"
-    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+    PASS_REGEX
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
     EXITS 0
 )
 
