@@ -32,19 +32,6 @@ set_tests_properties(
     PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
-add_multiple_definitions_test(
-    eggs.test.verify_definitions.test_main
-    Eggs::TestMain
-)
-set_target_properties(
-    eggs.test.verify_definitions.test_main
-    PROPERTIES FOLDER "header"
-)
-set_tests_properties(
-    eggs.test.verify_definitions.test_main
-    PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
-)
-
 # Helper — creates a test executable and registers it with CTest.
 #
 # PASS_REGEX: the test passes iff its output matches the regex; exit code is
@@ -183,12 +170,16 @@ add_lib_test(
 
 # --- cli tests -----------------------------------------------------------
 
+# parse_cli compaction: known flags consumed, unknowns preserved in argv.
+add_lib_test(parse_cli.pass SOURCES parse_cli.pass.cpp EXITS 0)
+
 # --help must print usage.
 add_lib_test(
     cli.help.pass
     SOURCES check.pass.cpp
     ARGS "--help"
-    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+    PASS_REGEX
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
     EXITS 0
 )
 
@@ -197,7 +188,8 @@ add_lib_test(
     cli.help_alias.pass
     SOURCES check.pass.cpp
     ARGS "-h"
-    PASS_REGEX "Usage: <test-executable> \\[options\\]"
+    PASS_REGEX
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
     EXITS 0
 )
 

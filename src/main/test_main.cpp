@@ -7,25 +7,7 @@
 
 #include <eggs/test.hpp>
 
-#include <cstdlib>
-
-#include "cli.hpp"
-
-int main(int argc, char const* const argv[])
+int main(int argc, char const* argv[])
 {
-    auto [opts, action] = eggs::test::parse_args(argc, argv);
-
-    using eggs::test::parse_action;
-    switch (action) {
-        case parse_action::exit_success: {
-            return EXIT_SUCCESS;
-        }
-        case parse_action::exit_failure: {
-            return EXIT_FAILURE;
-        }
-        case parse_action::run:
-            break;
-    }
-
-    return eggs::test::run(opts);
+    return eggs::test::main(argc, argv);
 }
