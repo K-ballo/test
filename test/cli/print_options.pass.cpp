@@ -18,9 +18,16 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    print_options_ns, "print_options with ns prefixes flags with --<ns>:<flag>"
+)
+{
+    eggs::test::print_options(stdout, "ns");
+}
+
+TEST_CASE(
     print_options_desc_col,
     "small desc_col wraps flags wider than the column to next line"
 )
 {
-    eggs::test::print_options(stdout, 18);
+    eggs::test::print_options(stdout, /*ns:*/ {}, 18);
 }

@@ -48,26 +48,47 @@ void print_option(
 
 } // namespace detail
 
-void print_options(std::FILE* out, std::size_t const desc_col)
+void print_options(
+    std::FILE* out, std::string_view const ns, std::size_t const desc_col
+)
 {
     for (opt_spec const& opt : k_opts) {
-        // --flag[=<value>]
-        auto const disp = std::format("--{}{}", opt.flag, opt.value);
+        // --[ns:]flag[=<value>]
+        auto const disp = std::format(
+            "--{}{}{}{}", ns, ns.empty() ? "" : ":", opt.flag, opt.value
+        );
 
         detail::print_option(out, disp, opt.desc, desc_col);
     }
 }
 
-run_options parse_cli(int& argc, char const* argv[])
+namespace {
+
+std::string_view extract_stem(std::string_view arg, std::string_view const ns)
+{
+    // Remove '--'
+    if (!arg.starts_with("--")) return {};
+    arg.remove_prefix(2);
+
+    if (!ns.empty()) {
+        // Remove '<ns>:'
+        if (!arg.starts_with(ns)) return {};
+        if (arg.size() <= ns.size() || arg[ns.size()] != ':') return {};
+        arg.remove_prefix(ns.size() + 1);
+    }
+
+    return arg;
+}
+
+} // namespace
+
+run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
 {
     int outc = 1;
     run_options opts;
 
     for (int i = 1; i < argc; ++i) {
-        std::string_view stem(argv[i]);
-        if (stem.starts_with("--")) {
-            stem.remove_prefix(2);
-        }
+        auto const stem = extract_stem(argv[i], ns);
 
         if (stem == "list") {
             opts.list = true;
