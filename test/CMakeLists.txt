@@ -31,20 +31,15 @@ set_tests_properties(
 
 # Helper — creates a test executable and registers it with CTest.
 #
-# PASS_REGEX: the test passes iff its output matches the regex; exit code is
-#             ignored.
-# FAIL_REGEX: the test fails if its output matches the regex; the exit code
-#             still drives the pass/fail verdict (unlike PASS_REGEX).
-# EXITS C:    the expected exit code.  With PASS_REGEX a companion .exit test
-#             is created to verify the exit code independently.  Without
-#             PASS_REGEX, WILL_FAIL is derived from C and applied to the main
-#             test.  Without EXITS no exit code is checked.
+# PASS_REGEX: the test passes only if its output matches this pattern.
+# FAIL_REGEX: the test fails if its output matches any of these patterns.
+# EXITS C:    the expected exit code (defaults to 0).
 function(add_lib_test name)
     cmake_parse_arguments(
         ARG
         ""
-        "EXITS;FAIL_REGEX;PASS_REGEX"
-        "ARGS;SOURCES"
+        "EXITS;PASS_REGEX"
+        "ARGS;FAIL_REGEX;SOURCES"
         ${ARGN}
     )
 
@@ -61,44 +56,24 @@ function(add_lib_test name)
         set_target_properties(_eggs_test.${_stem} PROPERTIES FOLDER "test")
     endif()
 
-    add_test(NAME eggs.test.${name} COMMAND _eggs_test.${_stem} ${ARG_ARGS})
-    set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
-
-    if(ARG_FAIL_REGEX)
-        set_tests_properties(
-            eggs.test.${name}
-            PROPERTIES FAIL_REGULAR_EXPRESSION "${ARG_FAIL_REGEX}"
-        )
+    if(NOT DEFINED ARG_EXITS)
+        set(ARG_EXITS 0)
     endif()
 
-    if(ARG_EXITS EQUAL 0)
-        set(_will_fail FALSE)
+    if(ARG_PASS_REGEX OR ARG_FAIL_REGEX OR NOT ARG_EXITS EQUAL 0)
+        list(LENGTH ARG_FAIL_REGEX _nfail)
+        add_test(
+            NAME eggs.test.${name}
+            COMMAND
+                ${CMAKE_COMMAND} -P
+                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/run_test.cmake" --
+                ${ARG_EXITS} "R:${ARG_PASS_REGEX}" ${_nfail} ${ARG_FAIL_REGEX}
+                $<TARGET_FILE:_eggs_test.${_stem}> ${ARG_ARGS}
+        )
     else()
-        set(_will_fail TRUE)
+        add_test(NAME eggs.test.${name} COMMAND _eggs_test.${_stem} ${ARG_ARGS})
     endif()
-    if(ARG_PASS_REGEX)
-        set_tests_properties(
-            eggs.test.${name}
-            PROPERTIES PASS_REGULAR_EXPRESSION "${ARG_PASS_REGEX}"
-        )
-        # PASS_REGEX ignores exit code; companion verifies it separately.
-        if(DEFINED ARG_EXITS)
-            add_test(
-                NAME eggs.test.${name}.exit
-                COMMAND _eggs_test.${_stem} ${ARG_ARGS}
-            )
-            set_tests_properties(
-                eggs.test.${name}.exit
-                PROPERTIES LABELS "unit" WILL_FAIL "${_will_fail}"
-            )
-        endif()
-    elseif(DEFINED ARG_EXITS)
-        # No PASS_REGEX: exit code drives the main test directly.
-        set_tests_properties(
-            eggs.test.${name}
-            PROPERTIES WILL_FAIL "${_will_fail}"
-        )
-    endif()
+    set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
 endfunction()
 
 # --- registration tests ------------------------------------------------------
@@ -528,56 +503,117 @@ add_lib_test(
 # --- stacktrace tests --------------------------------------------------------
 
 # All assertion macros called from a helper function: no eggs:: internal frames appear.
-# In Debug, the helper function name appears in the stacktrace.
+# .one_level.fail: in Debug, the immediate helper name appears in the stacktrace.
+# .two_levels.fail: in Debug, the outer helper name appears (all user frames shown).
 # The .pass test exercises the non-failure path (no stacktrace is printed).
 add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
 if(EGGS_HAS_CXX23_STACKTRACE)
-    # CHECK failure from a helper: in Debug, 'failing_check_helper' appears in stacktrace.
+    # CHECK failure one level deep: in Debug, 'failing_check_helper' appears in stacktrace.
     add_lib_test(
-        stacktrace.check.fail
+        stacktrace.check.one_level.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_check_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_failed"
         EXITS 1
     )
-    # REQUIRE failure from a helper: in Debug, 'failing_require_helper' appears in stacktrace.
+    # CHECK failure two levels deep: in Debug, 'outer_check_helper' appears in stacktrace.
     add_lib_test(
-        stacktrace.require.fail
+        stacktrace.check.two_levels.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_check_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_check_helper,FAILED:>"
+        FAIL_REGEX "check_failed"
+        EXITS 1
+    )
+    # REQUIRE failure one level deep: in Debug, 'failing_require_helper' appears in stacktrace.
+    add_lib_test(
+        stacktrace.require.one_level.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_require_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_failed"
         EXITS 1
     )
-    # CHECK_THROWS failure from a helper: in Debug, 'failing_throws_helper' appears in stacktrace.
+    # REQUIRE failure two levels deep: in Debug, 'outer_require_helper' appears in stacktrace.
     add_lib_test(
-        stacktrace.throws.fail
+        stacktrace.require.two_levels.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_require_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_require_helper,FAILED:>"
+        FAIL_REGEX "check_failed"
+        EXITS 1
+    )
+    # CHECK_THROWS failure one level deep: in Debug, 'failing_throws_helper' appears in stacktrace.
+    add_lib_test(
+        stacktrace.throws.one_level.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_throws<"
         EXITS 1
     )
-    # CHECK_THROWS_AS failure from a helper: in Debug, 'failing_throws_as_helper' appears.
+    # CHECK_THROWS failure two levels deep: in Debug, 'outer_throws_helper' appears in stacktrace.
     add_lib_test(
-        stacktrace.throws_as.fail
+        stacktrace.throws.two_levels.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_throws_helper,FAILED:>"
+        FAIL_REGEX "check_throws<"
+        EXITS 1
+    )
+    # CHECK_THROWS_AS failure one level deep: in Debug, 'failing_throws_as_helper' appears.
+    add_lib_test(
+        stacktrace.throws_as.one_level.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_as_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_as_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_throws_as<"
         EXITS 1
     )
-    # CHECK_CATCHES_AS failure from a helper: in Debug, 'failing_catches_helper' appears.
+    # CHECK_THROWS_AS failure two levels deep: in Debug, 'outer_throws_as_helper' appears.
     add_lib_test(
-        stacktrace.catches_as.fail
+        stacktrace.throws_as.two_levels.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_as_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_throws_as_helper,FAILED:>"
+        FAIL_REGEX "check_throws_as<"
+        EXITS 1
+    )
+    # CHECK_CATCHES_AS failure one level deep: in Debug, 'failing_catches_helper' appears.
+    add_lib_test(
+        stacktrace.catches_as.one_level.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_catches_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_catches_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_throws_as<"
         EXITS 1
     )
-    # CHECK_NOTHROW failure from a helper: in Debug, 'failing_nothrow_helper' appears.
+    # CHECK_CATCHES_AS failure two levels deep: in Debug, 'outer_catches_helper' appears.
     add_lib_test(
-        stacktrace.nothrow.fail
+        stacktrace.catches_as.two_levels.fail
         SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_catches_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_catches_helper,FAILED:>"
+        FAIL_REGEX "check_throws_as<"
+        EXITS 1
+    )
+    # CHECK_NOTHROW failure one level deep: in Debug, 'failing_nothrow_helper' appears.
+    add_lib_test(
+        stacktrace.nothrow.one_level.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_nothrow_one_level"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_nothrow_helper,FAILED:>"
-        FAIL_REGEX "eggs::"
+        FAIL_REGEX "check_nothrow<"
+        EXITS 1
+    )
+    # CHECK_NOTHROW failure two levels deep: in Debug, 'outer_nothrow_helper' appears.
+    add_lib_test(
+        stacktrace.nothrow.two_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_nothrow_two_levels"
+        PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_nothrow_helper,FAILED:>"
+        FAIL_REGEX "check_nothrow<"
         EXITS 1
     )
 endif()
