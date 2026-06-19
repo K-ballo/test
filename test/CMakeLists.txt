@@ -207,6 +207,31 @@ add_lib_test(
     EXITS 1
 )
 
+# --exit-code=0 on a failing suite must override the exit code to 0.
+add_lib_test(
+    cli.exit_code.pass
+    SOURCES check.fail.cpp
+    ARGS "--exit-code=0"
+    EXITS 0
+)
+
+# --exit-code=1 on a passing suite must override the exit code to 1.
+add_lib_test(
+    cli.exit_code.fail
+    SOURCES check.pass.cpp
+    ARGS "--exit-code=1"
+    EXITS 1
+)
+
+# --exit-code=<non-integer> must print an error and exit 1.
+add_lib_test(
+    cli.exit_code.invalid.fail
+    SOURCES check.pass.cpp
+    ARGS "--exit-code=oops"
+    PASS_REGEX "invalid exit code 'oops'"
+    EXITS 1
+)
+
 # --list must print exactly the registered test case names, one per line.
 string(
     CONCAT _list_regex

@@ -9,10 +9,12 @@
 #include <eggs/test/cli.hpp>
 #include <eggs/test/detail/print.hpp>
 
+#include <charconv>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <optional>
 #include <string_view>
 
 namespace eggs::test {
@@ -32,11 +34,21 @@ void print_help(std::FILE* out, std::string_view const usage)
     test::print_options(out, /*ns:*/ {}, k_desc_col);
 }
 
+std::optional<int> parse_int(std::string_view sv) noexcept
+{
+    int value = 0;
+    auto [end, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), value);
+    if (ec != std::errc{} || end != sv.data() + sv.size()) return std::nullopt;
+    return value;
+}
+
 } // namespace
 
 int main(int argc, char const* argv[])
 {
     run_options const opts = parse_cli(argc, argv);
+
+    std::optional<int> exit_code;
 
     for (int i = 1; i < argc; ++i) {
         std::string_view const arg = argv[i];
@@ -49,11 +61,22 @@ int main(int argc, char const* argv[])
             return EXIT_SUCCESS;
         }
 
+        if (arg.starts_with("--exit-code=")) {
+            std::string_view const val = arg.substr(12);
+
+            if (exit_code = test::parse_int(val); !exit_code) {
+                detail::println(stderr, "error: invalid exit code '{}'", val);
+                return EXIT_FAILURE;
+            }
+            continue;
+        }
+
         detail::println(stderr, "error: unknown argument '{}'", arg);
         return EXIT_FAILURE;
     }
 
-    return test::run(opts);
+    int const result = test::run(opts);
+    return exit_code.value_or(result);
 }
 
 } // namespace eggs::test
