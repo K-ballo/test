@@ -53,3 +53,14 @@ TEST_CASE(
     }());
     CHECK(false); // must not be reached
 }
+
+TEST_CASE(
+    require_nothrow_require_propagated,
+    "REQUIRE failing inside REQUIRE_NOTHROW propagates out"
+)
+{
+    REQUIRE_NOTHROW([&] {
+        REQUIRE(1 + 1 == 3);
+    }());
+    CHECK(false); // must not be reached
+}

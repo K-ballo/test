@@ -54,3 +54,31 @@ TEST_CASE(
     }
     CHECK(false); // must not be reached
 }
+
+TEST_CASE(
+    check_catches_as_require_propagated,
+    "REQUIRE failing inside CHECK_CATCHES_AS propagates out"
+)
+{
+    CHECK_CATCHES_AS(std::runtime_error, [&] {
+        REQUIRE(1 + 1 == 3);
+    }())
+    {
+        CHECK(false); // must not be reached
+    }
+    CHECK(false); // must not be reached
+}
+
+TEST_CASE(
+    require_catches_as_require_propagated,
+    "REQUIRE failing inside REQUIRE_CATCHES_AS propagates out"
+)
+{
+    REQUIRE_CATCHES_AS(std::runtime_error, [&] {
+        REQUIRE(1 + 1 == 3);
+    }())
+    {
+        CHECK(false); // must not be reached
+    }
+    CHECK(false); // must not be reached
+}

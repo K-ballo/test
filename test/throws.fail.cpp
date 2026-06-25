@@ -30,3 +30,14 @@ TEST_CASE(
     }());
     CHECK(false); // must not be reached
 }
+
+TEST_CASE(
+    require_throws_require_propagated,
+    "REQUIRE failing inside REQUIRE_THROWS propagates out"
+)
+{
+    REQUIRE_THROWS([&] {
+        REQUIRE(1 + 1 == 3);
+    }());
+    CHECK(false); // must not be reached
+}

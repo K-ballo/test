@@ -71,3 +71,14 @@ TEST_CASE(
     }());
     CHECK(false); // must not be reached
 }
+
+TEST_CASE(
+    require_throws_as_require_propagated,
+    "REQUIRE failing inside REQUIRE_THROWS_AS propagates out"
+)
+{
+    REQUIRE_THROWS_AS(std::runtime_error, [&] {
+        REQUIRE(1 + 1 == 3);
+    }());
+    CHECK(false); // must not be reached
+}
