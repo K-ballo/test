@@ -180,3 +180,14 @@ TEST_CASE(
     CHECK(std::string_view{argv[1]} == "--xyz:list");
     CHECK(std::string_view{argv[2]} == "--xyz:run=foo");
 }
+
+TEST_CASE(parse_cli_mutable_argv, "non-const char* overload forwards correctly")
+{
+    char prog[] = "prog";
+    char flag[] = "--list";
+    char* argv[] = {prog, flag};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.list == true);
+    CHECK(argc == 1);
+}
