@@ -7,7 +7,7 @@
 
 #include <eggs/test.hpp>
 
-int main(int argc, char const* argv[])
+int main(int argc, char* argv[])
 {
     return eggs::test::main(argc, argv);
 }
