@@ -167,6 +167,19 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    parse_cli_ns_exact_prefix, "--ns (arg is exactly the namespace prefix, no "
+                               "colon or stem) is left in argv"
+)
+{
+    char const* argv[] = {"prog", "--ns"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv, "ns");
+    CHECK(opts.list == false);
+    CHECK(argc == 2);
+    CHECK(std::string_view{argv[1]} == "--ns");
+}
+
+TEST_CASE(
     parse_cli_ns_other_ns,
     "--xyz:list and --xyz:run=foo with a different namespace are left in argv"
 )
