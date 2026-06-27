@@ -207,6 +207,15 @@ add_lib_test(
     EXITS 1
 )
 
+# --exit-code=<integer with trailing junk> must print an error and exit 1.
+add_lib_test(
+    cli.exit_code.trailing_junk.fail
+    SOURCES check.pass.cpp
+    ARGS "--exit-code=42abc"
+    PASS_REGEX "invalid exit code '42abc'"
+    EXITS 1
+)
+
 # --list must print exactly the registered test case names, one per line.
 string(
     CONCAT _list_regex
