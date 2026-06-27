@@ -562,6 +562,15 @@ add_lib_test(
 # The .pass test exercises the non-failure path (no stacktrace is printed).
 add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
 if(EGGS_HAS_CXX23_STACKTRACE)
+    # CHECK failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.check.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_check_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
+        EXITS 1
+    )
     # CHECK failure one level deep: in Debug, 'failing_check_helper' appears in stacktrace.
     add_lib_test(
         stacktrace.check.one_level.fail
@@ -578,6 +587,16 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         ARGS "--run=stacktrace_check_two_levels"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_check_helper,FAILED:>"
         FAIL_REGEX "check_failed"
+        EXITS 1
+    )
+
+    # REQUIRE failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.require.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_require_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
         EXITS 1
     )
     # REQUIRE failure one level deep: in Debug, 'failing_require_helper' appears in stacktrace.
@@ -598,6 +617,16 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         FAIL_REGEX "check_failed"
         EXITS 1
     )
+
+    # CHECK_THROWS failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.throws.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
+        EXITS 1
+    )
     # CHECK_THROWS failure one level deep: in Debug, 'failing_throws_helper' appears in stacktrace.
     add_lib_test(
         stacktrace.throws.one_level.fail
@@ -614,6 +643,16 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         ARGS "--run=stacktrace_throws_two_levels"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_throws_helper,FAILED:>"
         FAIL_REGEX "check_throws<"
+        EXITS 1
+    )
+
+    # CHECK_THROWS_AS failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.throws_as.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_throws_as_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
         EXITS 1
     )
     # CHECK_THROWS_AS failure one level deep: in Debug, 'failing_throws_as_helper' appears.
@@ -634,6 +673,16 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         FAIL_REGEX "check_throws_as<"
         EXITS 1
     )
+
+    # CHECK_CATCHES_AS failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.catches_as.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_catches_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
+        EXITS 1
+    )
     # CHECK_CATCHES_AS failure one level deep: in Debug, 'failing_catches_helper' appears.
     add_lib_test(
         stacktrace.catches_as.one_level.fail
@@ -650,6 +699,16 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         ARGS "--run=stacktrace_catches_two_levels"
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_catches_helper,FAILED:>"
         FAIL_REGEX "check_throws_as<"
+        EXITS 1
+    )
+
+    # CHECK_NOTHROW failure directly in TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.nothrow.zero_levels.fail
+        SOURCES stacktrace.fail.cpp
+        ARGS "--run=stacktrace_nothrow_zero_levels"
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "Stacktrace"
         EXITS 1
     )
     # CHECK_NOTHROW failure one level deep: in Debug, 'failing_nothrow_helper' appears.
