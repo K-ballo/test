@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test/detail/function_ref.hpp>
 #include <eggs/test/detail/noinline.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -16,19 +17,6 @@
 #include <source_location>
 
 namespace eggs::test::detail {
-
-template <typename Fn>
-std::exception_ptr invoke_catch(Fn&& fn)
-{
-    try {
-        fn();
-    } catch (require_failed const&) {
-        throw;
-    } catch (...) {
-        return std::current_exception();
-    }
-    return nullptr;
-}
 
 template <typename ExcType>
 bool holds_exception(std::exception_ptr const& ep) noexcept
@@ -40,6 +28,18 @@ bool holds_exception(std::exception_ptr const& ep) noexcept
     } catch (...) {
         return false;
     }
+}
+
+inline std::exception_ptr invoke_catch(function_ref<void()> fn)
+{
+    try {
+        fn();
+    } catch (require_failed const&) {
+        throw;
+    } catch (...) {
+        return std::current_exception();
+    }
+    return nullptr;
 }
 
 EGGS_TEST_NOINLINE void check_failed(
