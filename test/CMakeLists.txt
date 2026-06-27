@@ -31,13 +31,14 @@ set_tests_properties(
 
 # Helper — creates a test executable and registers it with CTest.
 #
-# PASS_REGEX: the test passes only if its output matches this pattern.
-# FAIL_REGEX: the test fails if its output matches any of these patterns.
-# EXITS C:    the expected exit code (defaults to 0).
+# COMPILE_FAIL: the test passes when the source fails to compile.
+# PASS_REGEX:   the test passes only if its output matches this pattern.
+# FAIL_REGEX:       the test fails if its output matches any of these patterns.
+# EXITS C:          the expected exit code (defaults to 0).
 function(add_lib_test name)
     cmake_parse_arguments(
         ARG
-        ""
+        "COMPILE_FAIL"
         "EXITS;PASS_REGEX"
         "ARGS;FAIL_REGEX;SOURCES"
         ${ARGN}
@@ -54,6 +55,24 @@ function(add_lib_test name)
         add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
         target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::TestMain)
         set_target_properties(_eggs_test.${_stem} PROPERTIES FOLDER "test")
+    endif()
+
+    if(ARG_COMPILE_FAIL)
+        set_target_properties(
+            _eggs_test.${_stem}
+            PROPERTIES EXCLUDE_FROM_ALL TRUE
+        )
+        add_test(
+            NAME eggs.test.${name}
+            COMMAND
+                ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
+                _eggs_test.${_stem} --config $<CONFIG>
+        )
+        set_tests_properties(
+            eggs.test.${name}
+            PROPERTIES WILL_FAIL TRUE LABELS "unit" RESOURCE_LOCK cmake_build
+        )
+        return()
     endif()
 
     if(NOT DEFINED ARG_EXITS)
@@ -369,6 +388,8 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
+# CHECK_THROWS rejects noexcept expressions.
+add_lib_test(throws.compile_fail SOURCES throws.compile_fail.cpp COMPILE_FAIL)
 
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -444,6 +465,12 @@ add_lib_test(
     FAIL_REGEX "FAILED: false;threw unexpected exception"
     EXITS 1
 )
+# CHECK_THROWS_AS rejects noexcept expressions.
+add_lib_test(
+    throws_as.compile_fail
+    SOURCES throws_as.compile_fail.cpp
+    COMPILE_FAIL
+)
 
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -498,6 +525,12 @@ add_lib_test(
     PASS_REGEX "FAILED: 1 \\+ 1 == 3"
     FAIL_REGEX "FAILED: false"
     EXITS 1
+)
+# CHECK_CATCHES_AS rejects noexcept expressions.
+add_lib_test(
+    catches_as.compile_fail
+    SOURCES catches_as.compile_fail.cpp
+    COMPILE_FAIL
 )
 
 # CHECK_NOTHROW when a std exception is thrown: 'threw unexpectedly' with message appears.

@@ -9,12 +9,17 @@
 
 #include <stdexcept>
 
+static int does_not_throw()
+{
+    return 0;
+}
+
 TEST_CASE(
     check_throws_as_no_throw,
     "CHECK_THROWS_AS fails when expression does not throw"
 )
 {
-    CHECK_THROWS_AS(std::runtime_error, 0);
+    CHECK_THROWS_AS(std::runtime_error, does_not_throw());
 }
 
 TEST_CASE(
@@ -22,7 +27,7 @@ TEST_CASE(
     "REQUIRE_THROWS_AS fails and stops execution when expression does not throw"
 )
 {
-    REQUIRE_THROWS_AS(std::runtime_error, static_cast<void>(0));
+    REQUIRE_THROWS_AS(std::runtime_error, does_not_throw());
     CHECK(false); // must not be reached
 }
 

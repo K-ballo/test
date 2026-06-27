@@ -10,6 +10,11 @@
 
 #include <stdexcept>
 
+static int does_not_throw()
+{
+    return 0;
+}
+
 // Verify that assertion macros fired from helper functions produce a stacktrace
 // in their diagnostic.
 
@@ -102,14 +107,14 @@ TEST_CASE(
     "failed CHECK_THROWS directly in TEST_CASE body prints no stacktrace"
 )
 {
-    CHECK_THROWS(1 + 1);
+    CHECK_THROWS(does_not_throw());
 }
 
 namespace {
 
 EGGS_TEST_NOINLINE void failing_throws_helper()
 {
-    CHECK_THROWS(1 + 1);
+    CHECK_THROWS(does_not_throw());
 }
 
 } // namespace
@@ -144,14 +149,14 @@ TEST_CASE(
     "failed CHECK_THROWS_AS directly in TEST_CASE body prints no stacktrace"
 )
 {
-    CHECK_THROWS_AS(std::runtime_error, 1 + 1);
+    CHECK_THROWS_AS(std::runtime_error, does_not_throw());
 }
 
 namespace {
 
 EGGS_TEST_NOINLINE void failing_throws_as_helper()
 {
-    CHECK_THROWS_AS(std::runtime_error, 1 + 1);
+    CHECK_THROWS_AS(std::runtime_error, does_not_throw());
 }
 
 } // namespace
@@ -186,7 +191,7 @@ TEST_CASE(
     "failed CHECK_CATCHES_AS directly in TEST_CASE body prints no stacktrace"
 )
 {
-    CHECK_CATCHES_AS(std::runtime_error, 1 + 1)
+    CHECK_CATCHES_AS(std::runtime_error, does_not_throw())
     {
         // unreachable: expression does not throw
     }
@@ -196,7 +201,7 @@ namespace {
 
 EGGS_TEST_NOINLINE void failing_catches_helper()
 {
-    CHECK_CATCHES_AS(std::runtime_error, 1 + 1)
+    CHECK_CATCHES_AS(std::runtime_error, does_not_throw())
     {
         // unreachable: expression does not throw
     }

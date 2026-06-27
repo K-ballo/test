@@ -7,16 +7,21 @@
 
 #include <eggs/test.hpp>
 
+static int does_not_throw()
+{
+    return 0;
+}
+
 TEST_CASE(
     check_throws_no_throw, "CHECK_THROWS fails when expression does not throw"
 )
 {
-    CHECK_THROWS(1 + 1);
+    CHECK_THROWS(does_not_throw());
 }
 
 TEST_CASE(require_throws_no_throw, "REQUIRE_THROWS fails and stops execution")
 {
-    REQUIRE_THROWS(0);
+    REQUIRE_THROWS(does_not_throw());
     CHECK(false); // must not be reached
 }
 
