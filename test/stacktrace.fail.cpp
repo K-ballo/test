@@ -13,6 +13,14 @@
 // Verify that assertion macros fired from helper functions produce a stacktrace
 // in their diagnostic.
 
+TEST_CASE(
+    stacktrace_check_zero_levels,
+    "failed CHECK directly in TEST_CASE body prints no stacktrace"
+)
+{
+    CHECK(false);
+}
+
 namespace {
 
 EGGS_TEST_NOINLINE void failing_check_helper()
@@ -45,6 +53,14 @@ TEST_CASE(
 )
 {
     outer_check_helper();
+}
+
+TEST_CASE(
+    stacktrace_require_zero_levels,
+    "failed REQUIRE directly in TEST_CASE body prints no stacktrace"
+)
+{
+    REQUIRE(false);
 }
 
 namespace {
@@ -81,6 +97,14 @@ TEST_CASE(
     outer_require_helper();
 }
 
+TEST_CASE(
+    stacktrace_throws_zero_levels,
+    "failed CHECK_THROWS directly in TEST_CASE body prints no stacktrace"
+)
+{
+    CHECK_THROWS(1 + 1);
+}
+
 namespace {
 
 EGGS_TEST_NOINLINE void failing_throws_helper()
@@ -115,6 +139,14 @@ TEST_CASE(
     outer_throws_helper();
 }
 
+TEST_CASE(
+    stacktrace_throws_as_zero_levels,
+    "failed CHECK_THROWS_AS directly in TEST_CASE body prints no stacktrace"
+)
+{
+    CHECK_THROWS_AS(std::runtime_error, 1 + 1);
+}
+
 namespace {
 
 EGGS_TEST_NOINLINE void failing_throws_as_helper()
@@ -147,6 +179,17 @@ TEST_CASE(
 )
 {
     outer_throws_as_helper();
+}
+
+TEST_CASE(
+    stacktrace_catches_zero_levels,
+    "failed CHECK_CATCHES_AS directly in TEST_CASE body prints no stacktrace"
+)
+{
+    CHECK_CATCHES_AS(std::runtime_error, 1 + 1)
+    {
+        // unreachable: expression does not throw
+    }
 }
 
 namespace {
@@ -184,6 +227,14 @@ TEST_CASE(
 )
 {
     outer_catches_helper();
+}
+
+TEST_CASE(
+    stacktrace_nothrow_zero_levels,
+    "failed CHECK_NOTHROW directly in TEST_CASE body prints no stacktrace"
+)
+{
+    CHECK_NOTHROW(throw 42);
 }
 
 namespace {
