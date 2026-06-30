@@ -42,19 +42,52 @@ bool holds_exception(std::exception_ptr const& ep) noexcept
     }
 }
 
+template <typename Fn>
+std::exception_ptr check_throws(Fn fn)
+{
+    try {
+        fn();
+    } catch (require_failed const&) {
+        throw;
+    } catch (...) {
+        run_state::current().last_threw = std::current_exception();
+        return std::current_exception();
+    }
+    return nullptr;
+}
+
+template <typename ExcType, typename Fn>
+std::exception_ptr check_throws_as(Fn fn)
+{
+    try {
+        fn();
+    } catch (require_failed const&) {
+        throw;
+    } catch (ExcType) {
+        run_state::current().last_threw = std::current_exception();
+        return std::current_exception();
+    } catch (...) {
+        run_state::current().last_threw = std::current_exception();
+        return nullptr;
+    }
+    return nullptr;
+}
+
 EGGS_TEST_NOINLINE void check_failed(
     const char* expr, std::source_location const& loc, std::size_t entry_depth
 );
 
-EGGS_TEST_NOINLINE std::exception_ptr check_throws_as(
-    std::exception_ptr threw, bool (*holds)(std::exception_ptr const&) noexcept,
-    char const* expr, run_state& s, char const* exc_type,
-    std::source_location const& loc
+EGGS_TEST_NOINLINE void check_throws_failed(
+    char const* expr, std::source_location const& loc, std::size_t entry_depth
 );
 
-EGGS_TEST_NOINLINE bool check_nothrow(
-    std::exception_ptr threw, const char* expr, run_state& s,
-    std::source_location const& loc
+EGGS_TEST_NOINLINE void check_throws_as_failed(
+    char const* expr, char const* exc_type, std::source_location const& loc,
+    std::size_t entry_depth
+);
+
+EGGS_TEST_NOINLINE void check_nothrow_failed(
+    char const* expr, std::source_location const& loc, std::size_t entry_depth
 );
 
 } // namespace eggs::test::detail

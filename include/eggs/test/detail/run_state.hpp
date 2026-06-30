@@ -10,6 +10,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
+#include <exception>
 
 namespace eggs::test::detail {
 
@@ -19,6 +20,7 @@ class run_state
     std::size_t entry_depth = 0;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+    std::exception_ptr last_threw;
 
     // Points at the run_state of the currently-executing test on this thread.
     // nullptr between test cases.

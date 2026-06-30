@@ -7,6 +7,7 @@
 
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/print.hpp>
+#include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstdio>
@@ -88,26 +89,29 @@ void throws_as_failed(
 
 } // namespace
 
-EGGS_TEST_NOINLINE std::exception_ptr check_throws_as(
-    std::exception_ptr threw, bool (*holds)(std::exception_ptr const&) noexcept,
-    char const* expr, run_state& s, char const* exc_type,
-    std::source_location const& loc
+EGGS_TEST_NOINLINE void check_throws_failed(
+    char const* expr, std::source_location const& loc, std::size_t entry_depth
 )
 {
+    auto const& st = detail::stacktrace::current(1);
+    throws_failed(expr, loc, st, entry_depth);
+}
+
+EGGS_TEST_NOINLINE void check_throws_as_failed(
+    char const* expr, char const* exc_type, std::source_location const& loc,
+    std::size_t entry_depth
+)
+{
+    auto const& threw = run_state::current().last_threw;
+
+    // Skip this function and the immediately-invoked lambda that wraps
+    // CHECK_THROWS_AS / CHECK_CATCHES_AS at the call site.
+    auto const& st = detail::stacktrace::current(1);
     if (threw) {
-        if (!holds || holds(threw)) {
-            ++s.assertions_passed;
-            return threw;
-        }
-        ++s.assertions_failed;
-        auto const& st = detail::stacktrace::current(1);
-        throws_as_failed(expr, exc_type, threw, loc, st, s.entry_depth);
+        throws_as_failed(expr, exc_type, threw, loc, st, entry_depth);
     } else {
-        ++s.assertions_failed;
-        auto const& st = detail::stacktrace::current(1);
-        throws_failed(expr, loc, st, s.entry_depth);
+        throws_failed(expr, loc, st, entry_depth);
     }
-    return nullptr;
 }
 
 namespace {
@@ -139,19 +143,12 @@ void nothrow_failed(
 
 } // namespace
 
-EGGS_TEST_NOINLINE bool check_nothrow(
-    std::exception_ptr threw, const char* expr, run_state& s,
-    std::source_location const& loc
+EGGS_TEST_NOINLINE void check_nothrow_failed(
+    char const* expr, std::source_location const& loc, std::size_t entry_depth
 )
 {
-    if (threw) {
-        ++s.assertions_failed;
-        auto const& st = detail::stacktrace::current(1);
-        nothrow_failed(expr, threw, loc, st, s.entry_depth);
-        return false;
-    }
-    ++s.assertions_passed;
-    return true;
+    auto const& st = detail::stacktrace::current(1);
+    nothrow_failed(expr, run_state::current().last_threw, loc, st, entry_depth);
 }
 
 } // namespace eggs::test::detail

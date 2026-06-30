@@ -72,19 +72,22 @@
 // CHECK_THROWS(expr)
 //
 // Evaluates expr and passes if it throws any exception.  Fails with a
-// diagnostic if expr completes without throwing.  Returns bool.
-#define CHECK_THROWS(...)                                                  \
-    static_cast<bool>(::eggs::test::detail::check_throws_as(               \
-        ::eggs::test::detail::invoke_catch([&]() {                         \
-            static_assert(                                                 \
-                !noexcept((__VA_ARGS__)),                                  \
-                "expression is noexcept: cannot throw"                     \
-            );                                                             \
-            (void)(__VA_ARGS__);                                           \
-        }),                                                                \
-        nullptr, #__VA_ARGS__, ::eggs::test::detail::run_state::current(), \
-        nullptr, ::std::source_location::current()                         \
-    ))
+// diagnostic if expr completes without throwing.  Returns std::exception_ptr.
+#define CHECK_THROWS(...)                                                    \
+    (::eggs::test::detail::check_throws([&] {                                \
+        static_assert(                                                       \
+            !noexcept((__VA_ARGS__)), "expression is noexcept: cannot throw" \
+        );                                                                   \
+        (void)(__VA_ARGS__);                                                 \
+    })                                                                       \
+         ? (++::eggs::test::detail::run_state::current().assertions_passed,  \
+            ::eggs::test::detail::run_state::current().last_threw)           \
+         : (++::eggs::test::detail::run_state::current().assertions_failed,  \
+            ::eggs::test::detail::check_throws_failed(                       \
+                #__VA_ARGS__, ::std::source_location::current(),             \
+                ::eggs::test::detail::run_state::current().entry_depth       \
+            ),                                                               \
+            nullptr))
 
 // REQUIRE_THROWS(expr)
 //
@@ -103,19 +106,21 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                                  \
-    ::eggs::test::detail::check_throws_as(                              \
-        ::eggs::test::detail::invoke_catch([&]() {                      \
-            static_assert(                                              \
-                !noexcept((__VA_ARGS__)),                               \
-                "expression is noexcept: cannot throw"                  \
-            );                                                          \
-            (void)(__VA_ARGS__);                                        \
-        }),                                                             \
-        &::eggs::test::detail::holds_exception<ExcType_>, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current(), #ExcType_,          \
-        ::std::source_location::current()                               \
-    )
+#define CHECK_THROWS_AS(ExcType_, ...)                                       \
+    (::eggs::test::detail::check_throws_as<ExcType_>([&] {                   \
+        static_assert(                                                       \
+            !noexcept((__VA_ARGS__)), "expression is noexcept: cannot throw" \
+        );                                                                   \
+        (void)(__VA_ARGS__);                                                 \
+    })                                                                       \
+         ? (++::eggs::test::detail::run_state::current().assertions_passed,  \
+            ::eggs::test::detail::run_state::current().last_threw)           \
+         : (++::eggs::test::detail::run_state::current().assertions_failed,  \
+            ::eggs::test::detail::check_throws_as_failed(                    \
+                #__VA_ARGS__, #ExcType_, ::std::source_location::current(),  \
+                ::eggs::test::detail::run_state::current().entry_depth       \
+            ),                                                               \
+            nullptr))
 
 // REQUIRE_THROWS_AS(ExcType, expr)
 //
@@ -166,11 +171,15 @@
 // Evaluates expr and passes if it does not throw.  Fails with a diagnostic if
 // any exception escapes.  Returns bool.
 #define CHECK_NOTHROW(...)                                                  \
-    ::eggs::test::detail::check_nothrow(                                    \
-        ::eggs::test::detail::invoke_catch([&]() { (void)(__VA_ARGS__); }), \
-        #__VA_ARGS__, ::eggs::test::detail::run_state::current(),           \
-        ::std::source_location::current()                                   \
-    )
+    (!::eggs::test::detail::check_throws([&] { (void)(__VA_ARGS__); })      \
+         ? (++::eggs::test::detail::run_state::current().assertions_passed, \
+            true)                                                           \
+         : (++::eggs::test::detail::run_state::current().assertions_failed, \
+            ::eggs::test::detail::check_nothrow_failed(                     \
+                #__VA_ARGS__, ::std::source_location::current(),            \
+                ::eggs::test::detail::run_state::current().entry_depth      \
+            ),                                                              \
+            false))
 
 // REQUIRE_NOTHROW(expr)
 //
@@ -183,7 +192,6 @@
     } while (false)
 
 namespace eggs::test {
-
 // Options passed to run()
 struct run_options
 {
