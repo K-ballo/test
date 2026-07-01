@@ -59,20 +59,42 @@ check(bool c, const char* expr, run_state& s, std::source_location const& loc)
     return false;
 }
 
-EGGS_TEST_NOINLINE void check_throws_failed(
-    const char* expr, std::source_location const& loc, std::size_t entry_depth
+inline void check_throws_failed(
+    const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st, std::size_t entry_depth
 )
 {
     detail::println(
         stdout, "  FAILED: {} did not throw  [{}:{}]", expr, loc.file_name(),
         loc.line()
     );
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
+}
+
+EGGS_TEST_NOINLINE bool check_throws(
+    detail::function_ref<void()> fn, const char* expr, run_state& s,
+    std::source_location const& loc
+)
+{
+    try {
+        fn();
+    } catch (require_failed const&) {
+        throw;
+    } catch (...) {
+        ++s.assertions_passed;
+        return true;
+    }
+
+    ++s.assertions_failed;
+    auto const& st = detail::stacktrace::current(1);
+    check_throws_failed(expr, loc, st, s.entry_depth);
+    return false;
 }
 
 EGGS_TEST_NOINLINE void check_throws_as_failed(
     const char* expr, const char* exc_type, std::exception_ptr threw,
-    std::source_location const& loc, std::size_t entry_depth
+    std::source_location const& loc, detail::stacktrace const& st,
+    std::size_t entry_depth
 )
 {
     try {
@@ -94,12 +116,38 @@ EGGS_TEST_NOINLINE void check_throws_as_failed(
             expr, exc_type, loc.file_name(), loc.line()
         );
     }
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
-EGGS_TEST_NOINLINE void check_nothrow_failed(
+EGGS_TEST_NOINLINE std::exception_ptr check_throws_as(
+    detail::function_ref<void()> fn, const char* expr, const char* exc_type,
+    run_state& s, std::source_location const& loc
+)
+{
+    std::exception_ptr threw = nullptr;
+    try {
+        fn();
+    } catch (require_failed const&) {
+        throw;
+        // } catch (ExcType const&) {
+        //     ++s.assertions_passed;
+        //     return std::current_exception();
+    } catch (...) {
+        threw = std::current_exception();
+    }
+
+    ++s.assertions_failed;
+    auto const& st = detail::stacktrace::current(1);
+    if (threw)
+        check_throws_as_failed(expr, exc_type, threw, loc, st, s.entry_depth);
+    else
+        check_throws_failed(expr, loc, st, s.entry_depth);
+    return nullptr;
+}
+
+inline void check_nothrow_failed(
     const char* expr, std::exception_ptr threw, std::source_location const& loc,
-    std::size_t entry_depth
+    detail::stacktrace const& st, std::size_t entry_depth
 )
 {
     try {
@@ -119,7 +167,30 @@ EGGS_TEST_NOINLINE void check_nothrow_failed(
             expr, loc.file_name(), loc.line()
         );
     }
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
+}
+
+EGGS_TEST_NOINLINE bool check_nothrow(
+    detail::function_ref<void()> fn, const char* expr, run_state& s,
+    std::source_location const& loc
+)
+{
+    std::exception_ptr threw = nullptr;
+    try {
+        fn();
+
+        ++s.assertions_passed;
+        return true;
+    } catch (require_failed const&) {
+        throw;
+    } catch (...) {
+        threw = std::current_exception();
+    }
+
+    ++s.assertions_failed;
+    auto const& st = detail::stacktrace::current(1);
+    check_nothrow_failed(expr, threw, loc, st, s.entry_depth);
+    return false;
 }
 
 } // namespace eggs::test::detail

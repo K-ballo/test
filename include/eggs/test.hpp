@@ -65,10 +65,9 @@
 //
 // Evaluates expr and passes if it throws any exception.  Fails with a
 // diagnostic if expr completes without throwing.  Returns bool.
-#define CHECK_THROWS(...)                             \
-    ::eggs::test::detail::check_throws(               \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current()    \
+#define CHECK_THROWS(...)                            \
+    ::eggs::test::detail::check_throws(              \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__ \
     )
 
 // REQUIRE_THROWS(expr)
@@ -88,10 +87,9 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                        \
-    ::eggs::test::detail::check_throws_as<ExcType_>(          \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__,         \
-        ::eggs::test::detail::run_state::current(), #ExcType_ \
+#define CHECK_THROWS_AS(ExcType_, ...)                          \
+    ::eggs::test::detail::check_throws_as /*<ExcType_>*/ (      \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, #ExcType_ \
     )
 
 // REQUIRE_THROWS_AS(ExcType, expr)
@@ -142,10 +140,9 @@
 //
 // Evaluates expr and passes if it does not throw.  Fails with a diagnostic if
 // any exception escapes.  Returns bool.
-#define CHECK_NOTHROW(...)                            \
-    ::eggs::test::detail::check_nothrow(              \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current()    \
+#define CHECK_NOTHROW(...)                           \
+    ::eggs::test::detail::check_nothrow(             \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__ \
     )
 
 // REQUIRE_NOTHROW(expr)
