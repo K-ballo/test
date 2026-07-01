@@ -34,17 +34,32 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
 
 } // namespace
 
-EGGS_TEST_NOINLINE void check_failed(
-    const char* expr, std::source_location const& loc, std::size_t entry_depth
+inline void check_failed(
+    const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st, ::size_t entry_depth
 )
 {
     detail::println(
         stdout, "  FAILED: {}  [{}:{}]", expr, loc.file_name(), loc.line()
     );
-    print_stacktrace(detail::stacktrace::current(1), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
-EGGS_TEST_NOINLINE void throws_failed(
+EGGS_TEST_NOINLINE bool
+check(bool c, const char* expr, run_state& s, std::source_location const& loc)
+{
+    if (c) {
+        ++s.assertions_passed;
+        return true;
+    }
+
+    ++s.assertions_failed;
+    auto const& st = detail::stacktrace::current(1);
+    check_failed(expr, loc, st, s.entry_depth);
+    return false;
+}
+
+EGGS_TEST_NOINLINE void check_throws_failed(
     const char* expr, std::source_location const& loc, std::size_t entry_depth
 )
 {
@@ -55,7 +70,7 @@ EGGS_TEST_NOINLINE void throws_failed(
     print_stacktrace(detail::stacktrace::current(2), entry_depth);
 }
 
-EGGS_TEST_NOINLINE void throws_as_failed(
+EGGS_TEST_NOINLINE void check_throws_as_failed(
     const char* expr, const char* exc_type, std::exception_ptr threw,
     std::source_location const& loc, std::size_t entry_depth
 )
@@ -82,7 +97,7 @@ EGGS_TEST_NOINLINE void throws_as_failed(
     print_stacktrace(detail::stacktrace::current(2), entry_depth);
 }
 
-EGGS_TEST_NOINLINE void nothrow_failed(
+EGGS_TEST_NOINLINE void check_nothrow_failed(
     const char* expr, std::exception_ptr threw, std::source_location const& loc,
     std::size_t entry_depth
 )

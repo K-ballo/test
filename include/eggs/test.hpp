@@ -50,16 +50,8 @@
 //
 // Uses #__VA_ARGS__ so that expressions containing commas (e.g. template
 // arguments) stringify correctly.
-#define CHECK(...)                                                          \
-    (static_cast<bool>(__VA_ARGS__)                                         \
-         ? (++::eggs::test::detail::run_state::current().assertions_passed, \
-            true)                                                           \
-         : (++::eggs::test::detail::run_state::current().assertions_failed, \
-            ::eggs::test::detail::check_failed(                             \
-                #__VA_ARGS__, ::std::source_location::current(),            \
-                ::eggs::test::detail::run_state::current().entry_depth      \
-            ),                                                              \
-            false))
+#define CHECK(...) \
+    ::eggs::test::detail::check(static_cast<bool>(__VA_ARGS__), #__VA_ARGS__)
 
 // REQUIRE(expr)
 //
@@ -76,8 +68,7 @@
 #define CHECK_THROWS(...)                             \
     ::eggs::test::detail::check_throws(               \
         [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current(),   \
-        ::std::source_location::current()             \
+        ::eggs::test::detail::run_state::current()    \
     )
 
 // REQUIRE_THROWS(expr)
@@ -97,11 +88,10 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                         \
-    ::eggs::test::detail::check_throws_as<ExcType_>(           \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__,          \
-        ::eggs::test::detail::run_state::current(), #ExcType_, \
-        ::std::source_location::current()                      \
+#define CHECK_THROWS_AS(ExcType_, ...)                        \
+    ::eggs::test::detail::check_throws_as<ExcType_>(          \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__,         \
+        ::eggs::test::detail::run_state::current(), #ExcType_ \
     )
 
 // REQUIRE_THROWS_AS(ExcType, expr)
@@ -155,8 +145,7 @@
 #define CHECK_NOTHROW(...)                            \
     ::eggs::test::detail::check_nothrow(              \
         [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current(),   \
-        ::std::source_location::current()             \
+        ::eggs::test::detail::run_state::current()    \
     )
 
 // REQUIRE_NOTHROW(expr)

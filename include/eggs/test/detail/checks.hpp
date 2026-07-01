@@ -17,27 +17,20 @@
 
 namespace eggs::test::detail {
 
-EGGS_TEST_NOINLINE void check_failed(
+EGGS_TEST_NOINLINE bool check(
+    bool c, const char* expr,
+    run_state& s = ::eggs::test::detail::run_state::current(),
+    std::source_location const& loc = std::source_location::current()
+);
+
+EGGS_TEST_NOINLINE void check_throws_failed(
     const char* expr, std::source_location const& loc, std::size_t entry_depth
-);
-
-EGGS_TEST_NOINLINE void throws_failed(
-    const char* expr, std::source_location const& loc, std::size_t entry_depth
-);
-
-EGGS_TEST_NOINLINE void throws_as_failed(
-    const char* expr, const char* exc_type, std::exception_ptr threw,
-    std::source_location const& loc, std::size_t entry_depth
-);
-
-EGGS_TEST_NOINLINE void nothrow_failed(
-    const char* expr, std::exception_ptr threw, std::source_location const& loc,
-    std::size_t entry_depth
 );
 
 template <typename Fn>
 EGGS_TEST_NOINLINE inline bool check_throws(
-    Fn fn, const char* expr, run_state& s, std::source_location const& loc
+    Fn fn, const char* expr, run_state& s,
+    std::source_location const& loc = std::source_location::current()
 )
 {
     try {
@@ -50,14 +43,19 @@ EGGS_TEST_NOINLINE inline bool check_throws(
     }
 
     ++s.assertions_failed;
-    throws_failed(expr, loc, s.entry_depth);
+    check_throws_failed(expr, loc, s.entry_depth);
     return false;
 }
+
+EGGS_TEST_NOINLINE void check_throws_as_failed(
+    const char* expr, const char* exc_type, std::exception_ptr threw,
+    std::source_location const& loc, std::size_t entry_depth
+);
 
 template <typename ExcType, typename Fn>
 EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
     Fn fn, const char* expr, run_state& s, const char* exc_type,
-    std::source_location const& loc
+    std::source_location const& loc = std::source_location::current()
 )
 {
     std::exception_ptr threw = nullptr;
@@ -74,15 +72,21 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
 
     ++s.assertions_failed;
     if (threw)
-        throws_as_failed(expr, exc_type, threw, loc, s.entry_depth);
+        check_throws_as_failed(expr, exc_type, threw, loc, s.entry_depth);
     else
-        throws_failed(expr, loc, s.entry_depth);
+        check_throws_failed(expr, loc, s.entry_depth);
     return nullptr;
 }
 
+EGGS_TEST_NOINLINE void check_nothrow_failed(
+    const char* expr, std::exception_ptr threw, std::source_location const& loc,
+    std::size_t entry_depth
+);
+
 template <typename Fn>
 EGGS_TEST_NOINLINE inline bool check_nothrow(
-    Fn fn, const char* expr, run_state& s, std::source_location const& loc
+    Fn fn, const char* expr, run_state& s,
+    std::source_location const& loc = std::source_location::current()
 )
 {
     std::exception_ptr threw = nullptr;
@@ -98,7 +102,7 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
     }
 
     ++s.assertions_failed;
-    nothrow_failed(expr, threw, loc, s.entry_depth);
+    check_nothrow_failed(expr, threw, loc, s.entry_depth);
     return false;
 }
 
