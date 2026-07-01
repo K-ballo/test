@@ -139,6 +139,22 @@ add_lib_test(
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
 )
+# Exception leaked from CHECK: caught and reported.
+add_lib_test(
+    exceptions.fail.check
+    SOURCES exceptions.fail.cpp
+    ARGS "--run=leaked_exception_check"
+    PASS_REGEX "UNKNOWN EXCEPTION"
+    EXITS 1
+)
+# Exception leaked from REQUIRE: caught and reported.
+add_lib_test(
+    exceptions.fail.require
+    SOURCES exceptions.fail.cpp
+    ARGS "--run=leaked_exception_require"
+    PASS_REGEX "UNKNOWN EXCEPTION"
+    EXITS 1
+)
 
 # --- cli tests -----------------------------------------------------------
 

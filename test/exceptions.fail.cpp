@@ -24,3 +24,30 @@ TEST_CASE(
 {
     throw 42;
 }
+
+namespace {
+
+[[noreturn]] bool throw_42()
+{
+    throw 42;
+}
+
+} // namespace
+
+TEST_CASE(
+    leaked_exception_check,
+    "exception leaked from a CHECK is caught and reported"
+)
+{
+    CHECK(throw_42());
+    CHECK(false); // must not be reached
+}
+
+TEST_CASE(
+    leaked_exception_require,
+    "exception leaked from a REQUIRE is caught and reported"
+)
+{
+    REQUIRE(throw_42());
+    CHECK(false); // must not be reached
+}
