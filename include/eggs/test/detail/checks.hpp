@@ -24,15 +24,39 @@ EGGS_TEST_NOINLINE bool check(
     std::source_location const& loc = std::source_location::current()
 );
 
-EGGS_TEST_NOINLINE bool check_throws(
+EGGS_TEST_NOINLINE std::exception_ptr check_throws(
     detail::function_ref<void()> fn, const char* expr,
     run_state& s = ::eggs::test::detail::run_state::current(),
     std::source_location const& loc = std::source_location::current()
 );
 
-//template <typename ExcType>
+template <typename ExcType, typename Fn>
+struct check_throws_as_wrapper
+{
+    Fn fn;
+
+    std::exception_ptr
+    operator()(run_state& s = ::eggs::test::detail::run_state::current())
+    {
+        try {
+            fn();
+        } catch (ExcType const&) {
+            ++s.assertions_passed;
+            return std::current_exception();
+        }
+        return nullptr;
+    }
+};
+
+template <typename ExcType, typename Fn>
+auto wrap_throws_as(Fn fn)
+{
+    return check_throws_as_wrapper<ExcType, Fn>{fn};
+}
+
 EGGS_TEST_NOINLINE std::exception_ptr check_throws_as(
-    detail::function_ref<void()> fn, const char* expr, const char* exc_type,
+    detail::function_ref<std::exception_ptr()> fn, const char* expr,
+    const char* exc_type,
     run_state& s = ::eggs::test::detail::run_state::current(),
     std::source_location const& loc = std::source_location::current()
 );

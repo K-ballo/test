@@ -64,7 +64,7 @@
 // CHECK_THROWS(expr)
 //
 // Evaluates expr and passes if it throws any exception.  Fails with a
-// diagnostic if expr completes without throwing.  Returns bool.
+// diagnostic if expr completes without throwing.  Returns std::exception_ptr.
 #define CHECK_THROWS(...)                            \
     ::eggs::test::detail::check_throws(              \
         [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__ \
@@ -87,9 +87,12 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                          \
-    ::eggs::test::detail::check_throws_as /*<ExcType_>*/ (      \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, #ExcType_ \
+#define CHECK_THROWS_AS(ExcType_, ...)                         \
+    ::eggs::test::detail::check_throws_as(                     \
+        ::eggs::test::detail::wrap_throws_as<ExcType_>([&]() { \
+            (void)(__VA_ARGS__);                               \
+        }),                                                    \
+        #__VA_ARGS__, #ExcType_                                \
     )
 
 // REQUIRE_THROWS_AS(ExcType, expr)
@@ -115,25 +118,36 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_CATCHES_AS(ExcType_, ...)                      \
-    try {                                                    \
-        if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
-            ::std::rethrow_exception(e);                     \
-    } catch (::eggs::test::detail::require_failed const&) {  \
-        throw;                                               \
+#define CHECK_CATCHES_AS(ExcType_, ...)                                \
+    try {                                                              \
+        if (auto e = ::eggs::test::detail::check_throws_as(            \
+                ::eggs::test::detail::wrap_throws_as<ExcType_>([&]() { \
+                    (void)(__VA_ARGS__);                               \
+                }),                                                    \
+                #__VA_ARGS__, #ExcType_                                \
+            ))                                                         \
+            std::rethrow_exception(e);                                 \
+    } catch (::eggs::test::detail::require_failed const&) {            \
+        throw;                                                         \
     } catch ([[maybe_unused]] ExcType_ const& exc)
 
 // REQUIRE_CATCHES_AS(ExcType, expr)
 //
 // Identical to CHECK_CATCHES_AS but stops execution of the current test case
 // on failure.
-#define REQUIRE_CATCHES_AS(ExcType_, ...)                    \
-    try {                                                    \
-        if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
-            ::std::rethrow_exception(e);                     \
-        throw ::eggs::test::detail::require_failed{};        \
-    } catch (::eggs::test::detail::require_failed const&) {  \
-        throw;                                               \
+#define REQUIRE_CATCHES_AS(ExcType_, ...)                              \
+    try {                                                              \
+        if (auto e = ::eggs::test::detail::check_throws_as(            \
+                ::eggs::test::detail::wrap_throws_as<ExcType_>([&]() { \
+                    (void)(__VA_ARGS__);                               \
+                }),                                                    \
+                #__VA_ARGS__, #ExcType_                                \
+            ))                                                         \
+            std::rethrow_exception(e);                                 \
+        else                                                           \
+            throw ::eggs::test::detail::require_failed{};              \
+    } catch (::eggs::test::detail::require_failed const&) {            \
+        throw;                                                         \
     } catch ([[maybe_unused]] ExcType_ const& exc)
 
 // CHECK_NOTHROW(expr)

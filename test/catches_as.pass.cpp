@@ -22,10 +22,13 @@ TEST_CASE(
     "CHECK_CATCHES_AS passes and binds int exception as exc"
 )
 {
+    bool caught = false;
     CHECK_CATCHES_AS(int, throw 42)
     {
+        caught = true;
         CHECK(exc == 42);
     }
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -33,11 +36,13 @@ TEST_CASE(
     "REQUIRE_CATCHES_AS passes without stopping the test"
 )
 {
+    bool caught = false;
     REQUIRE_CATCHES_AS(int, throw 42)
     {
+        caught = true;
         CHECK(exc == 42);
     }
-    CHECK(true);
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -45,10 +50,13 @@ TEST_CASE(
     "CHECK_CATCHES_AS passes and binds std exception as exc"
 )
 {
+    bool caught = false;
     CHECK_CATCHES_AS(std::runtime_error, throw std::runtime_error{"oops"})
     {
+        caught = true;
         CHECK(std::string_view(exc.what()) == "oops");
     }
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -56,11 +64,13 @@ TEST_CASE(
     "REQUIRE_CATCHES_AS passes without stopping the test"
 )
 {
+    bool caught = false;
     REQUIRE_CATCHES_AS(std::runtime_error, throw std::runtime_error{"oops"})
     {
+        caught = true;
         CHECK(std::string_view(exc.what()) == "oops");
     }
-    CHECK(true);
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -68,10 +78,13 @@ TEST_CASE(
     "CHECK_CATCHES_AS passes for derived std type"
 )
 {
+    bool caught = false;
     CHECK_CATCHES_AS(std::exception, throw std::runtime_error{"oops"})
     {
+        caught = true;
         CHECK(std::string_view(exc.what()) == "oops");
     }
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -79,11 +92,13 @@ TEST_CASE(
     "REQUIRE_CATCHES_AS passes without stopping the test"
 )
 {
+    bool caught = false;
     REQUIRE_CATCHES_AS(std::exception, throw std::runtime_error{"oops"})
     {
+        caught = true;
         CHECK(std::string_view(exc.what()) == "oops");
     }
-    CHECK(true);
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -91,10 +106,13 @@ TEST_CASE(
     "CHECK_CATCHES_AS passes for exact custom type"
 )
 {
+    bool caught = false;
     CHECK_CATCHES_AS(my_error, throw my_error{})
     {
+        caught = true;
         CHECK(exc.value == 0);
     }
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -102,11 +120,13 @@ TEST_CASE(
     "REQUIRE_CATCHES_AS passes without stopping the test"
 )
 {
+    bool caught = false;
     REQUIRE_CATCHES_AS(my_error, throw my_error{})
     {
+        caught = true;
         CHECK(exc.value == 0);
     }
-    CHECK(true);
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -114,7 +134,12 @@ TEST_CASE(
     "CHECK_CATCHES_AS with empty body behaves like CHECK_THROWS_AS"
 )
 {
-    CHECK_CATCHES_AS(std::runtime_error, throw std::runtime_error{"x"}) {}
+    bool caught = false;
+    CHECK_CATCHES_AS(std::runtime_error, throw std::runtime_error{"x"})
+    {
+        caught = true;
+    }
+    CHECK(caught);
 }
 
 TEST_CASE(
@@ -122,6 +147,10 @@ TEST_CASE(
     "REQUIRE_CATCHES_AS with empty body does not stop the test"
 )
 {
-    REQUIRE_CATCHES_AS(std::runtime_error, throw std::runtime_error{"x"}) {}
-    CHECK(true);
+    bool caught = false;
+    REQUIRE_CATCHES_AS(std::runtime_error, throw std::runtime_error{"x"})
+    {
+        caught = true;
+    }
+    CHECK(caught);
 }
