@@ -7,6 +7,7 @@
 
 #include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
+#include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstddef>

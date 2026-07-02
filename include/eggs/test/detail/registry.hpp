@@ -21,11 +21,6 @@ struct test_entry
     void (*run)();
 };
 
-// Exception thrown by REQUIRE to unwind the current test case without
-// terminating the process.  Caught by the runner per-test.
-struct require_failed
-{};
-
 struct test_entry_hash
 {
     using is_transparent = void;

@@ -9,6 +9,7 @@
 
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/require.hpp>
 #include <eggs/test/detail/run_state.hpp>
 
 #include <exception>
@@ -64,10 +65,8 @@
 // REQUIRE(expr)
 //
 // Identical to CHECK but stops execution of the current test case on failure.
-#define REQUIRE(...)                                                           \
-    do {                                                                       \
-        if (!CHECK(__VA_ARGS__)) throw ::eggs::test::detail::require_failed{}; \
-    } while (false)
+// Returns bool.
+#define REQUIRE(...) ::eggs::test::detail::require(CHECK(__VA_ARGS__))
 
 // CHECK_THROWS(expr)
 //
@@ -82,12 +81,10 @@
 
 // REQUIRE_THROWS(expr)
 //
-// Identical to CHECK_THROWS but stops execution of the current test case on failure.
-#define REQUIRE_THROWS(...)                               \
-    do {                                                  \
-        if (!CHECK_THROWS(__VA_ARGS__))                   \
-            throw ::eggs::test::detail::require_failed{}; \
-    } while (false)
+// Identical to CHECK_THROWS but stops execution of the current test case on
+// failure.  Returns bool.
+#define REQUIRE_THROWS(...) \
+    ::eggs::test::detail::require(CHECK_THROWS(__VA_ARGS__))
 
 // CHECK_THROWS_AS(ExcType, expr)
 //
@@ -107,12 +104,9 @@
 // REQUIRE_THROWS_AS(ExcType, expr)
 //
 // Identical to CHECK_THROWS_AS but stops execution of the current test case
-// on failure.
-#define REQUIRE_THROWS_AS(ExcType_, ...)                  \
-    do {                                                  \
-        if (!CHECK_THROWS_AS(ExcType_, __VA_ARGS__))      \
-            throw ::eggs::test::detail::require_failed{}; \
-    } while (false)
+// on failure.  Returns std::exception_ptr.
+#define REQUIRE_THROWS_AS(ExcType_, ...) \
+    ::eggs::test::detail::require(CHECK_THROWS_AS(ExcType_, __VA_ARGS__))
 
 // CHECK_CATCHES_AS(ExcType, expr)
 //
@@ -131,21 +125,15 @@
     try {                                                    \
         if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
             ::std::rethrow_exception(e);                     \
-    } catch (::eggs::test::detail::require_failed const&) {  \
-        throw;                                               \
     } catch ([[maybe_unused]] ExcType_ const& exc)
 
 // REQUIRE_CATCHES_AS(ExcType, expr)
 //
 // Identical to CHECK_CATCHES_AS but stops execution of the current test case
 // on failure.
-#define REQUIRE_CATCHES_AS(ExcType_, ...)                    \
-    try {                                                    \
-        if (auto e = CHECK_THROWS_AS(ExcType_, __VA_ARGS__)) \
-            ::std::rethrow_exception(e);                     \
-        throw ::eggs::test::detail::require_failed{};        \
-    } catch (::eggs::test::detail::require_failed const&) {  \
-        throw;                                               \
+#define REQUIRE_CATCHES_AS(ExcType_, ...)                                   \
+    try {                                                                   \
+        ::std::rethrow_exception(REQUIRE_THROWS_AS(ExcType_, __VA_ARGS__)); \
     } catch ([[maybe_unused]] ExcType_ const& exc)
 
 // CHECK_NOTHROW(expr)
@@ -162,12 +150,9 @@
 // REQUIRE_NOTHROW(expr)
 //
 // Identical to CHECK_NOTHROW but stops execution of the current test case on
-// failure.
-#define REQUIRE_NOTHROW(...)                              \
-    do {                                                  \
-        if (!CHECK_NOTHROW(__VA_ARGS__))                  \
-            throw ::eggs::test::detail::require_failed{}; \
-    } while (false)
+// failure.  Returns bool.
+#define REQUIRE_NOTHROW(...) \
+    ::eggs::test::detail::require(CHECK_NOTHROW(__VA_ARGS__))
 
 namespace eggs::test {
 

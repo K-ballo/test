@@ -55,9 +55,10 @@ target_sources(
             FILES
                 include/eggs/test.hpp
                 include/eggs/test/cli.hpp
-                include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/noinline.hpp
+                include/eggs/test/detail/registry.hpp
+                include/eggs/test/detail/require.hpp
                 include/eggs/test/detail/run_state.hpp
     PRIVATE
         FILE_SET private_headers
