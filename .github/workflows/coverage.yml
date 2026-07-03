@@ -123,9 +123,16 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update -q
-          sudo apt-get install -y gcc-16 g++-16 lcov
+          sudo apt-get install -y gcc-16 g++-16
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 100 \
                                    --slave /usr/bin/g++ g++ /usr/bin/g++-16
+
+      - name: Install lcov
+        run: |
+          sudo apt-get install -y libcapture-tiny-perl libdatetime-perl libtimedate-perl
+          curl -sL https://github.com/linux-test-project/lcov/releases/download/v2.4/lcov-2.4.tar.gz \
+            | tar xz -C "$HOME"
+          echo "$HOME/lcov-2.4/bin" >> "$GITHUB_PATH"
 
       - name: Install Ninja
         run: sudo apt-get install -y ninja-build
@@ -153,7 +160,7 @@ jobs:
         run: |
           lcov --capture \
                --gcov-tool gcov-16 \
-               --ignore-errors mismatch \
+               --ignore-errors mismatch,inconsistent \
                --directory build/coverage-gcc \
                --output-file build/coverage-gcc/coverage.info
           lcov --extract build/coverage-gcc/coverage.info \
