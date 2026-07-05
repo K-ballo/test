@@ -7,6 +7,8 @@
 
 #include <eggs/test.hpp>
 
+#include <type_traits>
+
 TEST_CASE(
     check_nothrow_pass, "CHECK_NOTHROW passes when expression does not throw"
 )
@@ -20,4 +22,28 @@ TEST_CASE(
 {
     REQUIRE_NOTHROW(1 + 1);
     CHECK(true);
+}
+
+TEST_CASE(check_nothrow_expression, "CHECK_NOTHROW's result can be captured")
+{
+    if (auto r = CHECK_NOTHROW(1 + 1)) {
+        static_assert(std::is_same_v<decltype(r), bool>);
+
+        CHECK(r == true);
+    } else {
+        CHECK(false); // must not be reached
+    }
+}
+
+TEST_CASE(
+    require_nothrow_expression, "REQUIRE_NOTHROW's result can be captured"
+)
+{
+    if (auto r = REQUIRE_NOTHROW(1 + 1)) {
+        static_assert(std::is_same_v<decltype(r), bool>);
+
+        CHECK(r == true);
+    } else {
+        CHECK(false); // must not be reached
+    }
 }

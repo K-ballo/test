@@ -7,6 +7,8 @@
 
 #include <eggs/test.hpp>
 
+#include <type_traits>
+
 TEST_CASE(require_bool_true, "REQUIRE passes and does not stop execution")
 {
     REQUIRE(true);
@@ -20,4 +22,15 @@ TEST_CASE(require_pointer, "REQUIRE passes with non-null pointer")
     int* p = &x;
     REQUIRE(p != nullptr);
     CHECK(*p == x);
+}
+
+TEST_CASE(require_expression, "REQUIRE's result can be captured")
+{
+    if (auto r = REQUIRE(1 + 1 == 2)) {
+        static_assert(std::is_same_v<decltype(r), bool>);
+
+        CHECK(r == true);
+    } else {
+        CHECK(false); // must not be reached
+    }
 }

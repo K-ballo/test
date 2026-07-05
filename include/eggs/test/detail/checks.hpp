@@ -36,7 +36,7 @@ EGGS_TEST_NOINLINE void nothrow_failed(
 );
 
 template <typename Fn>
-EGGS_TEST_NOINLINE inline bool check_throws(
+EGGS_TEST_NOINLINE inline std::exception_ptr check_throws(
     Fn fn, const char* expr, run_state& s, std::source_location const& loc
 )
 {
@@ -46,12 +46,12 @@ EGGS_TEST_NOINLINE inline bool check_throws(
         throw;
     } catch (...) {
         ++s.assertions_passed;
-        return true;
+        return std::current_exception();
     }
 
     ++s.assertions_failed;
     throws_failed(expr, loc, s.entry_depth);
-    return false;
+    return nullptr;
 }
 
 template <typename ExcType, typename Fn>

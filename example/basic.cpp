@@ -32,7 +32,12 @@ TEST_CASE(containers, "basic container checks")
 {
     std::vector<int> const v = {1, 2, 3};
     REQUIRE(!v.empty());
-    CHECK(v.size() == 3);
     CHECK(v.front() == 1);
     CHECK(v.back() == 3);
+
+    // CHECK returns bool, so it can guard a further check that would be
+    // unsafe to evaluate if the condition it depends on didn't hold.
+    if (CHECK(v.size() >= 3)) {
+        CHECK(v[2] == 3);
+    }
 }

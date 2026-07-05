@@ -7,6 +7,8 @@
 
 #include <eggs/test.hpp>
 
+#include <type_traits>
+
 TEST_CASE(check_bool_true, "CHECK passes when expression is true")
 {
     CHECK(true);
@@ -33,4 +35,15 @@ TEST_CASE(
     };
 
     CHECK(flag{});
+}
+
+TEST_CASE(check_expression, "CHECK's result can be captured")
+{
+    if (auto r = CHECK(1 + 1 == 2)) {
+        static_assert(std::is_same_v<decltype(r), bool>);
+
+        CHECK(r == true);
+    } else {
+        CHECK(false); // must not be reached
+    }
 }

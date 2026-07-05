@@ -71,7 +71,7 @@
 // CHECK_THROWS(expr)
 //
 // Evaluates expr and passes if it throws any exception.  Fails with a
-// diagnostic if expr completes without throwing.  Returns bool.
+// diagnostic if expr completes without throwing.  Returns std::exception_ptr.
 #define CHECK_THROWS(...)                             \
     ::eggs::test::detail::check_throws(               \
         [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
@@ -82,7 +82,7 @@
 // REQUIRE_THROWS(expr)
 //
 // Identical to CHECK_THROWS but stops execution of the current test case on
-// failure.  Returns bool.
+// failure.  Returns std::exception_ptr.
 #define REQUIRE_THROWS(...) \
     ::eggs::test::detail::require(CHECK_THROWS(__VA_ARGS__))
 

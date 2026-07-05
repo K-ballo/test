@@ -8,6 +8,7 @@
 #include <eggs/test.hpp>
 
 #include <stdexcept>
+#include <type_traits>
 
 namespace {
 struct my_error
@@ -57,4 +58,40 @@ TEST_CASE(
 {
     REQUIRE_THROWS(throw my_error{});
     CHECK(true);
+}
+
+TEST_CASE(
+    check_throws_expression,
+    "CHECK_THROWS's result can be captured and rethrown"
+)
+{
+    if (auto exc = CHECK_THROWS(throw 42)) {
+        static_assert(std::is_same_v<decltype(exc), std::exception_ptr>);
+
+        try {
+            std::rethrow_exception(exc);
+        } catch (int v) {
+            CHECK(v == 42);
+        }
+    } else {
+        CHECK(false); // must not be reached
+    }
+}
+
+TEST_CASE(
+    require_throws_expression,
+    "REQUIRE_THROWS's result can be captured and rethrown"
+)
+{
+    if (auto exc = REQUIRE_THROWS(throw 42)) {
+        static_assert(std::is_same_v<decltype(exc), std::exception_ptr>);
+
+        try {
+            std::rethrow_exception(exc);
+        } catch (int v) {
+            CHECK(v == 42);
+        }
+    } else {
+        CHECK(false); // must not be reached
+    }
 }
