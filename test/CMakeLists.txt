@@ -31,18 +31,31 @@ set_tests_properties(
 
 # Helper — creates a test executable and registers it with CTest.
 #
-# PASS_REGEX: the test passes only if its output matches this pattern.
-# FAIL_REGEX: the test fails if its output matches any of these patterns.
 # EXITS C:    the expected exit code (defaults to 0).
+# FAIL_REGEX: the test fails if its output matches any of these patterns
+#             (repeatable).
+# PASS_REGEX: the test passes only if its output matches all of these patterns
+#             (repeatable).
 function(add_lib_test name)
     cmake_parse_arguments(
         ARG
         ""
-        "EXITS;PASS_REGEX"
-        "ARGS;FAIL_REGEX;SOURCES"
+        "EXITS"
+        "ARGS;FAIL_REGEX;PASS_REGEX;SOURCES"
         ${ARGN}
     )
-
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(
+            FATAL_ERROR
+            "add_lib_test(${name}): missing values for keyword(s): ${ARG_KEYWORDS_MISSING_VALUES}"
+        )
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(
+            FATAL_ERROR
+            "add_lib_test(${name}): unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}"
+        )
+    endif()
     list(LENGTH ARG_SOURCES _n)
     if(_n EQUAL 1)
         get_filename_component(_stem ${ARG_SOURCES} NAME_WLE)
@@ -53,26 +66,31 @@ function(add_lib_test name)
     if(NOT TARGET _eggs_test.${_stem})
         add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
         target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::TestMain)
-        set_target_properties(_eggs_test.${_stem} PROPERTIES FOLDER "test")
-    endif()
-
-    if(NOT DEFINED ARG_EXITS)
-        set(ARG_EXITS 0)
-    endif()
-
-    if(ARG_PASS_REGEX OR ARG_FAIL_REGEX OR NOT ARG_EXITS EQUAL 0)
-        list(LENGTH ARG_FAIL_REGEX _nfail)
-        add_test(
-            NAME eggs.test.${name}
-            COMMAND
-                ${CMAKE_COMMAND} -P
-                "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/run_test.cmake" --
-                ${ARG_EXITS} "R:${ARG_PASS_REGEX}" ${_nfail} ${ARG_FAIL_REGEX}
-                $<TARGET_FILE:_eggs_test.${_stem}> ${ARG_ARGS}
+        set_target_properties(
+            _eggs_test.${_stem}
+            PROPERTIES
+                FOLDER "test"
+                TEST_LAUNCHER
+                    "${CMAKE_COMMAND};-P;${CMAKE_CURRENT_FUNCTION_LIST_DIR}/test_launcher.cmake;--"
         )
-    else()
-        add_test(NAME eggs.test.${name} COMMAND _eggs_test.${_stem} ${ARG_ARGS})
     endif()
+
+    # test_launcher.cmake picks these control args.
+    set(_control_args)
+    if(DEFINED ARG_EXITS AND NOT ARG_EXITS EQUAL 0)
+        list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
+    endif()
+    foreach(_pat IN LISTS ARG_FAIL_REGEX)
+        list(APPEND _control_args "--eggs-run-test-fail-regex=${_pat}")
+    endforeach()
+    foreach(_pat IN LISTS ARG_PASS_REGEX)
+        list(APPEND _control_args "--eggs-run-test-pass-regex=${_pat}")
+    endforeach()
+
+    add_test(
+        NAME eggs.test.${name}
+        COMMAND _eggs_test.${_stem} ${_control_args} ${ARG_ARGS}
+    )
     set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
 endfunction()
 
@@ -166,7 +184,9 @@ add_lib_test(
     SOURCES check.pass.cpp
     ARGS "--help"
     PASS_REGEX
-        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\]"
+        "-h, --help"
+        "--list.*list selected test case"
     EXITS 0
 )
 
@@ -176,7 +196,9 @@ add_lib_test(
     SOURCES check.pass.cpp
     ARGS "-h"
     PASS_REGEX
-        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\].*-h, --help.*--list.*list selected test case"
+        "Usage: .*_eggs_test\\.check\\.pass.*\\[options\\]"
+        "-h, --help"
+        "--list.*list selected test case"
     EXITS 0
 )
 

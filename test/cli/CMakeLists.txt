@@ -13,7 +13,7 @@ add_lib_test(
     cli/print_options.bare.pass
     SOURCES print_options.pass.cpp
     ARGS "--run=print_options_bare"
-    PASS_REGEX "--list.*list selected test case.*--run=<test_case>"
+    PASS_REGEX "--list.*list selected test case" "--run=<test_case>"
 )
 
 # print_options: ns form prefixes every flag with --<ns>:<flag>.
@@ -21,7 +21,7 @@ add_lib_test(
     cli/print_options.ns.pass
     SOURCES print_options.pass.cpp
     ARGS "--run=print_options_ns"
-    PASS_REGEX "--ns:list.*list selected test case.*--ns:run=<test_case>"
+    PASS_REGEX "--ns:list.*list selected test case" "--ns:run=<test_case>"
     FAIL_REGEX "  --list"
 )
 
