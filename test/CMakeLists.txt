@@ -280,6 +280,31 @@ add_lib_test(check.pass SOURCES check.pass.cpp DISCOVER EXITS 0)
 # REQUIRE with true expressions must exit 0 and not stop execution.
 add_lib_test(require.pass SOURCES require.pass.cpp DISCOVER EXITS 0)
 
+# SKIP stops execution and is reported separately from passed/failed cases,
+# without affecting the exit code.  --run fixes the order since test case
+# registration order is otherwise unspecified.
+add_lib_test(
+    skip.reason.pass
+    SOURCES skip.pass.cpp
+    ARGS "--run=skip_reason"
+    PASS_REGEX "\\[ SKIP \\] skip_reason -- not supported on this platform"
+    FAIL_REGEX "FAILED: false|\\[ FAIL \\]"
+    EXITS 0
+)
+
+# SKIP stops execution and is reported separately from passed/failed cases,
+# without affecting the exit code.  --run fixes the order since test case
+# registration order is otherwise unspecified.
+add_lib_test(
+    skip.after_checks.pass
+    SOURCES skip.pass.cpp
+    ARGS "--run=skip_after_checks_pass"
+    PASS_REGEX
+        "\\[ SKIP \\] skip_after_checks_pass -- skipping the rest of this test case"
+    FAIL_REGEX "FAILED: false|\\[ FAIL \\]"
+    EXITS 0
+)
+
 # --- failing tests -----------------------------------------------------------
 
 # CHECK with a false expression must cause the test case to be reported as
@@ -298,6 +323,16 @@ add_lib_test(
     SOURCES require.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# SKIP cannot undo an earlier failed CHECK: the case is still reported as
+# failed, not skipped.
+add_lib_test(
+    skip.fail
+    SOURCES skip.fail.cpp
+    PASS_REGEX "FAILED: 1 \\+ 1 == 3.*\\[ FAIL \\] skip_after_check_failure"
+    FAIL_REGEX "\\[ SKIP \\]"
     EXITS 1
 )
 

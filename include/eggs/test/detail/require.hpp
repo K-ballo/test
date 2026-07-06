@@ -10,7 +10,7 @@
 namespace eggs::test::detail {
 
 // Exception thrown by REQUIRE to unwind the current test case.
-struct unwind final
+struct unwind
 {};
 
 template <typename T>

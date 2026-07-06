@@ -11,6 +11,7 @@
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
 #include <eggs/test/detail/run_state.hpp>
+#include <eggs/test/detail/skip.hpp>
 
 #include <exception>
 #include <source_location>
@@ -69,6 +70,19 @@
 // Identical to CHECK but stops execution of the current test case on failure.
 // Returns bool.
 #define REQUIRE(...) ::eggs::test::detail::require(CHECK(__VA_ARGS__))
+
+// SKIP(reason)
+//
+// Marks the current test case as skipped and stops its execution
+// immediately, the same way REQUIRE does on failure.  Use this when a test
+// cannot meaningfully run in the current environment (e.g. an unsupported
+// platform or a missing feature).  Skipped test cases are reported
+// separately from passed and failed ones and do not affect the process
+// exit code.
+//
+// If a CHECK/REQUIRE already failed earlier in the same test case, the case
+// is still reported as failed; SKIP cannot undo an earlier failure.
+#define SKIP(reason_) ::eggs::test::detail::skip(reason_)
 
 // CHECK_THROWS(expr)
 //
