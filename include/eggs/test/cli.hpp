@@ -12,7 +12,9 @@
 #include <cstddef>
 #include <cstdio>
 #include <initializer_list>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace eggs::test {
 namespace detail {
@@ -31,12 +33,22 @@ void print_options(
     std::FILE* out, std::string_view ns = {}, std::size_t desc_col = 29u
 );
 
+// Result of parse_cli: the parsed options, and one message per flag that had
+// an invalid value.
+struct parse_cli_result
+{
+    run_options opts;
+    std::vector<std::string> errors;
+};
+
 // Parse known test-runner flags from argv, removing them in-place.
 // Unrecognized tokens remain in argv[1..argc-1]; argc is updated accordingly.
 // If ns is non-empty, only flags of the form --<ns>:<flag> are processed.
-run_options parse_cli(int& argc, char const* argv[], std::string_view ns = {});
+parse_cli_result
+parse_cli(int& argc, char const* argv[], std::string_view ns = {});
 
-inline run_options parse_cli(int& argc, char* argv[], std::string_view ns = {})
+inline parse_cli_result
+parse_cli(int& argc, char* argv[], std::string_view ns = {})
 {
     return parse_cli(argc, const_cast<char const**>(argv), ns);
 }

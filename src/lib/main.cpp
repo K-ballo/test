@@ -46,7 +46,12 @@ std::optional<int> parse_int(std::string_view sv) noexcept
 
 int main(int argc, char const* argv[])
 {
-    run_options const opts = parse_cli(argc, argv);
+    auto [opts, errors] = parse_cli(argc, argv);
+
+    for (auto const& e : errors) {
+        detail::println(stderr, "error: {}", e);
+    }
+    if (!errors.empty()) return EXIT_FAILURE;
 
     std::optional<int> exit_code;
 

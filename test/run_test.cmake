@@ -38,14 +38,29 @@ endwhile()
 
 list(POP_FRONT _args _exe)
 
+# Force color on (unless the test already picked its own --color=).
+set(_has_color_arg FALSE)
+foreach(_a IN LISTS _args)
+    if(_a MATCHES "^--color=")
+        set(_has_color_arg TRUE)
+    endif()
+endforeach()
+if(NOT _has_color_arg)
+    list(APPEND _args "--color=always")
+endif()
+
 execute_process(
-    COMMAND "${_exe}" ${_args} "--color=never"
+    COMMAND "${_exe}" ${_args}
     OUTPUT_VARIABLE _output
     ERROR_VARIABLE _output
     ECHO_OUTPUT_VARIABLE
     ECHO_ERROR_VARIABLE
     RESULT_VARIABLE _status
 )
+
+# Strip ANSI escape codes before matching;.
+string(ASCII 27 _esc)
+string(REGEX REPLACE "${_esc}\\[[0-9;]*m" "" _output "${_output}")
 
 if(NOT _status EQUAL _exits)
     message(SEND_ERROR "exit code ${_status} (expected ${_exits})")

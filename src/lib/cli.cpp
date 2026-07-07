@@ -14,7 +14,9 @@
 #include <cstdio>
 #include <format>
 #include <initializer_list>
+#include <string>
 #include <string_view>
+#include <vector>
 
 #include "opts.hpp"
 
@@ -82,10 +84,11 @@ std::string_view extract_stem(std::string_view arg, std::string_view const ns)
 
 } // namespace
 
-run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
+parse_cli_result parse_cli(int& argc, char const* argv[], std::string_view ns)
 {
     int outc = 1;
     run_options opts;
+    std::vector<std::string> errors;
 
     for (int i = 1; i < argc; ++i) {
         auto const stem = extract_stem(argv[i], ns);
@@ -103,7 +106,7 @@ run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
             } else if (val == "never") {
                 opts.color = color_when::never;
             } else {
-                argv[outc++] = argv[i];
+                errors.push_back(std::format("invalid color '{}'", val));
             }
         } else {
             argv[outc++] = argv[i];
@@ -111,7 +114,7 @@ run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
     }
 
     argc = outc;
-    return opts;
+    return {std::move(opts), std::move(errors)};
 }
 
 } // namespace eggs::test

@@ -237,7 +237,7 @@ add_lib_test(
     cli.color.invalid.fail
     SOURCES check.pass.cpp
     ARGS "--color=unknown"
-    PASS_REGEX "unknown argument '--color=unknown'"
+    PASS_REGEX "invalid color 'unknown'"
     EXITS 1
 )
 
