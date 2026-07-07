@@ -8,15 +8,9 @@
 #include <eggs/test.hpp>
 
 #include <algorithm>
-#include <cstdio>
 #include <format>
+#include <optional>
 #include <string_view>
-
-#ifdef _WIN32
-#    include <windows.h>
-#else
-#    include <unistd.h>
-#endif
 
 namespace eggs::test::detail {
 
@@ -37,7 +31,7 @@ enum class emphasis : int
 
 struct text_style
 {
-    detail::color fg;
+    std::optional<detail::color> fg;
     detail::emphasis em = emphasis::none;
 };
 
@@ -52,38 +46,11 @@ constexpr text_style operator|(text_style ts, emphasis em) noexcept
     return ts;
 }
 
-inline bool g_use_color = false;
-
-inline void init_color(color_when when) noexcept
-{
-    if (when == color_when::never) {
-        g_use_color = false;
-        return;
-    }
-
-    if (when == color_when::always) {
-        g_use_color = true;
-#ifdef _WIN32
-        // Best-effort: enable ANSI escape processing for the console.
-        // Do not disable color on failure — the user asked for it explicitly.
-        HANDLE const h = GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD mode = 0;
-        if (h != INVALID_HANDLE_VALUE && GetConsoleMode(h, &mode))
-            SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-#endif
-        return;
-    }
-
-    // auto_: enable color only when stdout is a console that supports ANSI.
-#ifdef _WIN32
-    HANDLE const h = GetStdHandle(STD_OUTPUT_HANDLE);
-    DWORD mode = 0;
-    g_use_color = h != INVALID_HANDLE_VALUE && GetConsoleMode(h, &mode) &&
-                  SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-#else
-    g_use_color = isatty(fileno(stdout)) != 0;
-#endif
-}
+inline constexpr text_style bold_red = fg(color::red) | emphasis::bold;
+inline constexpr text_style bold_green = fg(color::green) | emphasis::bold;
+inline constexpr text_style bold_cyan = fg(color::cyan) | emphasis::bold;
+inline constexpr text_style yellow = fg(color::yellow);
+inline constexpr text_style gray = fg(color::gray);
 
 struct styled
 {
@@ -91,24 +58,37 @@ struct styled
     text_style style;
 };
 
+// Decides whether output should be colored; has no side effect other than,
+// best-effort, enabling ANSI escape processing on the Windows console when
+// color is requested.
+[[nodiscard]] bool should_use_color(color_when when) noexcept;
+
+// Resolves to ts when use_color is true, or the empty text_style otherwise.
+constexpr text_style when(bool use_color, text_style ts) noexcept
+{
+    return use_color ? ts : text_style{};
+}
+
 } // namespace eggs::test::detail
 
 template <>
 struct std::formatter<eggs::test::detail::styled>
     : std::formatter<std::string_view>
 {
+    using base = std::formatter<std::string_view>;
+
     auto format(eggs::test::detail::styled const& arg, auto& ctx) const
     {
-        if (!eggs::test::detail::g_use_color) {
-            return std::formatter<std::string_view>::format(arg.text, ctx);
+        if (!arg.style.fg) {
+            return base::format(arg.text, ctx);
         }
 
         auto out = std::format_to(
             ctx.out(), "\033[{};{}m", static_cast<int>(arg.style.em),
-            static_cast<int>(arg.style.fg)
+            static_cast<int>(*arg.style.fg)
         );
         ctx.advance_to(out);
-        out = std::formatter<std::string_view>::format(arg.text, ctx);
+        out = base::format(arg.text, ctx);
         return std::ranges::copy(std::string_view("\033[0m"), out).out;
     }
 };

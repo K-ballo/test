@@ -28,12 +28,14 @@ void print_failed(
     Args&&... args
 )
 {
-    detail::print(
-        stdout, "  {}: ",
-        detail::styled(
-            "FAILED", detail::fg(detail::color::red) | detail::emphasis::bold
-        )
-    );
+    auto const styled = //
+        [use_color = run_state::current().use_color](
+            std::string_view text, text_style ts
+        ) noexcept {
+            return detail::styled(text, detail::when(use_color, ts));
+        };
+
+    detail::print(stdout, "  {}: ", styled("FAILED", detail::bold_red));
     detail::println(stdout, fmt, std::forward<Args>(args)...);
     detail::println(
         stdout, "    {}  [{}:{}]", loc.function_name(), loc.file_name(),

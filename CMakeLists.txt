@@ -46,6 +46,7 @@ add_library(
     src/lib/cli.cpp
     src/lib/main.cpp
     src/lib/runner.cpp
+    src/lib/styled.cpp
 )
 target_sources(
     _eggs_test

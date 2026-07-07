@@ -156,7 +156,6 @@
 
 namespace eggs::test {
 
-// --color=<when> setting for run_options.
 enum class color_when
 {
     auto_,
@@ -167,7 +166,7 @@ enum class color_when
 // Options passed to run()
 struct run_options
 {
-    // (needs short description)
+    // whether to color output; auto colors only when stdout is a terminal
     color_when color = color_when::auto_;
     // ordered test case names; empty = run all
     std::vector<std::string_view> run;

@@ -19,6 +19,7 @@ class run_state
     std::size_t entry_depth = 0;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+    bool use_color = false;
 
     // Points at the run_state of the currently-executing test on this thread.
     // nullptr between test cases.
