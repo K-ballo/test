@@ -6,6 +6,7 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/color.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
@@ -27,7 +28,9 @@ void print_failed(
     Args&&... args
 )
 {
-    detail::print(stdout, "  FAILED: ");
+    detail::print(
+        stdout, "  {}: ", detail::colored("FAILED", detail::ansi::bold_red)
+    );
     detail::println(stdout, fmt, std::forward<Args>(args)...);
     detail::println(
         stdout, "    {}  [{}:{}]", loc.function_name(), loc.file_name(),

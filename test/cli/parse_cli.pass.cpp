@@ -194,6 +194,61 @@ TEST_CASE(
     CHECK(std::string_view{argv[2]} == "--xyz:run=foo");
 }
 
+TEST_CASE(parse_cli_color_auto, "--color=auto is consumed and sets opts.color")
+{
+    char const* argv[] = {"prog", "--color=auto"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.color == eggs::test::color_when::auto_);
+    CHECK(argc == 1);
+}
+
+TEST_CASE(
+    parse_cli_color_always, "--color=always is consumed and sets opts.color"
+)
+{
+    char const* argv[] = {"prog", "--color=always"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.color == eggs::test::color_when::always);
+    CHECK(argc == 1);
+}
+
+TEST_CASE(
+    parse_cli_color_never, "--color=never is consumed and sets opts.color"
+)
+{
+    char const* argv[] = {"prog", "--color=never"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.color == eggs::test::color_when::never);
+    CHECK(argc == 1);
+}
+
+TEST_CASE(
+    parse_cli_ns_color, "--ns:color=never is consumed and sets opts.color"
+)
+{
+    char const* argv[] = {"prog", "--ns:color=never"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv, "ns");
+    CHECK(opts.color == eggs::test::color_when::never);
+    CHECK(argc == 1);
+}
+
+TEST_CASE(
+    parse_cli_color_invalid,
+    "--color=bogus (unrecognized value) is left in argv"
+)
+{
+    char const* argv[] = {"prog", "--color=bogus"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.color == eggs::test::color_when::auto_);
+    CHECK(argc == 2);
+    CHECK(std::string_view{argv[1]} == "--color=bogus");
+}
+
 TEST_CASE(parse_cli_mutable_argv, "non-const char* overload forwards correctly")
 {
     char prog[] = "prog";

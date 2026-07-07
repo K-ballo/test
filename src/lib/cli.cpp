@@ -94,6 +94,17 @@ run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
             opts.list = true;
         } else if (stem.starts_with("run=")) {
             opts.run.push_back(stem.substr(4));
+        } else if (stem.starts_with("color=")) {
+            auto const val = stem.substr(6);
+            if (val == "auto") {
+                opts.color = color_when::auto_;
+            } else if (val == "always") {
+                opts.color = color_when::always;
+            } else if (val == "never") {
+                opts.color = color_when::never;
+            } else {
+                argv[outc++] = argv[i];
+            }
         } else {
             argv[outc++] = argv[i];
         }

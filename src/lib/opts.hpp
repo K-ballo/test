@@ -39,9 +39,16 @@ constexpr
              }},
         {.flag = "run=",
          .value = "<test_case>",
+         .desc =
+             {
+                 "run only the specified test cases (repeatable).",
+                 "all test cases will run if omitted",
+             }},
+        {.flag = "color=",
+         .value = "<auto|always|never>",
          .desc = {
-             "run only the specified test cases (repeatable).",
-             "all test cases will run if omitted",
+             "control colored output; defaults to auto,",
+             "which colors output only when stdout is a terminal",
          }},
 };
 

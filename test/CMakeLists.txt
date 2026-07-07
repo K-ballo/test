@@ -232,6 +232,15 @@ add_lib_test(
     EXITS 1
 )
 
+# --color=<invalid> must print an error and exit 1.
+add_lib_test(
+    cli.color.invalid.fail
+    SOURCES check.pass.cpp
+    ARGS "--color=unknown"
+    PASS_REGEX "unknown argument '--color=unknown'"
+    EXITS 1
+)
+
 # --list must print exactly the registered test case names, one per line.
 string(
     CONCAT _list_regex

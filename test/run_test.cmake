@@ -39,7 +39,7 @@ endwhile()
 list(POP_FRONT _args _exe)
 
 execute_process(
-    COMMAND "${_exe}" ${_args}
+    COMMAND "${_exe}" ${_args} "--color=never"
     OUTPUT_VARIABLE _output
     ERROR_VARIABLE _output
     ECHO_OUTPUT_VARIABLE

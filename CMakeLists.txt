@@ -56,6 +56,7 @@ target_sources(
                 include/eggs/test.hpp
                 include/eggs/test/cli.hpp
                 include/eggs/test/detail/checks.hpp
+                include/eggs/test/detail/color.hpp
                 include/eggs/test/detail/noinline.hpp
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/require.hpp

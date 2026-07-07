@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <format>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
@@ -44,7 +45,12 @@ int registry::run(std::vector<test_entry> const& run)
     std::vector<std::string_view> cases_failed;
 
     for (test_entry const& e : run) {
-        detail::println(stdout, "[ RUN  ] {} -- {}", e.name, e.desc);
+        detail::println(
+            stdout, "[ {}  ] {} -- {}",
+            detail::colored("RUN", detail::ansi::bold_cyan),
+            detail::colored(e.name, detail::ansi::yellow),
+            detail::colored(e.desc, detail::ansi::gray)
+        );
 
         run_state state;
         state.entry_depth = entry_depth;
@@ -56,34 +62,65 @@ int registry::run(std::vector<test_entry> const& run)
             passed = !state.assertions_failed;
         } catch (require_failed const&) {
         } catch (std::exception const& ex) {
-            detail::println(stdout, "  EXCEPTION: {}", ex.what());
+            detail::println(
+                stdout, "  {}: {}",
+                detail::colored("EXCEPTION", detail::ansi::bold_red), ex.what()
+            );
         } catch (...) {
-            detail::println(stdout, "  UNKNOWN EXCEPTION");
+            detail::println(
+                stdout, "  {}",
+                detail::colored("UNKNOWN EXCEPTION", detail::ansi::bold_red)
+            );
         }
         run_state::set_current(nullptr);
 
         if (passed) {
-            detail::println(stdout, "[ PASS ] {}", e.name);
+            detail::println(
+                stdout, "[ {} ] {}",
+                detail::colored("PASS", detail::ansi::bold_green),
+                detail::colored(e.name, detail::ansi::yellow)
+            );
             ++cases_passed;
         } else {
-            detail::println(stdout, "[ FAIL ] {}", e.name);
+            detail::println(
+                stdout, "[ {} ] {}",
+                detail::colored("FAIL", detail::ansi::bold_red),
+                detail::colored(e.name, detail::ansi::yellow)
+            );
             cases_failed.push_back(e.name);
         }
 
         auto const assertions_total =
             state.assertions_passed + state.assertions_failed;
-        detail::println(
-            stdout, "{} of {} assertions passed", state.assertions_passed,
+        auto const summary = std::format(
+            "{} of {} assertions passed", state.assertions_passed,
             assertions_total
+        );
+        detail::println(
+            stdout, "{}",
+            detail::colored(
+                summary,
+                passed ? detail::ansi::bold_green : detail::ansi::bold_red
+            )
         );
     }
 
     auto const cases_total = cases_passed + cases_failed.size();
+    auto const summary =
+        std::format("\n{} of {} test cases passed", cases_passed, cases_total);
     detail::println(
-        stdout, "\n{} of {} test cases passed", cases_passed, cases_total
+        stdout, "{}",
+        detail::colored(
+            summary, cases_failed.empty() ? detail::ansi::bold_green
+                                          : detail::ansi::bold_red
+        )
     );
+
     if (!cases_failed.empty()) {
-        detail::println(stdout, "Failed test cases:");
+        detail::println(
+            stdout,
+            "{}:", detail::colored("Failed test cases", detail::ansi::bold_red)
+        );
         for (auto const& e : cases_failed) {
             detail::println(stdout, "- {}", e);
         }
@@ -96,6 +133,8 @@ int registry::run(std::vector<test_entry> const& run)
 
 int run(run_options opts)
 {
+    ::eggs::test::detail::init_color(opts.color);
+
     auto const& all_cases = detail::registry::cases();
 
     std::vector<detail::test_entry> selected_cases;
