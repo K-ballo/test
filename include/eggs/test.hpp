@@ -8,7 +8,6 @@
 #pragma once
 
 #include <eggs/test/detail/checks.hpp>
-#include <eggs/test/detail/color.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -157,11 +156,18 @@
 
 namespace eggs::test {
 
-using detail::color_when;
+// --color=<when> setting for run_options.
+enum class color_when
+{
+    auto_,
+    always,
+    never
+};
 
 // Options passed to run()
 struct run_options
 {
+    // (needs short description)
     color_when color = color_when::auto_;
     // ordered test case names; empty = run all
     std::vector<std::string_view> run;

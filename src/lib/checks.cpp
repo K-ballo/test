@@ -6,9 +6,9 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test/detail/checks.hpp>
-#include <eggs/test/detail/color.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
+#include <eggs/test/detail/styled.hpp>
 
 #include <cassert>
 #include <cstdio>
@@ -29,7 +29,10 @@ void print_failed(
 )
 {
     detail::print(
-        stdout, "  {}: ", detail::colored("FAILED", detail::ansi::bold_red)
+        stdout, "  {}: ",
+        detail::styled(
+            "FAILED", detail::fg(detail::color::red) | detail::emphasis::bold
+        )
     );
     detail::println(stdout, fmt, std::forward<Args>(args)...);
     detail::println(

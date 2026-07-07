@@ -9,6 +9,7 @@
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
+#include <eggs/test/detail/styled.hpp>
 
 #include <cstddef>
 #include <cstdio>
@@ -47,9 +48,11 @@ int registry::run(std::vector<test_entry> const& run)
     for (test_entry const& e : run) {
         detail::println(
             stdout, "[ {}  ] {} -- {}",
-            detail::colored("RUN", detail::ansi::bold_cyan),
-            detail::colored(e.name, detail::ansi::yellow),
-            detail::colored(e.desc, detail::ansi::gray)
+            detail::styled(
+                "RUN", detail::fg(detail::color::cyan) | detail::emphasis::bold
+            ),
+            detail::styled(e.name, detail::fg(detail::color::yellow)),
+            detail::styled(e.desc, detail::fg(detail::color::gray))
         );
 
         run_state state;
@@ -64,12 +67,19 @@ int registry::run(std::vector<test_entry> const& run)
         } catch (std::exception const& ex) {
             detail::println(
                 stdout, "  {}: {}",
-                detail::colored("EXCEPTION", detail::ansi::bold_red), ex.what()
+                detail::styled(
+                    "EXCEPTION",
+                    detail::fg(detail::color::red) | detail::emphasis::bold
+                ),
+                ex.what()
             );
         } catch (...) {
             detail::println(
                 stdout, "  {}",
-                detail::colored("UNKNOWN EXCEPTION", detail::ansi::bold_red)
+                detail::styled(
+                    "UNKNOWN EXCEPTION",
+                    detail::fg(detail::color::red) | detail::emphasis::bold
+                )
             );
         }
         run_state::set_current(nullptr);
@@ -77,15 +87,21 @@ int registry::run(std::vector<test_entry> const& run)
         if (passed) {
             detail::println(
                 stdout, "[ {} ] {}",
-                detail::colored("PASS", detail::ansi::bold_green),
-                detail::colored(e.name, detail::ansi::yellow)
+                detail::styled(
+                    "PASS",
+                    detail::fg(detail::color::green) | detail::emphasis::bold
+                ),
+                detail::styled(e.name, detail::fg(detail::color::yellow))
             );
             ++cases_passed;
         } else {
             detail::println(
                 stdout, "[ {} ] {}",
-                detail::colored("FAIL", detail::ansi::bold_red),
-                detail::colored(e.name, detail::ansi::yellow)
+                detail::styled(
+                    "FAIL",
+                    detail::fg(detail::color::red) | detail::emphasis::bold
+                ),
+                detail::styled(e.name, detail::fg(detail::color::yellow))
             );
             cases_failed.push_back(e.name);
         }
@@ -98,9 +114,10 @@ int registry::run(std::vector<test_entry> const& run)
         );
         detail::println(
             stdout, "{}",
-            detail::colored(
+            detail::styled(
                 summary,
-                passed ? detail::ansi::bold_green : detail::ansi::bold_red
+                detail::fg(passed ? detail::color::green : detail::color::red) |
+                    detail::emphasis::bold
             )
         );
     }
@@ -110,16 +127,21 @@ int registry::run(std::vector<test_entry> const& run)
         std::format("\n{} of {} test cases passed", cases_passed, cases_total);
     detail::println(
         stdout, "{}",
-        detail::colored(
-            summary, cases_failed.empty() ? detail::ansi::bold_green
-                                          : detail::ansi::bold_red
+        detail::styled(
+            summary,
+            detail::fg(
+                cases_failed.empty() ? detail::color::green : detail::color::red
+            ) | detail::emphasis::bold
         )
     );
 
     if (!cases_failed.empty()) {
         detail::println(
-            stdout,
-            "{}:", detail::colored("Failed test cases", detail::ansi::bold_red)
+            stdout, "{}:",
+            detail::styled(
+                "Failed test cases",
+                detail::fg(detail::color::red) | detail::emphasis::bold
+            )
         );
         for (auto const& e : cases_failed) {
             detail::println(stdout, "- {}", e);

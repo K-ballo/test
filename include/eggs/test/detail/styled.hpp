@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <eggs/test.hpp>
+
 #include <algorithm>
 #include <cstdio>
 #include <format>
@@ -18,21 +20,37 @@
 
 namespace eggs::test::detail {
 
-namespace ansi {
-inline constexpr const char* reset = "\033[0m";
-inline constexpr const char* bold_red = "\033[1;31m";
-inline constexpr const char* bold_green = "\033[1;32m";
-inline constexpr const char* bold_cyan = "\033[1;36m";
-inline constexpr const char* yellow = "\033[0;33m";
-inline constexpr const char* gray = "\033[0;90m";
-} // namespace ansi
-
-enum class color_when
+enum class color : int
 {
-    auto_,
-    always,
-    never
+    red = 31,
+    green = 32,
+    yellow = 33,
+    cyan = 36,
+    gray = 90
 };
+
+enum class emphasis : int
+{
+    none = 0,
+    bold = 1
+};
+
+struct text_style
+{
+    detail::color fg;
+    detail::emphasis em = emphasis::none;
+};
+
+constexpr text_style fg(color c) noexcept
+{
+    return {c};
+}
+
+constexpr text_style operator|(text_style ts, emphasis em) noexcept
+{
+    ts.em = em;
+    return ts;
+}
 
 inline bool g_use_color = false;
 
@@ -67,31 +85,30 @@ inline void init_color(color_when when) noexcept
 #endif
 }
 
-struct colored
+struct styled
 {
     std::string_view text;
-    const char* code;
+    text_style style;
 };
 
 } // namespace eggs::test::detail
 
 template <>
-struct std::formatter<eggs::test::detail::colored>
+struct std::formatter<eggs::test::detail::styled>
     : std::formatter<std::string_view>
 {
-    auto format(eggs::test::detail::colored const& arg, auto& ctx) const
+    auto format(eggs::test::detail::styled const& arg, auto& ctx) const
     {
         if (!eggs::test::detail::g_use_color) {
             return std::formatter<std::string_view>::format(arg.text, ctx);
         }
 
-        auto out = std::ranges::copy(std::string_view(arg.code), ctx.out()).out;
+        auto out = std::format_to(
+            ctx.out(), "\033[{};{}m", static_cast<int>(arg.style.em),
+            static_cast<int>(arg.style.fg)
+        );
         ctx.advance_to(out);
         out = std::formatter<std::string_view>::format(arg.text, ctx);
-        out = std::ranges::copy(
-                  std::string_view(eggs::test::detail::ansi::reset), out
-        )
-                  .out;
-        return out;
+        return std::ranges::copy(std::string_view("\033[0m"), out).out;
     }
 };
