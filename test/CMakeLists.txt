@@ -348,6 +348,28 @@ add_lib_test(
     EXITS 1
 )
 
+# --- color tests ---------------------------------------------------------
+
+string(ASCII 27 _esc) # ESC[
+
+# --color=always must actually emit ANSI escape codes in the output.
+add_lib_test(
+    color.always.pass
+    SOURCES check.pass.cpp
+    ARGS "--color=always"
+    PASS_REGEX "${_esc}"
+)
+
+# --color=never must suppress all ANSI escape codes in the output. The
+# runner only strips escape codes it forced on itself, so a test that picks
+# its own --color= is matched against the raw, unstripped output.
+add_lib_test(
+    color.never.pass
+    SOURCES check.pass.cpp
+    ARGS "--color=never"
+    FAIL_REGEX "${_esc}"
+)
+
 # --- exception tests ---------------------------------------------------------
 
 # CHECK_THROWS / REQUIRE_THROWS pass for any thrown type (int, std::exception, custom).

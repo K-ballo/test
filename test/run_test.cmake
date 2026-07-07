@@ -58,9 +58,11 @@ execute_process(
     RESULT_VARIABLE _status
 )
 
-# Strip ANSI escape codes before matching;.
-string(ASCII 27 _esc)
-string(REGEX REPLACE "${_esc}\\[[0-9;]*m" "" _output "${_output}")
+# Only strip the ANSI escape codes we forced on above.
+if(NOT _has_color_arg)
+    string(ASCII 27 _esc)
+    string(REGEX REPLACE "${_esc}\\[[0-9;]*m" "" _output "${_output}")
+endif()
 
 if(NOT _status EQUAL _exits)
     message(SEND_ERROR "exit code ${_status} (expected ${_exits})")
