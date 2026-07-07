@@ -8,10 +8,12 @@
 #pragma once
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/context.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
 
 #include <exception>
+#include <format>
 #include <source_location>
 #include <string_view>
 #include <vector>
@@ -155,6 +157,36 @@
 // failure.  Returns bool.
 #define REQUIRE_NOTHROW(...) \
     ::eggs::test::detail::require(CHECK_NOTHROW(__VA_ARGS__))
+
+#define EGGS_TEST_PP_CAT_(a, b) a##b
+#define EGGS_TEST_PP_CAT(a, b) EGGS_TEST_PP_CAT_(a, b)
+
+// CONTEXT(expr)
+//
+// Records a scoped diagnostic message, shown alongside every CHECK/REQUIRE
+// diagnostic (whether PASSED or FAILED) produced while still in scope.
+// Nested CONTEXT calls all remain active until their own scope ends, and are
+// shown outermost first:
+//
+//   void push_item(int id) {
+//       CONTEXT(id);
+//       CHECK(id > 0);
+//   }
+//
+// Prints "<expr> -> <value>", where <value> is expr formatted with
+// std::format at the point CONTEXT is called (not when a diagnostic is
+// printed), so it reflects the state at the start of the scope even if expr
+// changes, or is corrupted, before a diagnostic actually fires. When expr is
+// itself a literal (e.g. a plain string message), the "<expr> -> " prefix is
+// omitted and only the value is shown.
+//
+// Uses #__VA_ARGS__ so that expressions containing commas (e.g. template
+// arguments) stringify correctly.
+#define CONTEXT(...)                                     \
+    ::eggs::test::detail::context_frame const            \
+    EGGS_TEST_PP_CAT(eggs_test_context_, __LINE__)(      \
+        #__VA_ARGS__, ::std::format("{}", (__VA_ARGS__)) \
+    )
 
 namespace eggs::test {
 

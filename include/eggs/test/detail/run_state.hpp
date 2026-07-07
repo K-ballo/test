@@ -10,8 +10,11 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
+#include <vector>
 
 namespace eggs::test::detail {
+
+class context_frame;
 
 class run_state
 {
@@ -20,6 +23,7 @@ class run_state
     std::size_t entry_depth = 0;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+    std::vector<context_frame const*> context_stack;
 
     // Points at the run_state of the currently-executing test on this thread.
     // nullptr between test cases.

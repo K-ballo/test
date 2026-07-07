@@ -6,6 +6,7 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/context.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
@@ -25,7 +26,23 @@ namespace eggs::test::detail {
 
 namespace {
 
-// Prints "<label>: <message>" followed by "<function>  [<file>:<line>]".
+// Prints one "CONTEXT: <label> -> <value>" line per active context_frame,
+// outermost first; skips the "<label> -> " prefix for literal-only frames.
+void print_context()
+{
+    for (context_frame const* frame : run_state::current().context_stack) {
+        if (frame->label().empty()) {
+            detail::println(stdout, "  CONTEXT: {}", frame->message());
+        } else {
+            detail::println(
+                stdout, "  CONTEXT: {} -> {}", frame->label(), frame->message()
+            );
+        }
+    }
+}
+
+// Prints "<label>: <message>", "<function>  [<file>:<line>]", then any active
+// CONTEXT frames.
 template <typename... Args>
 void print_check(
     const char* label, std::source_location const& loc,
@@ -38,6 +55,7 @@ void print_check(
         stdout, "    #0 {}  [{}:{}]", loc.function_name(), loc.file_name(),
         loc.line()
     );
+    print_context();
 }
 
 template <typename... Args>

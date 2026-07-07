@@ -397,6 +397,52 @@ add_lib_test(
     EXITS 1
 )
 
+# --- context tests -------------------------------------------------------
+
+# CONTEXT(expr) shows "expr -> value" alongside PASSED diagnostics (with
+# --verbose); an expression merely starting with a digit (not itself a
+# literal) still shows its label; a literal-only message omits the
+# "expr -> " prefix; nested frames print outermost first; a frame stops
+# applying once its scope ends; and the value is captured when CONTEXT(...) is
+# called, not when a diagnostic is later printed.
+string(CONCAT _context_nested_regex "CONTEXT: outer\n" "  CONTEXT: inner")
+add_lib_test(
+    context.pass
+    SOURCES context.pass.cpp
+    ARGS "--verbose"
+    PASS_REGEX
+        "CONTEXT: id -> 42"
+        "CONTEXT: 5 \\+ x -> 8"
+        "CONTEXT: processing item"
+        "${_context_nested_regex}"
+        "CONTEXT: counter -> 0"
+    FAIL_REGEX "CONTEXT: scoped out" "CONTEXT: counter -> 7"
+    EXITS 0
+)
+
+# CONTEXT(expr) appears alongside FAILED diagnostics too (no --verbose
+# needed); its value is captured when CONTEXT(...) was called, not at the
+# point of failure; and it prints after the source location but before any
+# stacktrace.
+string(
+    CONCAT _context_placement_regex
+    ".\n"
+    "  CONTEXT: id -> 3\n"
+    "  Stacktrace"
+)
+add_lib_test(
+    context.fail
+    SOURCES context.fail.cpp
+    PASS_REGEX
+        "FAILED: id == 42"
+        "CONTEXT: id -> 7"
+        "FAILED: counter == 999"
+        "CONTEXT: counter -> 0"
+        "${_context_placement_regex}"
+    FAIL_REGEX "CONTEXT: counter -> 5"
+    EXITS 1
+)
+
 # --- cli tests -----------------------------------------------------------
 
 add_subdirectory(cli)

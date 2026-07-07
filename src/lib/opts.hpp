@@ -46,7 +46,7 @@ constexpr
              }},
         {.flag = "verbose",
          .value = {},
-         .desc = {"also report successful checks, not just failures"}},
+         .desc = {"also report successful checks"}},
 };
 
 } // namespace eggs::test
