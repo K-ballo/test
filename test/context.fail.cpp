@@ -30,6 +30,16 @@ TEST_CASE(
     CHECK(counter == 999);
 }
 
+TEST_CASE(
+    context_fmt_fail, "CONTEXT(fmt, args...) appears in a FAILED diagnostic too"
+)
+{
+    int i = 1;
+    int j = 2;
+    CONTEXT("i={} j={}", i, j);
+    CHECK(false);
+}
+
 namespace {
 
 EGGS_TEST_NOINLINE void failing_context_helper()

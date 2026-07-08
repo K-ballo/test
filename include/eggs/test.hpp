@@ -161,31 +161,37 @@
 #define EGGS_TEST_PP_CAT_(a, b) a##b
 #define EGGS_TEST_PP_CAT(a, b) EGGS_TEST_PP_CAT_(a, b)
 
+// CONTEXT(fmt, args...)
 // CONTEXT(expr)
 //
 // Records a scoped diagnostic message, shown alongside every CHECK/REQUIRE
-// diagnostic (whether PASSED or FAILED) produced while still in scope.
-// Nested CONTEXT calls all remain active until their own scope ends, and are
-// shown outermost first:
+// diagnostic (whether PASSED or FAILED) produced while still in scope, along
+// with the CONTEXT(...) call's own source location. Nested CONTEXT calls all
+// remain active until their own scope ends, and are shown innermost first:
 //
 //   void push_item(int id) {
-//       CONTEXT(id);
+//       CONTEXT("processing item {}", id);
 //       CHECK(id > 0);
 //   }
 //
-// Prints "<expr> -> <value>", where <value> is expr formatted with
-// std::format at the point CONTEXT is called (not when a diagnostic is
-// printed), so it reflects the state at the start of the scope even if expr
-// changes, or is corrupted, before a diagnostic actually fires. When expr is
-// itself a literal (e.g. a plain string message), the "<expr> -> " prefix is
-// omitted and only the value is shown.
+// fmt is a std::format format string and args its arguments (possibly none).
 //
-// Uses #__VA_ARGS__ so that expressions containing commas (e.g. template
-// arguments) stringify correctly.
-#define CONTEXT(...)                                     \
-    ::eggs::test::detail::context_frame const            \
-    EGGS_TEST_PP_CAT(eggs_test_context_, __LINE__)(      \
-        #__VA_ARGS__, ::std::format("{}", (__VA_ARGS__)) \
+// As a special case, CONTEXT(expr) with a single argument instead formats
+// expr with a default "{}" spec and labels it with its own stringified text,
+// printing "<expr> -> <value>" - unless expr is itself a literal (e.g. a
+// plain string message), in which case only the value is shown:
+//
+//   CONTEXT(id);                 // "id -> 42"
+//   CONTEXT("processing item");  // "processing item"
+//
+// The value is captured at the point CONTEXT is called, so it reflects the
+// state at the start of the scope, before a diagnostic actually fires.
+#define CONTEXT(...)                                                     \
+    ::eggs::test::detail::context_guard const                            \
+    EGGS_TEST_PP_CAT(eggs_test_context_guard_, __LINE__)(                \
+        ::eggs::test::detail::make_context(                              \
+            #__VA_ARGS__, ::std::source_location::current(), __VA_ARGS__ \
+        )                                                                \
     )
 
 namespace eggs::test {

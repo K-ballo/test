@@ -25,7 +25,7 @@ TEST_CASE(
     CHECK(1 + 1 == 2);
 }
 
-TEST_CASE(context_nested_pass, "nested CONTEXT frames show outermost first")
+TEST_CASE(context_nested_pass, "nested CONTEXT frames show innermost first")
 {
     CONTEXT("outer");
     {
@@ -64,5 +64,36 @@ TEST_CASE(
 {
     int x = 3;
     CONTEXT(5 + x);
+    CHECK(1 + 1 == 2);
+}
+
+TEST_CASE(
+    context_fmt_pass,
+    "CONTEXT(fmt, args...) formats with the given format string and no label"
+)
+{
+    int i = 1;
+    int j = 2;
+    CONTEXT("i={} j={}", i, j);
+    CHECK(1 + 1 == 2);
+}
+
+namespace {
+
+template <typename T, typename U>
+T first_of(T t, U)
+{
+    return t;
+}
+
+} // namespace
+
+TEST_CASE(
+    context_template_comma_pass,
+    "CONTEXT(expr) where expr has an unparenthesized template-argument comma "
+    "is still treated as one argument, not two"
+)
+{
+    CONTEXT(first_of<int, double>(5, 1.5));
     CHECK(1 + 1 == 2);
 }

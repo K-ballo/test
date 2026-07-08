@@ -26,23 +26,25 @@ namespace eggs::test::detail {
 
 namespace {
 
-// Prints one "CONTEXT: <label> -> <value>" line per active context_frame,
-// outermost first; skips the "<label> -> " prefix for literal-only frames.
-void print_context()
+// Prints a single "Context (innermost first):" header followed by one
+// "<message>  [<file>:<line>]" line per active context_guard. <file>:<line>
+// is each CONTEXT(...) call's own location, not the check's. Prints nothing
+// if there are no active frames.
+void print_context(context_guard const* guard)
 {
-    for (context_frame const* frame : run_state::current().context_stack) {
-        if (frame->label().empty()) {
-            detail::println(stdout, "  CONTEXT: {}", frame->message());
-        } else {
-            detail::println(
-                stdout, "  CONTEXT: {} -> {}", frame->label(), frame->message()
-            );
-        }
+    if (!guard) return;
+
+    detail::println(stdout, "  Context (innermost first):");
+    for (; guard; guard = guard->prev) {
+        context_frame const& frame = guard->frame;
+        detail::println(
+            stdout, "    {}  [{}:{}]", frame.message, frame.loc.file_name(),
+            frame.loc.line()
+        );
     }
 }
 
-// Prints "<label>: <message>", "<function>  [<file>:<line>]", then any active
-// CONTEXT frames.
+// Prints "<label>: <message>", "<function>  [<file>:<line>]".
 template <typename... Args>
 void print_check(
     const char* label, std::source_location const& loc,
@@ -55,7 +57,6 @@ void print_check(
         stdout, "    #0 {}  [{}:{}]", loc.function_name(), loc.file_name(),
         loc.line()
     );
-    print_context();
 }
 
 template <typename... Args>
@@ -64,6 +65,7 @@ void print_passed(
     Args&&... args
 )
 {
+    print_context(run_state::current().context_top);
     print_check("PASSED", loc, fmt, std::forward<Args>(args)...);
 }
 
@@ -73,6 +75,7 @@ void print_failed(
     Args&&... args
 )
 {
+    print_context(run_state::current().context_top);
     print_check("FAILED", loc, fmt, std::forward<Args>(args)...);
 }
 

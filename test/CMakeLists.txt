@@ -399,47 +399,60 @@ add_lib_test(
 
 # --- context tests -------------------------------------------------------
 
-# CONTEXT(expr) shows "expr -> value" alongside PASSED diagnostics (with
-# --verbose); an expression merely starting with a digit (not itself a
-# literal) still shows its label; a literal-only message omits the
-# "expr -> " prefix; nested frames print outermost first; a frame stops
-# applying once its scope ends; and the value is captured when CONTEXT(...) is
-# called, not when a diagnostic is later printed.
-string(CONCAT _context_nested_regex "CONTEXT: outer\n" "  CONTEXT: inner")
+# CONTEXT(expr) shows "expr -> value" plus its own source location, before
+# PASSED diagnostics (with --verbose); an expression merely starting with a
+# digit (not itself a literal) still shows its label; a literal-only message
+# omits the "expr -> " prefix; nested frames print innermost first; a frame
+# stops applying once its scope ends; the value is captured when
+# CONTEXT(...) is called, not when a diagnostic is later printed;
+# CONTEXT(fmt, args...) prints the formatted result with no label; and an
+# expression with an unparenthesized template-argument comma is still
+# treated as a single argument.
+# A single "Context (innermost first):" header covers all active frames; each
+# frame gets its own indented line, with no repeated header in between.
+string(
+    CONCAT _context_nested_regex
+    "Context \\(innermost first\\):\n"
+    "    inner  \\[.*context\\.pass\\.cpp:[0-9]+\\]\n"
+    "    outer"
+)
 add_lib_test(
     context.pass
     SOURCES context.pass.cpp
     ARGS "--verbose"
     PASS_REGEX
-        "CONTEXT: id -> 42"
-        "CONTEXT: 5 \\+ x -> 8"
-        "CONTEXT: processing item"
+        "id -> 42  \\[.*context\\.pass\\.cpp:[0-9]+\\]"
+        "5 \\+ x -> 8"
+        "processing item"
         "${_context_nested_regex}"
-        "CONTEXT: counter -> 0"
-    FAIL_REGEX "CONTEXT: scoped out" "CONTEXT: counter -> 7"
+        "counter -> 0"
+        "i=1 j=2"
+        "first_of<int, double>\\(5, 1\\.5\\) -> 5"
+    FAIL_REGEX "scoped out" "counter -> 7"
     EXITS 0
 )
 
 # CONTEXT(expr) appears alongside FAILED diagnostics too (no --verbose
-# needed); its value is captured when CONTEXT(...) was called, not at the
-# point of failure; and it prints after the source location but before any
-# stacktrace.
+# needed);
+# CONTEXT(fmt, args...) works the same way for failures;
+# the CONTEXT block prints before the FAILED line.
 string(
     CONCAT _context_placement_regex
-    ".\n"
-    "  CONTEXT: id -> 3\n"
-    "  Stacktrace"
+    "Context \\(innermost first\\):\n"
+    "    id -> 3  .*context\\.fail\\.cpp:[0-9]+.\n"
+    "  FAILED: id == 42\n"
 )
 add_lib_test(
     context.fail
     SOURCES context.fail.cpp
     PASS_REGEX
         "FAILED: id == 42"
-        "CONTEXT: id -> 7"
+        "id -> 7"
         "FAILED: counter == 999"
-        "CONTEXT: counter -> 0"
+        "counter -> 0"
+        "i=1 j=2"
         "${_context_placement_regex}"
-    FAIL_REGEX "CONTEXT: counter -> 5"
+    FAIL_REGEX "counter -> 5"
     EXITS 1
 )
 

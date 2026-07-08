@@ -40,7 +40,7 @@ bool is_numeric_literal(std::string_view text)
 
 } // namespace
 
-bool context_frame::is_literal(std::string_view expr) noexcept
+bool is_literal_expr(std::string_view expr) noexcept
 {
     if (expr.empty()) return false;
 
