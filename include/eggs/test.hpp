@@ -165,7 +165,7 @@ struct run_options
     bool list = false;
 };
 
-// Public entry point — call this from main().
+// Public entry point - call this from main().
 int run(run_options opts = {});
 
 // Full default main: parse_cli + --help handling + run.

@@ -30,7 +30,7 @@ FetchContent_Declare(Eggs.Test SOURCE_DIR "${EGGS_TEST_SOURCE_DIR}")
 FetchContent_MakeAvailable(Eggs.Test)
 
 # -------------------------------------------------------------------------
-# Verification target — links against the FetchContent target and runs.
+# Verification target - links against the FetchContent target and runs.
 # -------------------------------------------------------------------------
 add_executable(consumer_verify main.cpp)
 target_link_libraries(consumer_verify PRIVATE Eggs::Test Eggs::TestMain)

@@ -12,11 +12,11 @@
 
 namespace eggs::test {
 
-// ── Option table ─────────────────────────────────────────────────────────────
+// -- Option table -------------------------------------------------------------
 //
-// flag  — the flag stem
-// value — the flag value
-// desc  — --help right-column text
+// flag  - the flag stem
+// value - the flag value
+// desc  - --help right-column text
 
 struct opt_spec
 {

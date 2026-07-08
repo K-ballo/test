@@ -5,7 +5,7 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-# ── Verify interface header sets ────────────────────────────────────────────
+# -- Verify interface header sets --------------------------------------------
 
 add_test(
     NAME eggs.test.verify_headers
@@ -18,7 +18,7 @@ set_tests_properties(
     PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
-# ── Verify definitions in headers ─────────────────────────────────────────--
+# -- Verify definitions in headers -------------------------------------------
 
 include(AddMultipleDefinitionsTest)
 
@@ -29,7 +29,7 @@ set_tests_properties(
     PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
-# Helper — creates a test executable and registers it with CTest.
+# Helper - creates a test executable and registers it with CTest.
 #
 # EXITS C:    the expected exit code (defaults to 0).
 # FAIL_REGEX: the test fails if its output matches any of these patterns

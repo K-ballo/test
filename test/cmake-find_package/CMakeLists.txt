@@ -18,7 +18,7 @@ set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
 find_package(Eggs.Test REQUIRED)
 
 # -------------------------------------------------------------------------
-# Verification target — links against the imported target and runs.
+# Verification target - links against the imported target and runs.
 # -------------------------------------------------------------------------
 add_executable(consumer_verify main.cpp)
 target_link_libraries(consumer_verify PRIVATE Eggs::Test Eggs::TestMain)

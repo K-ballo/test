@@ -95,7 +95,7 @@ target_link_libraries(_eggs_test PUBLIC ${EGGS_CXX23_STACKTRACE_LIB})
 add_library(Eggs::Test ALIAS _eggs_test)
 
 #
-# Eggs::TestMain — object library that provides main().
+# Eggs::TestMain - object library that provides main().
 # Link it into any test executable instead of writing your own main.
 #
 add_library(_eggs_test_main STATIC src/main/test_main.cpp)

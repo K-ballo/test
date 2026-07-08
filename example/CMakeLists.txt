@@ -5,7 +5,7 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-# Helper — creates an example executable and, when BUILD_TESTING is also
+# Helper - creates an example executable and, when BUILD_TESTING is also
 # enabled, registers it as a CTest test case.
 #
 # CASES: ordered list of test case names passed as --run=<name> arguments to

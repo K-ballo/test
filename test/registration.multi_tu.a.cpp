@@ -7,7 +7,7 @@
 
 #include <eggs/test.hpp>
 
-// First translation unit — verifies that test cases defined across separate
+// First translation unit - verifies that test cases defined across separate
 // TUs both register and run when linked into the same executable.
 
 TEST_CASE(multi_tu_case_a, "test case in translation unit A")

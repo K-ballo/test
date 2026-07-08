@@ -19,13 +19,13 @@ int main() {
 
 ### Assertion macros
 
-`CHECK(expr)` — evaluates *expr*; reports failure and continues.  
-`REQUIRE(expr)` — like `CHECK`, but stops the current test case on failure.
+`CHECK(expr)` - evaluates *expr*; reports failure and continues.  
+`REQUIRE(expr)` - like `CHECK`, but stops the current test case on failure.
 
-`CHECK_THROWS(expr)` — passes if *expr* throws any exception.  
-`CHECK_THROWS_AS(ExcType, expr)` — passes if *expr* throws an exception of type *ExcType*; returns `std::exception_ptr` on success.  
-`CHECK_CATCHES_AS(ExcType, expr) { }` — like `CHECK_THROWS_AS`; the body runs on success with the caught exception bound to `exc`.  
-`CHECK_NOTHROW(expr)` — passes if *expr* does not throw.
+`CHECK_THROWS(expr)` - passes if *expr* throws any exception.  
+`CHECK_THROWS_AS(ExcType, expr)` - passes if *expr* throws an exception of type *ExcType*; returns `std::exception_ptr` on success.  
+`CHECK_CATCHES_AS(ExcType, expr) { }` - like `CHECK_THROWS_AS`; the body runs on success with the caught exception bound to `exc`.  
+`CHECK_NOTHROW(expr)` - passes if *expr* does not throw.
 
 Every `CHECK_*` macro has a `REQUIRE_*` variant that stops the test case on failure.
 

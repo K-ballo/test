@@ -29,7 +29,7 @@ run_state*& run_state::_current_ptr() noexcept
 
 registry::cases_type& registry::cases()
 {
-    // Meyers singleton — guaranteed to be constructed before first use,
+    // Meyers singleton - guaranteed to be constructed before first use,
     // which avoids the static-initialisation-order fiasco when test_entry
     // instances in different translation units register before main().
     static registry::cases_type v;

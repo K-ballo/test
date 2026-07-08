@@ -6,7 +6,7 @@
 Language: Cpp
 Standard: Latest
 
-# ── Indentation ──────────────────────────────────────────────────────────────
+# -- Indentation --------------------------------------------------------------
 IndentWidth:                    4
 TabWidth:                       4
 UseTab:                         Never
@@ -15,13 +15,13 @@ IndentCaseLabels:               true
 IndentPPDirectives:             AfterHash   # `#  if`, `#    define` inside nested ifdefs
 NamespaceIndentation:           None        # namespace bodies are NOT indented
 
-# ── Column limit ─────────────────────────────────────────────────────────────
+# -- Column limit -------------------------------------------------------------
 ColumnLimit:                    80          # classic; fits terminal & paper
 
-# ── Brace style ──────────────────────────────────────────────────────────────
+# -- Brace style --------------------------------------------------------------
 BreakBeforeBraces:              Mozilla     # wraps after functions and classes/structs
 
-# ── Spaces ───────────────────────────────────────────────────────────────────
+# -- Spaces -------------------------------------------------------------------
 SpaceBeforeParens:              ControlStatements
 SpaceInEmptyParentheses:        false
 SpacesInParentheses:            false
@@ -31,16 +31,16 @@ SpaceAfterTemplateKeyword:      true        # `template <typename T>` (space aft
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeCpp11BracedList:     false
 
-# ── Pointer / reference alignment ────────────────────────────────────────────
-# East-const style: `T const&`, `T*` → pointer/ref binds to the type, not name
-PointerAlignment:               Left        # `T* p` / `T& r` — type-side binding
+# -- Pointer / reference alignment --------------------------------------------
+# East-const style: `T const&`, `T*` -> pointer/ref binds to the type, not name
+PointerAlignment:               Left        # `T* p` / `T& r` - type-side binding
 ReferenceAlignment:             Left
 
-# ── Template / requires ──────────────────────────────────────────────────────
-AlwaysBreakTemplateDeclarations: Yes        # `template <…>` always on its own line
+# -- Template / requires ------------------------------------------------------
+AlwaysBreakTemplateDeclarations: Yes        # `template <...>` always on its own line
                                              # before the declaration
 
-# ── Function / call formatting ───────────────────────────────────────────────
+# -- Function / call formatting -----------------------------------------------
 AllowShortFunctionsOnASingleLine:    Inline  # only genuinely trivial accessors inline
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine:        true
@@ -51,23 +51,23 @@ AlignAfterOpenBracket:               BlockIndent  # always breaks, places closin
 BinPackArguments:               true       # all args same line
 BinPackParameters:              true       # same for parameters
 
-# ── Return type ──────────────────────────────────────────────────────────────
+# -- Return type --------------------------------------------------------------
 AlwaysBreakAfterReturnType:     None        # return type stays on same line as name
                                              # unless forced by column limit
 
-# ── Constructor initialiser lists ────────────────────────────────────────────
+# -- Constructor initialiser lists --------------------------------------------
 BreakConstructorInitializers:   BeforeColon # `: base(x)\n, member_(y)` style
 ConstructorInitializerIndentWidth: 4
 PackConstructorInitializers:    Never
 
-# ── Inheritance ──────────────────────────────────────────────────────────────
+# -- Inheritance --------------------------------------------------------------
 BreakInheritanceList:           BeforeColon
 
-# ── Include sorting ──────────────────────────────────────────────────────────
+# -- Include sorting ----------------------------------------------------------
 SortIncludes:                   CaseSensitive
 IncludeBlocks:                  Regroup
 IncludeCategories:
-  # 1. The library's own headers  <eggs/…>
+  # 1. The library's own headers  <eggs/...>
   - Regex:    '^<eggs/'
     Priority: 1
   # 2. Standard library
@@ -77,18 +77,18 @@ IncludeCategories:
   - Regex:    '.*'
     Priority: 3
 
-# ── Comments ─────────────────────────────────────────────────────────────────
+# -- Comments -----------------------------------------------------------------
 ReflowComments:                 false       # do NOT reflow // section banners
                                              # (e.g. `// namespace detail`)
 SpacesBeforeTrailingComments:   1
 
-# ── Alignment ────────────────────────────────────────────────────────────────
+# -- Alignment ----------------------------------------------------------------
 AlignConsecutiveAssignments:    false       # no forced vertical alignment of `=`
 AlignConsecutiveDeclarations:   false
 AlignTrailingComments:          true        # trailing `//` comments align in a block
 AlignEscapedNewlines:           Left
 
-# ── Misc ─────────────────────────────────────────────────────────────────────
+# -- Misc ---------------------------------------------------------------------
 Cpp11BracedListStyle:           true
 FixNamespaceComments:           true        # auto-add `// namespace foo` at closing }
 CompactNamespaces:              false
