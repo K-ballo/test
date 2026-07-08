@@ -112,6 +112,17 @@ add_lib_test(
     EXITS 0
 )
 
+# The [ RUN ] line for a test case shows its name, description, and source
+# location.
+add_lib_test(
+    registration.info.pass
+    SOURCES registration.cpp
+    ARGS "--run=registration_one"
+    PASS_REGEX
+        "\\[ RUN  \\] registration_one -- first test case registers  .*registration\\.cpp:13."
+    EXITS 0
+)
+
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.

@@ -26,18 +26,20 @@
 //   TEST_CASE(my_test, "adds two integers") {
 //       CHECK(1 + 1 == 2);
 //   }
-//
-// All names are fully qualified (::eggs::test::detail::) so the macro is safe
-// inside any user namespace.
-#define TEST_CASE(name_, desc_)                                                \
-    struct name_                                                               \
-    {                                                                          \
-        static void run();                                                     \
-        inline static bool const registered_ = [] {                            \
-            ::eggs::test::detail::registry::add({#name_, desc_, &name_::run}); \
-            return true;                                                       \
-        }();                                                                   \
-    };                                                                         \
+#define TEST_CASE(name_, desc_)                            \
+    struct name_                                           \
+    {                                                      \
+      private:                                             \
+        static void run();                                 \
+        inline static bool const registered_ =             \
+            (::eggs::test::detail::registry::add({         \
+                 .name = #name_,                           \
+                 .desc = desc_,                            \
+                 .run = &name_::run,                       \
+                 .loc = ::std::source_location::current(), \
+             }),                                           \
+             true);                                        \
+    };                                                     \
     void name_::run()
 
 // CHECK(expr)

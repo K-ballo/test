@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstddef>
+#include <source_location>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
@@ -19,6 +20,7 @@ struct test_entry
     std::string_view name;
     std::string_view desc;
     void (*run)();
+    std::source_location loc;
 };
 
 struct test_entry_hash

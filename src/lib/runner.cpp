@@ -44,7 +44,10 @@ int registry::run(std::vector<test_entry> const& run)
     std::vector<std::string_view> cases_failed;
 
     for (test_entry const& e : run) {
-        detail::println(stdout, "[ RUN  ] {} -- {}", e.name, e.desc);
+        detail::println(
+            stdout, "[ RUN  ] {} -- {}  [{}:{}]", e.name, e.desc,
+            e.loc.file_name(), e.loc.line()
+        );
 
         run_state state;
         state.entry_depth = entry_depth;
