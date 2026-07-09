@@ -553,11 +553,11 @@ add_lib_test(
 )
 # REQUIRE inside CHECK_THROWS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
-    throws.require_propagated.fail
+    throws.require_propagated.check.fail
     SOURCES throws.fail.cpp
     ARGS "--run=check_throws_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false"
+    FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws<>"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_THROWS propagates out: unwind is not swallowed as a throw.
@@ -566,7 +566,7 @@ add_lib_test(
     SOURCES throws.fail.cpp
     ARGS "--run=require_throws_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false"
+    FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws<>"
     EXITS 1
 )
 # CHECK_THROWS rejects noexcept expressions.
@@ -642,11 +642,14 @@ add_lib_test(
 )
 # REQUIRE inside CHECK_THROWS_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
-    throws_as.require_propagated.fail
+    throws_as.require_propagated.check.fail
     SOURCES throws_as.fail.cpp
     ARGS "--run=check_throws_as_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false" "threw unexpected exception"
+    FAIL_REGEX
+        "FAILED: false"
+        "threw unexpected exception"
+        "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_THROWS_AS propagates out: unwind is not swallowed as a throw.
@@ -655,7 +658,10 @@ add_lib_test(
     SOURCES throws_as.fail.cpp
     ARGS "--run=require_throws_as_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false" "threw unexpected exception"
+    FAIL_REGEX
+        "FAILED: false"
+        "threw unexpected exception"
+        "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
 )
 # CHECK_THROWS_AS rejects noexcept expressions.
@@ -747,11 +753,11 @@ add_lib_test(
 )
 # REQUIRE inside CHECK_CATCHES_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
-    catches_as.require_propagated.fail
+    catches_as.require_propagated.check.fail
     SOURCES catches_as.fail.cpp
     ARGS "--run=check_catches_as_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false"
+    FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_CATCHES_AS propagates out: unwind is not swallowed as a throw.
@@ -760,7 +766,7 @@ add_lib_test(
     SOURCES catches_as.fail.cpp
     ARGS "--run=require_catches_as_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false"
+    FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
 )
 # CHECK_CATCHES_AS rejects noexcept expressions.
@@ -831,11 +837,14 @@ add_lib_test(
 )
 # REQUIRE inside CHECK_NOTHROW propagates out: unwind is not swallowed as a throw.
 add_lib_test(
-    nothrow.require_propagated.fail
+    nothrow.require_propagated.check.fail
     SOURCES nothrow.fail.cpp
     ARGS "--run=check_nothrow_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false" "threw unexpectedly"
+    FAIL_REGEX
+        "FAILED: false"
+        "threw unexpectedly"
+        "$<$<CONFIG:Debug>:check_nothrow<>"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_NOTHROW propagates out: unwind is not swallowed as a throw.
@@ -844,7 +853,10 @@ add_lib_test(
     SOURCES nothrow.fail.cpp
     ARGS "--run=require_nothrow_require_propagated"
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
-    FAIL_REGEX "FAILED: false" "threw unexpectedly"
+    FAIL_REGEX
+        "FAILED: false"
+        "threw unexpectedly"
+        "$<$<CONFIG:Debug>:check_nothrow<>"
     EXITS 1
 )
 
@@ -862,7 +874,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_check_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # CHECK failure one level deep: in Debug, 'failing_check_helper' appears in stacktrace.
@@ -890,7 +902,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_require_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # REQUIRE failure one level deep: in Debug, 'failing_require_helper' appears in stacktrace.
@@ -918,7 +930,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_throws_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # CHECK_THROWS failure one level deep: in Debug, 'failing_throws_helper' appears in stacktrace.
@@ -946,7 +958,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_throws_as_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # CHECK_THROWS_AS failure one level deep: in Debug, 'failing_throws_as_helper' appears.
@@ -974,7 +986,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_catches_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # CHECK_CATCHES_AS failure one level deep: in Debug, 'failing_catches_helper' appears.
@@ -1002,7 +1014,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         SOURCES stacktrace.fail.cpp
         ARGS "--run=stacktrace_nothrow_zero_levels"
         PASS_REGEX "FAILED:"
-        FAIL_REGEX "Stacktrace"
+        FAIL_REGEX "#1 "
         EXITS 1
     )
     # CHECK_NOTHROW failure one level deep: in Debug, 'failing_nothrow_helper' appears.

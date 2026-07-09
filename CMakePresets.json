@@ -44,8 +44,8 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
-        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=."
+        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=."
       }
     },
     {
@@ -57,8 +57,8 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
-        "CXXFLAGS": "-stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=.",
+        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CXXFLAGS": "-stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
         "LDFLAGS": "-stdlib=libc++"
       }
     },
