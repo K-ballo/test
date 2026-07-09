@@ -14,12 +14,35 @@
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
+#include <format>
+#include <string>
 #include <string_view>
 #include <unordered_set>
 #include <vector>
 
 namespace eggs::test {
 namespace detail {
+
+namespace {
+
+// "<passed> passed (<percent>%)", plus " | <failed> failed (<percent>%)"
+// when failed != 0. The two percentages always add up to 100.
+std::string format_summary(std::size_t passed, std::size_t failed)
+{
+    auto const total = passed + failed;
+    auto const percent_passed = total == 0 ? 100 : passed * 100 / total;
+
+    if (failed == 0) {
+        return std::format("{} passed ({}%)", passed, percent_passed);
+    }
+
+    return std::format(
+        "{} passed ({}%) | {} failed ({}%)", passed, percent_passed, failed,
+        100 - percent_passed
+    );
+}
+
+} // namespace
 
 run_state*& run_state::_current_ptr() noexcept
 {
@@ -65,28 +88,36 @@ int registry::run(std::vector<test_entry> const& run)
         }
         run_state::set_current(nullptr);
 
-        if (passed) {
-            detail::println(stdout, "[ PASS ] {}", e.name);
-            ++cases_passed;
-        } else {
-            detail::println(stdout, "[ FAIL ] {}", e.name);
-            cases_failed.push_back(e.name);
-        }
-
         auto const assertions_total =
             state.assertions_passed + state.assertions_failed;
-        detail::println(
-            stdout, "{} of {} assertions passed", state.assertions_passed,
-            assertions_total
-        );
+        if (assertions_total == 0) {
+            detail::println(
+                stdout, "[ {} ] {} -- 0 assertions\n", passed ? "PASS" : "FAIL",
+                e.name
+            );
+        } else {
+            detail::println(
+                stdout, "[ {} ] {} -- {} assertions: {}\n",
+                passed ? "PASS" : "FAIL", e.name, assertions_total,
+                format_summary(state.assertions_passed, state.assertions_failed)
+            );
+        }
+
+        if (passed) {
+            ++cases_passed;
+        } else {
+            cases_failed.push_back(e.name);
+        }
     }
 
+    // Omit summary if only one test-case.
     auto const cases_total = cases_passed + cases_failed.size();
-    detail::println(
-        stdout, "\n{} of {} test cases passed", cases_passed, cases_total
-    );
-    if (!cases_failed.empty()) {
-        detail::println(stdout, "Failed test cases:");
+    if (cases_total != 1) {
+        detail::println(
+            stdout, "{} test cases: {}{}", cases_total,
+            format_summary(cases_passed, cases_failed.size()),
+            cases_failed.empty() ? "" : ":"
+        );
         for (auto const& e : cases_failed) {
             detail::println(stdout, "- {}", e);
         }

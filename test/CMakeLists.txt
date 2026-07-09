@@ -100,7 +100,7 @@ endfunction()
 add_lib_test(
     registration
     SOURCES registration.cpp
-    PASS_REGEX "3 of 3 test cases passed"
+    PASS_REGEX "3 test cases: 3 passed \\(100%\\)"
     EXITS 0
 )
 
@@ -108,7 +108,7 @@ add_lib_test(
 add_lib_test(
     registration.multi_tu
     SOURCES registration.multi_tu.a.cpp registration.multi_tu.b.cpp
-    PASS_REGEX "2 of 2 test cases passed"
+    PASS_REGEX "2 test cases: 2 passed \\(100%\\)"
     EXITS 0
 )
 
@@ -121,6 +121,86 @@ add_lib_test(
     PASS_REGEX
         "\\[ RUN  \\] registration_one -- first test case registers  .*registration\\.cpp:13."
     EXITS 0
+)
+
+# --- summary tests ------------------------------------------------------------
+
+# A single-case run must not print the test-cases summary.
+add_lib_test(
+    summary.single_case.pass
+    SOURCES summary.per_case.cpp
+    ARGS "--run=per_case_pass"
+    PASS_REGEX "per_case_pass"
+    FAIL_REGEX "test cases:"
+    EXITS 0
+)
+
+# The test-cases summary reports percentages and lists only the failing case(s).
+add_lib_test(
+    summary.mixed.fail
+    SOURCES summary.mixed.cpp
+    ARGS "--run=mixed_pass_one" "--run=mixed_fail" "--run=mixed_pass_two"
+    PASS_REGEX
+        "3 test cases: 2 passed \\(66%\\) \\| 1 failed \\(34%\\):\n- mixed_fail"
+    FAIL_REGEX "- mixed_pass_one" "- mixed_pass_two"
+    EXITS 1
+)
+
+# The test-cases summary omits the "| 0 failed (0%)" clause on 100% success.
+add_lib_test(
+    summary.full_pass.pass
+    SOURCES summary.full_pass.cpp
+    PASS_REGEX "3 test cases: 3 passed \\(100%\\)"
+    FAIL_REGEX "\\| .*failed"
+    EXITS 0
+)
+
+# The assertions summary reports percentages and failed count.
+add_lib_test(
+    summary.per_case.mixed.fail
+    SOURCES summary.mixed.cpp
+    ARGS "--run=check_mixed"
+    PASS_REGEX
+        "check_mixed -- 3 assertions: 2 passed \\(66%\\) \\| 1 failed \\(34%\\)"
+    EXITS 1
+)
+
+# The assertions summary shows both counts with zero passing assertions.
+add_lib_test(
+    summary.per_case.fail
+    SOURCES summary.per_case.cpp
+    ARGS "--run=per_case_fail"
+    PASS_REGEX
+        "\\[ FAIL \\] per_case_fail -- 1 assertions: 0 passed \\(0%\\) \\| 1 failed \\(100%\\)"
+    EXITS 1
+)
+
+# The assertions summary omits the "| 0 failed (0%)" clause on 100% success.
+add_lib_test(
+    summary.per_case.pass
+    SOURCES summary.per_case.cpp
+    ARGS "--run=per_case_pass"
+    PASS_REGEX "\\[ PASS \\] per_case_pass -- 1 assertions: 1 passed \\(100%\\)"
+    EXITS 0
+)
+
+# A test case with no assertions at all shows "0 assertions" with no
+# passed/failed percentage clause.
+add_lib_test(
+    summary.per_case.zero.pass
+    SOURCES summary.zero_assertions.cpp
+    ARGS "--run=zero_assertions_pass"
+    PASS_REGEX "\\[ PASS \\] zero_assertions_pass -- 0 assertions"
+    FAIL_REGEX "0 assertions:"
+    EXITS 0
+)
+add_lib_test(
+    summary.per_case.zero.fail
+    SOURCES summary.zero_assertions.cpp
+    ARGS "--run=zero_assertions_fail"
+    PASS_REGEX "\\[ FAIL \\] zero_assertions_fail -- 0 assertions"
+    FAIL_REGEX "0 assertions:"
+    EXITS 1
 )
 
 # --- passing tests -----------------------------------------------------------
@@ -316,18 +396,20 @@ add_lib_test(
     EXITS 0
 )
 
-# --run=<name> --run=<name> must warn and run the case only once.
+# --run=<name> --run=<name> must warn and run the case only once: a second
+# [ RUN ] block for it must not appear.
 string(
-    CONCAT _run_dedup_regex
-    "warning: duplicate test case 'registration_one'"
+    CONCAT _run_dedup_fail_regex
+    "\\[ RUN  \\] registration_one[^\n]*"
     "(\n[^\n]*)*\n"
-    "1 of 1 test cases passed"
+    "\\[ RUN  \\] registration_one"
 )
 add_lib_test(
     cli.run.dedup.pass
     SOURCES registration.cpp
     ARGS "--run=registration_one" "--run=registration_one"
-    PASS_REGEX "${_run_dedup_regex}"
+    PASS_REGEX "warning: duplicate test case 'registration_one'"
+    FAIL_REGEX "${_run_dedup_fail_regex}"
     EXITS 0
 )
 
@@ -335,7 +417,7 @@ add_lib_test(
 string(
     CONCAT _run_order_regex
     "\\[ RUN  \\] registration_three[^\n]*"
-    "(\n[^\n]+)+\n"
+    "(\n[^\n]*)+\n"
     "\\[ RUN  \\] registration_one"
 )
 add_lib_test(
