@@ -5,10 +5,14 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.31)
 project(Eggs.Test DESCRIPTION "A C++23 test library" LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+if(NOT PROJECT_IS_TOP_LEVEL)
+    # for include(EggsTest)
+    set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" PARENT_SCOPE)
+endif()
 
 include(GNUInstallDirs)
 
@@ -177,6 +181,7 @@ if(ENABLE_INSTALL)
         FILES
             ${CMAKE_CURRENT_BINARY_DIR}/eggs.test-config.cmake
             ${CMAKE_CURRENT_BINARY_DIR}/eggs.test-config-version.cmake
+            cmake/EggsTest.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/eggs.test
     )
 endif()

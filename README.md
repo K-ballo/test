@@ -44,10 +44,26 @@ See `CMakePresets.json` for the full list of presets (GCC, Clang, Clang+libc++, 
 ```cmake
 find_package(eggs.test REQUIRED)
 target_link_libraries(my_tests PRIVATE Eggs::TestMain)
+
+include(EggsTest)
+eggs_discover_tests(my_tests)
 ```
 
 `Eggs::Test` provides the test macros and the `eggs::test::run()` entry point.  
 `Eggs::TestMain` additionally supplies a `main()` with CLI argument handling.
+
+`eggs_discover_tests()` registers one CTest test per `TEST_CASE` in `my_tests`, discovered at
+test time (so added/renamed/removed test cases don't require re-running CMake):
+
+```cmake
+eggs_discover_tests(target
+    [TEST_PREFIX prefix] [TEST_SUFFIX suffix]
+    [EXTRA_ARGS args...]
+    [WORKING_DIRECTORY dir]
+    [PROPERTIES name1 value1...]
+    [TEST_LIST var]
+)
+```
 
 ## License
 

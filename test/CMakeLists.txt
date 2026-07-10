@@ -29,8 +29,11 @@ set_tests_properties(
     PROPERTIES LABELS "header" RESOURCE_LOCK cmake_build
 )
 
+include(EggsTest)
+
 # Helper - creates a test executable and registers it with CTest.
 #
+# DISCOVER:   register one CTest test per TEST_CASE (discovered at test time).
 # EXITS C:    the expected exit code (defaults to 0).
 # FAIL_REGEX: the test fails if its output matches any of these patterns
 #             (repeatable).
@@ -39,7 +42,7 @@ set_tests_properties(
 function(add_lib_test name)
     cmake_parse_arguments(
         ARG
-        ""
+        "DISCOVER"
         "EXITS"
         "ARGS;FAIL_REGEX;PASS_REGEX;SOURCES"
         ${ARGN}
@@ -87,11 +90,20 @@ function(add_lib_test name)
         list(APPEND _control_args "--eggs-run-test-pass-regex=${_pat}")
     endforeach()
 
-    add_test(
-        NAME eggs.test.${name}
-        COMMAND _eggs_test.${_stem} ${_control_args} ${ARG_ARGS}
-    )
-    set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
+    if(ARG_DISCOVER)
+        eggs_discover_tests(
+            _eggs_test.${_stem}
+            TEST_PREFIX "eggs.test.${name}/"
+            EXTRA_ARGS ${_control_args} ${ARG_ARGS}
+            PROPERTIES LABELS unit
+        )
+    else()
+        add_test(
+            NAME eggs.test.${name}
+            COMMAND _eggs_test.${_stem} ${_control_args} ${ARG_ARGS}
+        )
+        set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
+    endif()
 endfunction()
 
 # --- registration tests ------------------------------------------------------
@@ -102,6 +114,14 @@ add_lib_test(
     SOURCES registration.cpp
     PASS_REGEX "3 test cases: 3 passed \\(100%\\)"
     EXITS 0
+)
+
+# Same executable, discovered at test time: one CTest test per TEST_CASE.
+add_lib_test(
+    registration.discover
+    SOURCES registration.cpp
+    DISCOVER
+    FAIL_REGEX "test cases:"
 )
 
 # Test cases defined across two translation units both register and run.
@@ -206,10 +226,10 @@ add_lib_test(
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.
-add_lib_test(check.pass SOURCES check.pass.cpp EXITS 0)
+add_lib_test(check.pass SOURCES check.pass.cpp DISCOVER EXITS 0)
 
 # REQUIRE with true expressions must exit 0 and not stop execution.
-add_lib_test(require.pass SOURCES require.pass.cpp EXITS 0)
+add_lib_test(require.pass SOURCES require.pass.cpp DISCOVER EXITS 0)
 
 # --- failing tests -----------------------------------------------------------
 
@@ -457,13 +477,13 @@ add_lib_test(
 # --- exception tests ---------------------------------------------------------
 
 # CHECK_THROWS / REQUIRE_THROWS pass for any thrown type (int, std::exception, custom).
-add_lib_test(throws.pass SOURCES throws.pass.cpp)
+add_lib_test(throws.pass SOURCES throws.pass.cpp DISCOVER)
 # CHECK_THROWS_AS / REQUIRE_THROWS_AS pass for exact and derived exception types.
-add_lib_test(throws_as.pass SOURCES throws_as.pass.cpp)
+add_lib_test(throws_as.pass SOURCES throws_as.pass.cpp DISCOVER)
 # CHECK_CATCHES_AS / REQUIRE_CATCHES_AS pass and bind the caught exception to exc.
-add_lib_test(catches_as.pass SOURCES catches_as.pass.cpp)
+add_lib_test(catches_as.pass SOURCES catches_as.pass.cpp DISCOVER)
 # CHECK_NOTHROW / REQUIRE_NOTHROW pass when the expression does not throw.
-add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp)
+add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp DISCOVER)
 
 # CHECK_THROWS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -691,7 +711,7 @@ add_lib_test(
 # .one_level.fail: in Debug, the immediate helper name appears in the stacktrace.
 # .two_levels.fail: in Debug, the outer helper name appears (all user frames shown).
 # The .pass test exercises the non-failure path (no stacktrace is printed).
-add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp)
+add_lib_test(stacktrace.pass SOURCES stacktrace.pass.cpp DISCOVER)
 if(EGGS_HAS_CXX23_STACKTRACE)
     # CHECK failure directly in TEST_CASE body: no stacktrace must appear.
     add_lib_test(

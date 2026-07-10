@@ -6,7 +6,7 @@
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 # parse_cli compaction: known flags consumed, unknowns preserved in argv.
-add_lib_test(cli/parse_cli.pass SOURCES parse_cli.pass.cpp EXITS 0)
+add_lib_test(cli/parse_cli.pass SOURCES parse_cli.pass.cpp DISCOVER EXITS 0)
 
 # print_options: bare form lists --list and --run=<test_case> with descriptions.
 add_lib_test(
