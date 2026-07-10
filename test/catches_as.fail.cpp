@@ -56,13 +56,35 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    check_catches_as_wrong_unknown,
+    "CHECK_CATCHES_AS fails when expression throws an unknown wrong type"
+)
+{
+    CHECK_CATCHES_AS(std::runtime_error, throw 42)
+    {
+        CHECK(false); // body must not run
+    }
+}
+
+TEST_CASE(
+    require_catches_as_wrong_unknown,
+    "REQUIRE_CATCHES_AS fails and stops "
+    "execution when throwing unknown wrong type"
+)
+{
+    REQUIRE_CATCHES_AS(std::runtime_error, throw 42)
+    {
+        CHECK(false); // body must not run
+    }
+    CHECK(false); // must not be reached
+}
+
+TEST_CASE(
     check_catches_as_require_propagated,
     "REQUIRE failing inside CHECK_CATCHES_AS propagates out"
 )
 {
-    CHECK_CATCHES_AS(std::runtime_error, [&] {
-        REQUIRE(1 + 1 == 3);
-    }())
+    CHECK_CATCHES_AS(std::runtime_error, REQUIRE(1 + 2 == 4))
     {
         CHECK(false); // must not be reached
     }
@@ -74,9 +96,7 @@ TEST_CASE(
     "REQUIRE failing inside REQUIRE_CATCHES_AS propagates out"
 )
 {
-    REQUIRE_CATCHES_AS(std::runtime_error, [&] {
-        REQUIRE(1 + 1 == 3);
-    }())
+    REQUIRE_CATCHES_AS(std::runtime_error, REQUIRE(1 + 2 == 4))
     {
         CHECK(false); // must not be reached
     }

@@ -10,14 +10,6 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace {
-struct my_error
-{};
-
-struct my_derived_error : my_error
-{};
-} // namespace
-
 TEST_CASE(check_throws_as_int, "CHECK_THROWS_AS passes for exact type int")
 {
     CHECK_THROWS_AS(int, throw 42);
@@ -64,6 +56,11 @@ TEST_CASE(
     CHECK(true);
 }
 
+namespace {
+struct my_error
+{};
+} // namespace
+
 TEST_CASE(
     check_throws_as_custom_exception,
     "CHECK_THROWS_AS passes for exact custom type"
@@ -78,6 +75,50 @@ TEST_CASE(
 )
 {
     REQUIRE_THROWS_AS(my_error, throw my_error{});
+    CHECK(true);
+}
+
+namespace {
+struct my_derived_error : my_error
+{};
+} // namespace
+
+TEST_CASE(
+    check_throws_as_derived_custom_exception,
+    "CHECK_THROWS_AS passes for derived custom type"
+)
+{
+    CHECK_THROWS_AS(my_error, throw my_derived_error{});
+}
+
+TEST_CASE(
+    require_throws_as_derived_custom_exception,
+    "REQUIRE_THROWS_AS passes without stopping the test"
+)
+{
+    REQUIRE_THROWS_AS(my_error, throw my_derived_error{});
+    CHECK(true);
+}
+
+namespace {
+struct my_final_error final : my_derived_error
+{};
+} // namespace
+
+TEST_CASE(
+    check_throws_as_final_exception,
+    "CHECK_THROWS_AS passes for a final exception type"
+)
+{
+    CHECK_THROWS_AS(my_final_error, throw my_final_error{});
+}
+
+TEST_CASE(
+    require_throws_as_final_exception,
+    "REQUIRE_THROWS_AS passes without stopping the test"
+)
+{
+    REQUIRE_THROWS_AS(my_final_error, throw my_final_error{});
     CHECK(true);
 }
 

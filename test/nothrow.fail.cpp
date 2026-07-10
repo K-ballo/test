@@ -48,9 +48,7 @@ TEST_CASE(
     "REQUIRE failing inside CHECK_NOTHROW propagates out"
 )
 {
-    CHECK_NOTHROW([&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    CHECK_NOTHROW(REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }
 
@@ -59,8 +57,6 @@ TEST_CASE(
     "REQUIRE failing inside REQUIRE_NOTHROW propagates out"
 )
 {
-    REQUIRE_NOTHROW([&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    REQUIRE_NOTHROW(REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }

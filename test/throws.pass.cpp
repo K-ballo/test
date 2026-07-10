@@ -10,11 +10,6 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace {
-struct my_error
-{};
-} // namespace
-
 TEST_CASE(check_throws_int, "CHECK_THROWS passes when expression throws int")
 {
     CHECK_THROWS(throw 42);
@@ -43,6 +38,11 @@ TEST_CASE(
     CHECK(true);
 }
 
+namespace {
+struct my_error
+{};
+} // namespace
+
 TEST_CASE(
     check_throws_custom_exception,
     "CHECK_THROWS passes when expression throws custom exception"
@@ -57,6 +57,28 @@ TEST_CASE(
 )
 {
     REQUIRE_THROWS(throw my_error{});
+    CHECK(true);
+}
+
+namespace {
+struct my_final_error final : my_error
+{};
+} // namespace
+
+TEST_CASE(
+    check_throws_final_exception,
+    "CHECK_THROWS passes when expression throws a final exception type"
+)
+{
+    CHECK_THROWS(throw my_final_error{});
+}
+
+TEST_CASE(
+    require_throws_final_exception,
+    "REQUIRE_THROWS passes without stopping the test"
+)
+{
+    REQUIRE_THROWS(throw my_final_error{});
     CHECK(true);
 }
 

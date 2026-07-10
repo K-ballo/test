@@ -25,9 +25,7 @@ TEST_CASE(
     "REQUIRE failing inside CHECK_THROWS propagates out"
 )
 {
-    CHECK_THROWS([&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    CHECK_THROWS(REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }
 
@@ -36,8 +34,6 @@ TEST_CASE(
     "REQUIRE failing inside REQUIRE_THROWS propagates out"
 )
 {
-    REQUIRE_THROWS([&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    REQUIRE_THROWS(REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }

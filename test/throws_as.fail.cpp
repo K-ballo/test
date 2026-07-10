@@ -66,9 +66,7 @@ TEST_CASE(
     "REQUIRE failing inside CHECK_THROWS_AS propagates out"
 )
 {
-    CHECK_THROWS_AS(std::runtime_error, [&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    CHECK_THROWS_AS(std::runtime_error, REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }
 
@@ -77,8 +75,6 @@ TEST_CASE(
     "REQUIRE failing inside REQUIRE_THROWS_AS propagates out"
 )
 {
-    REQUIRE_THROWS_AS(std::runtime_error, [&] {
-        REQUIRE(1 + 1 == 3);
-    }());
+    REQUIRE_THROWS_AS(std::runtime_error, REQUIRE(1 + 2 == 4));
     CHECK(false); // must not be reached
 }

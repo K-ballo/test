@@ -507,7 +507,7 @@ add_lib_test(
     throws.require_propagated.fail
     SOURCES throws.fail.cpp
     ARGS "--run=check_throws_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
@@ -516,7 +516,7 @@ add_lib_test(
     throws.require_propagated.require.fail
     SOURCES throws.fail.cpp
     ARGS "--run=require_throws_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
@@ -538,7 +538,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# CHECK_THROWS_AS when the wrong std exception type is thrown: type and message appear.
+# CHECK_THROWS_AS when the wrong std::exception type is thrown: type and message appear.
 add_lib_test(
     throws_as.wrong_type.check.fail
     SOURCES throws_as.fail.cpp
@@ -547,7 +547,7 @@ add_lib_test(
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     EXITS 1
 )
-# REQUIRE_THROWS_AS with wrong std exception type: type and message appear; execution stops.
+# REQUIRE_THROWS_AS when the wrong std::exception type is thrown: type and message appear; execution stops.
 add_lib_test(
     throws_as.wrong_type.require.fail
     SOURCES throws_as.fail.cpp
@@ -557,7 +557,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# CHECK_THROWS_AS when a unknown wrong type is thrown: no type name or message appears.
+# CHECK_THROWS_AS when an unknown wrong type is thrown: no type name or message appears.
 add_lib_test(
     throws_as.wrong_unknown.check.fail
     SOURCES throws_as.fail.cpp
@@ -567,7 +567,7 @@ add_lib_test(
     FAIL_REGEX ": \""
     EXITS 1
 )
-# REQUIRE_THROWS_AS with unknown wrong type: no type or message appear; execution stops.
+# REQUIRE_THROWS_AS when an unknown wrong type is thrown: no type or message appear; execution stops.
 add_lib_test(
     throws_as.wrong_unknown.require.fail
     SOURCES throws_as.fail.cpp
@@ -582,8 +582,8 @@ add_lib_test(
     throws_as.require_propagated.fail
     SOURCES throws_as.fail.cpp
     ARGS "--run=check_throws_as_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
-    FAIL_REGEX "FAILED: false;threw unexpected exception"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    FAIL_REGEX "FAILED: false" "threw unexpected exception"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_THROWS_AS propagates out: require_failed is not swallowed as a throw.
@@ -591,8 +591,8 @@ add_lib_test(
     throws_as.require_propagated.require.fail
     SOURCES throws_as.fail.cpp
     ARGS "--run=require_throws_as_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
-    FAIL_REGEX "FAILED: false;threw unexpected exception"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    FAIL_REGEX "FAILED: false" "threw unexpected exception"
     EXITS 1
 )
 
@@ -613,7 +613,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# CHECK_CATCHES_AS when the wrong std exception type is thrown: type and message appear.
+# CHECK_CATCHES_AS when the wrong std::exception type is thrown: type and message appear.
 add_lib_test(
     catches_as.wrong_type.check.fail
     SOURCES catches_as.fail.cpp
@@ -622,7 +622,7 @@ add_lib_test(
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     EXITS 1
 )
-# REQUIRE_CATCHES_AS with wrong std exception type: type and message appear; execution stops.
+# REQUIRE_CATCHES_AS when the wrong std::exception type is thrown: type and message appear; execution stops.
 add_lib_test(
     catches_as.wrong_type.require.fail
     SOURCES catches_as.fail.cpp
@@ -632,12 +632,32 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
+# CHECK_CATCHES_AS when an unknown wrong type is thrown: no type name or message appears.
+add_lib_test(
+    catches_as.wrong_unknown.check.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=check_catches_as_wrong_unknown"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*expected std::runtime_error"
+    FAIL_REGEX ": \""
+    EXITS 1
+)
+# REQUIRE_CATCHES_AS when an unknown wrong type is thrown: no type or message appear; execution stops.
+add_lib_test(
+    catches_as.wrong_unknown.require.fail
+    SOURCES catches_as.fail.cpp
+    ARGS "--run=require_catches_as_wrong_unknown"
+    PASS_REGEX
+        "FAILED:.*threw unexpected exception.*expected std::runtime_error"
+    FAIL_REGEX "FAILED: false;: \""
+    EXITS 1
+)
 # REQUIRE inside CHECK_CATCHES_AS propagates out: require_failed is not swallowed as a throw.
 add_lib_test(
     catches_as.require_propagated.fail
     SOURCES catches_as.fail.cpp
     ARGS "--run=check_catches_as_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
@@ -646,12 +666,12 @@ add_lib_test(
     catches_as.require_propagated.require.fail
     SOURCES catches_as.fail.cpp
     ARGS "--run=require_catches_as_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
 
-# CHECK_NOTHROW when a std exception is thrown: 'threw unexpectedly' with message appears.
+# CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.
 add_lib_test(
     nothrow.throws.check.fail
     SOURCES nothrow.fail.cpp
@@ -659,7 +679,7 @@ add_lib_test(
     PASS_REGEX "FAILED:.*threw unexpectedly.*\"oops\""
     EXITS 1
 )
-# REQUIRE_NOTHROW when a std exception is thrown: message appears; execution stops.
+# REQUIRE_NOTHROW when a std::exception is thrown: message appears; execution stops.
 add_lib_test(
     nothrow.throws.require.fail
     SOURCES nothrow.fail.cpp
@@ -668,7 +688,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# CHECK_NOTHROW when a unknown exception is thrown: 'threw unexpectedly' without type or message.
+# CHECK_NOTHROW when an unknown exception is thrown: 'threw unexpectedly' without type or message.
 add_lib_test(
     nothrow.throws_unknown.check.fail
     SOURCES nothrow.fail.cpp
@@ -677,7 +697,7 @@ add_lib_test(
     FAIL_REGEX ": \""
     EXITS 1
 )
-# REQUIRE_NOTHROW when a unknown exception is thrown: no type or message appear; execution stops.
+# REQUIRE_NOTHROW when an unknown exception is thrown: no type or message appear; execution stops.
 add_lib_test(
     nothrow.throws_unknown.require.fail
     SOURCES nothrow.fail.cpp
@@ -691,8 +711,8 @@ add_lib_test(
     nothrow.require_propagated.fail
     SOURCES nothrow.fail.cpp
     ARGS "--run=check_nothrow_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
-    FAIL_REGEX "FAILED: false;threw unexpectedly"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    FAIL_REGEX "FAILED: false" "threw unexpectedly"
     EXITS 1
 )
 # REQUIRE inside REQUIRE_NOTHROW propagates out: require_failed is not swallowed as a throw.
@@ -700,8 +720,8 @@ add_lib_test(
     nothrow.require_propagated.require.fail
     SOURCES nothrow.fail.cpp
     ARGS "--run=require_nothrow_require_propagated"
-    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
-    FAIL_REGEX "FAILED: false;threw unexpectedly"
+    PASS_REGEX "FAILED: 1 \\+ 2 == 4"
+    FAIL_REGEX "FAILED: false" "threw unexpectedly"
     EXITS 1
 )
 
