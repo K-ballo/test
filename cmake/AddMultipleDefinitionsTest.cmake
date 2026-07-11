@@ -36,7 +36,11 @@ function(add_multiple_definitions_test name target)
 
     set(_includes "")
     foreach(_header IN LISTS _headers)
-        file(RELATIVE_PATH _rel "${CMAKE_SOURCE_DIR}" "${_header}")
+        cmake_path(
+            RELATIVE_PATH _header
+            BASE_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            OUTPUT_VARIABLE _rel
+        )
         string(APPEND _includes "#include <${_rel}>\n")
     endforeach()
     file(

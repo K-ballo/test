@@ -69,6 +69,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.4.0"
+
       - name: Set up MSVC environment
         if: startsWith(matrix.compiler, 'msvc') || startsWith(matrix.compiler, 'clang-cl')
         shell: pwsh
@@ -125,16 +130,9 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-22   200
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 200
 
-      - name: Install Ninja
-        if: runner.os == 'Linux'
-        run: sudo apt-get install -y ninja-build
-
       - name: Fix APT cache permissions
         if: always() && runner.os == 'Linux'
         run: sudo rm -rf ~/.cache/apt/archives/lock ~/.cache/apt/archives/partial
-
-      - name: Check CMake Version
-        run: cmake --version
 
       # -----------------------------------------------------------------------
       # Main project

@@ -44,11 +44,11 @@ include(EggsTest)
 #             (repeatable).
 function(add_lib_test name)
     cmake_parse_arguments(
+        PARSE_ARGV 1
         ARG
         "DISCOVER"
         "EXITS"
         "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;SOURCES"
-        ${ARGN}
     )
     if("COMPILE_FAIL" IN_LIST ARG_KEYWORDS_MISSING_VALUES)
         set(ARG_COMPILE_FAIL "")
@@ -81,7 +81,7 @@ function(add_lib_test name)
 
     list(LENGTH ARG_SOURCES _n)
     if(_n EQUAL 1 AND NOT DEFINED ARG_COMPILE_FAIL)
-        get_filename_component(_stem ${ARG_SOURCES} NAME_WLE)
+        cmake_path(GET ARG_SOURCES STEM LAST_ONLY _stem)
     else()
         set(_stem ${name})
     endif()
@@ -436,7 +436,7 @@ add_lib_test(
     SOURCES registration.cpp
     ARGS "--list" "--run=registration_one"
     PASS_REGEX "^registration_one\n?$"
-    FAIL_REGEX "registration_two;registration_three"
+    FAIL_REGEX "registration_two" "registration_three"
     EXITS 0
 )
 
@@ -461,7 +461,7 @@ add_lib_test(
     SOURCES registration.cpp
     ARGS "--run=registration_one"
     PASS_REGEX "registration_one"
-    FAIL_REGEX "registration_two;registration_three"
+    FAIL_REGEX "registration_two" "registration_three"
     EXITS 0
 )
 
@@ -637,7 +637,7 @@ add_lib_test(
     ARGS "--run=require_throws_as_wrong_unknown"
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
-    FAIL_REGEX "FAILED: false;: \""
+    FAIL_REGEX "FAILED: false" ": \""
     EXITS 1
 )
 # REQUIRE inside CHECK_THROWS_AS propagates out: unwind is not swallowed as a throw.
@@ -748,7 +748,7 @@ add_lib_test(
     ARGS "--run=require_catches_as_wrong_unknown"
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
-    FAIL_REGEX "FAILED: false;: \""
+    FAIL_REGEX "FAILED: false" ": \""
     EXITS 1
 )
 # REQUIRE inside CHECK_CATCHES_AS propagates out: unwind is not swallowed as a throw.
@@ -832,7 +832,7 @@ add_lib_test(
     SOURCES nothrow.fail.cpp
     ARGS "--run=require_nothrow_throws_unknown"
     PASS_REGEX "FAILED:.*threw unexpectedly"
-    FAIL_REGEX "FAILED: false;: \""
+    FAIL_REGEX "FAILED: false" ": \""
     EXITS 1
 )
 # REQUIRE inside CHECK_NOTHROW propagates out: unwind is not swallowed as a throw.

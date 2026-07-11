@@ -5,7 +5,7 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-cmake_minimum_required(VERSION 3.31)
+cmake_minimum_required(VERSION 4.0)
 project(Eggs.Test-FetchContent LANGUAGES CXX)
 
 set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT
@@ -23,7 +23,11 @@ if(NOT DEFINED EGGS_TEST_SOURCE_DIR)
         "Pass -DEGGS_TEST_SOURCE_DIR=<path> to cmake."
     )
 endif()
-file(TO_CMAKE_PATH "${EGGS_TEST_SOURCE_DIR}" EGGS_TEST_SOURCE_DIR)
+cmake_path(
+    CONVERT "${EGGS_TEST_SOURCE_DIR}"
+    TO_CMAKE_PATH_LIST EGGS_TEST_SOURCE_DIR
+    NORMALIZE
+)
 
 include(FetchContent)
 FetchContent_Declare(Eggs.Test SOURCE_DIR "${EGGS_TEST_SOURCE_DIR}")

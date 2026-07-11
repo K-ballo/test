@@ -21,6 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.4.0"
+
       - name: Set up APT package cache
         run: |
           mkdir -p ~/.cache/apt/archives/partial
@@ -40,9 +45,6 @@ jobs:
           sudo bash llvm.sh 22 all
           sudo update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-22   200
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 200
-
-      - name: Install Ninja
-        run: sudo apt-get install -y ninja-build
 
       - name: Fix APT cache permissions
         if: always()
@@ -106,6 +108,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.4.0"
+
       - name: Set up APT package cache
         run: |
           mkdir -p ~/.cache/apt/archives/partial
@@ -133,9 +140,6 @@ jobs:
           curl -sL https://github.com/linux-test-project/lcov/releases/download/v2.4/lcov-2.4.tar.gz \
             | tar xz -C "$HOME"
           echo "$HOME/lcov-2.4/bin" >> "$GITHUB_PATH"
-
-      - name: Install Ninja
-        run: sudo apt-get install -y ninja-build
 
       - name: Fix APT cache permissions
         if: always()
