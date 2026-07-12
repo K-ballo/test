@@ -74,11 +74,17 @@
 //
 // Evaluates expr and passes if it throws any exception.  Fails with a
 // diagnostic if expr completes without throwing.  Returns std::exception_ptr.
-#define CHECK_THROWS(...)                             \
-    ::eggs::test::detail::check_throws(               \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current(),   \
-        ::std::source_location::current()             \
+#define CHECK_THROWS(...)                                                \
+    ::eggs::test::detail::check_throws(                                  \
+        [&]() {                                                          \
+            static_assert(                                               \
+                !noexcept((__VA_ARGS__)),                                \
+                "CHECK_THROWS(" #__VA_ARGS__ "): expression is noexcept" \
+            );                                                           \
+            (void)(__VA_ARGS__);                                         \
+        },                                                               \
+        #__VA_ARGS__, ::eggs::test::detail::run_state::current(),        \
+        ::std::source_location::current()                                \
     )
 
 // REQUIRE_THROWS(expr)
@@ -96,11 +102,18 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                         \
-    ::eggs::test::detail::check_throws_as<ExcType_>(           \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__,          \
-        ::eggs::test::detail::run_state::current(), #ExcType_, \
-        ::std::source_location::current()                      \
+#define CHECK_THROWS_AS(ExcType_, ...)                                       \
+    ::eggs::test::detail::check_throws_as<ExcType_>(                         \
+        [&]() {                                                              \
+            static_assert(                                                   \
+                !noexcept((__VA_ARGS__)),                                    \
+                "CHECK_THROWS_AS(" #ExcType_ ", " #__VA_ARGS__               \
+                "): expression is noexcept"                                  \
+            );                                                               \
+            (void)(__VA_ARGS__);                                             \
+        },                                                                   \
+        #__VA_ARGS__, ::eggs::test::detail::run_state::current(), #ExcType_, \
+        ::std::source_location::current()                                    \
     )
 
 // REQUIRE_THROWS_AS(ExcType, expr)

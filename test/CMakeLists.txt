@@ -33,6 +33,9 @@ include(EggsTest)
 
 # Helper - creates a test executable and registers it with CTest.
 #
+# COMPILE_FAIL: the test passes when the source fails to compile.  Its value
+#               list is passed to the source as preprocessor definitions.
+#               Cannot be combined with ARGS, DISCOVER, or EXITS.
 # DISCOVER:   register one CTest test per TEST_CASE (discovered at test time).
 # EXITS C:    the expected exit code (defaults to 0).
 # FAIL_REGEX: the test fails if its output matches any of these patterns
@@ -44,51 +47,97 @@ function(add_lib_test name)
         ARG
         "DISCOVER"
         "EXITS"
-        "ARGS;FAIL_REGEX;PASS_REGEX;SOURCES"
+        "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;SOURCES"
         ${ARGN}
     )
+    if("COMPILE_FAIL" IN_LIST ARG_KEYWORDS_MISSING_VALUES)
+        set(ARG_COMPILE_FAIL "")
+        list(REMOVE_ITEM ARG_KEYWORDS_MISSING_VALUES "COMPILE_FAIL")
+    endif()
+    if(
+        DEFINED ARG_COMPILE_FAIL
+        AND (DEFINED ARG_ARGS OR ARG_DISCOVER OR DEFINED ARG_EXITS)
+    )
+        message(
+            SEND_ERROR
+            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, or EXITS"
+        )
+        return()
+    endif()
     if(ARG_KEYWORDS_MISSING_VALUES)
         message(
-            FATAL_ERROR
+            SEND_ERROR
             "add_lib_test(${name}): missing values for keyword(s): ${ARG_KEYWORDS_MISSING_VALUES}"
         )
+        return()
     endif()
     if(ARG_UNPARSED_ARGUMENTS)
         message(
-            FATAL_ERROR
+            SEND_ERROR
             "add_lib_test(${name}): unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}"
         )
+        return()
     endif()
+
     list(LENGTH ARG_SOURCES _n)
-    if(_n EQUAL 1)
+    if(_n EQUAL 1 AND NOT DEFINED ARG_COMPILE_FAIL)
         get_filename_component(_stem ${ARG_SOURCES} NAME_WLE)
     else()
         set(_stem ${name})
     endif()
+
+    set(_test_launcher
+        ${CMAKE_COMMAND}
+        -P
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/test_launcher.cmake
+        --
+    )
 
     if(NOT TARGET _eggs_test.${_stem})
         add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
         target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::TestMain)
         set_target_properties(
             _eggs_test.${_stem}
-            PROPERTIES
-                FOLDER "test"
-                TEST_LAUNCHER
-                    "${CMAKE_COMMAND};-P;${CMAKE_CURRENT_FUNCTION_LIST_DIR}/test_launcher.cmake;--"
+            PROPERTIES FOLDER "test" TEST_LAUNCHER "${_test_launcher}"
         )
     endif()
 
     # test_launcher.cmake picks these control args.
     set(_control_args)
-    if(DEFINED ARG_EXITS AND NOT ARG_EXITS EQUAL 0)
-        list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
-    endif()
     foreach(_pat IN LISTS ARG_FAIL_REGEX)
         list(APPEND _control_args "--eggs-run-test-fail-regex=${_pat}")
     endforeach()
     foreach(_pat IN LISTS ARG_PASS_REGEX)
         list(APPEND _control_args "--eggs-run-test-pass-regex=${_pat}")
     endforeach()
+
+    if(DEFINED ARG_COMPILE_FAIL)
+        target_compile_definitions(
+            _eggs_test.${_stem}
+            PRIVATE ${ARG_COMPILE_FAIL}
+        )
+        set_target_properties(
+            _eggs_test.${_stem}
+            PROPERTIES EXCLUDE_FROM_ALL TRUE COMPILE_WARNING_AS_ERROR OFF
+        )
+
+        add_test(
+            NAME eggs.test.${name}
+            COMMAND
+                ${_test_launcher} ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+                --target _eggs_test.${_stem} --config $<CONFIG> ${_control_args}
+                --eggs-run-test-will-fail
+        )
+        set_tests_properties(
+            eggs.test.${name}
+            PROPERTIES LABELS "unit" RESOURCE_LOCK cmake_build
+        )
+        return()
+    endif()
+
+    if(DEFINED ARG_EXITS)
+        list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
+    endif()
 
     if(ARG_DISCOVER)
         eggs_discover_tests(
@@ -520,6 +569,20 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
+# CHECK_THROWS rejects noexcept expressions.
+add_lib_test(
+    throws.noexcept.check.compile_fail
+    SOURCES throws.compile_fail.cpp
+    COMPILE_FAIL CHECK_THROWS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX "CHECK_THROWS\\(1 \\+ 1\\): expression is noexcept"
+)
+# REQUIRE_THROWS rejects noexcept expressions.
+add_lib_test(
+    throws.noexcept.require.compile_fail
+    SOURCES throws.compile_fail.cpp
+    COMPILE_FAIL REQUIRE_THROWS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX "CHECK_THROWS\\(1 \\+ 1\\): expression is noexcept"
+)
 
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -595,6 +658,22 @@ add_lib_test(
     FAIL_REGEX "FAILED: false" "threw unexpected exception"
     EXITS 1
 )
+# CHECK_THROWS_AS rejects noexcept expressions.
+add_lib_test(
+    throws_as.noexcept.check.compile_fail
+    SOURCES throws_as.compile_fail.cpp
+    COMPILE_FAIL CHECK_THROWS_AS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX
+        "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
+)
+# REQUIRE_THROWS_AS rejects noexcept expressions.
+add_lib_test(
+    throws_as.noexcept.require.compile_fail
+    SOURCES throws_as.compile_fail.cpp
+    COMPILE_FAIL REQUIRE_THROWS_AS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX
+        "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
+)
 
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -669,6 +748,22 @@ add_lib_test(
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
     EXITS 1
+)
+# CHECK_CATCHES_AS rejects noexcept expressions.
+add_lib_test(
+    catches_as.noexcept.check.compile_fail
+    SOURCES catches_as.compile_fail.cpp
+    COMPILE_FAIL CHECK_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX
+        "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
+)
+# REQUIRE_CATCHES_AS rejects noexcept expressions.
+add_lib_test(
+    catches_as.noexcept.require.compile_fail
+    SOURCES catches_as.compile_fail.cpp
+    COMPILE_FAIL REQUIRE_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
+    PASS_REGEX
+        "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
 )
 
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.

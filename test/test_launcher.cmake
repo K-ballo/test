@@ -10,12 +10,14 @@
 #
 # Recognized <control-arg>:
 #   --eggs-run-test-exits=<N>          expected exit code (default 0)
+#   --eggs-run-test-will-fail          expect a non-zero exit code instead
 #   --eggs-run-test-fail-regex=<regex> must NOT match (repeatable)
 #   --eggs-run-test-pass-regex=<regex> must match (repeatable)
 #
 # Runs <exe> with <args>, echoes its output (stdout and stderr merged),
 # then checks:
-#   1. exit code equals the expected exit code (0 unless overridden)
+#   1. exit code equals <N> (0 unless overridden), or, with
+#      --eggs-run-test-will-fail, is non-zero
 #   2. output does not match any --eggs-run-test-fail-regex=<pattern>
 #   3. output matches every --eggs-run-test-pass-regex=<pattern>
 
@@ -30,14 +32,16 @@ endif()
 
 set(_exe "${CMAKE_ARGV4}")
 set(_args)
-set(_exits 0)
+set(_will_fail FALSE)
 set(_fail_patterns)
 set(_pass_patterns)
 
 set(_i 5)
 while(_i LESS CMAKE_ARGC)
     set(_arg "${CMAKE_ARGV${_i}}")
-    if(_arg MATCHES "^--eggs-run-test-exits=(.*)$")
+    if(_arg STREQUAL "--eggs-run-test-will-fail")
+        set(_will_fail TRUE)
+    elseif(_arg MATCHES "^--eggs-run-test-exits=(.*)$")
         set(_exits "${CMAKE_MATCH_1}")
     elseif(_arg MATCHES "^--eggs-run-test-fail-regex=(.*)$")
         list(APPEND _fail_patterns "${CMAKE_MATCH_1}")
@@ -49,6 +53,17 @@ while(_i LESS CMAKE_ARGC)
     math(EXPR _i "${_i} + 1")
 endwhile()
 
+if(_will_fail AND DEFINED _exits)
+    message(
+        FATAL_ERROR
+        "--eggs-run-test-exits=<N> cannot be used together with --eggs-run-test-will-fail"
+    )
+endif()
+
+if(NOT DEFINED _exits)
+    set(_exits 0)
+endif()
+
 execute_process(
     COMMAND "${_exe}" ${_args}
     OUTPUT_VARIABLE _output
@@ -58,7 +73,11 @@ execute_process(
     RESULT_VARIABLE _status
 )
 
-if(NOT _status EQUAL _exits)
+if(_will_fail)
+    if(_status EQUAL 0)
+        message(SEND_ERROR "exit code ${_status} (expected non-zero)")
+    endif()
+elseif(NOT _status EQUAL _exits)
     message(SEND_ERROR "exit code ${_status} (expected ${_exits})")
 endif()
 
