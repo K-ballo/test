@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <exception>
 #include <source_location>
+#include <type_traits>
 
 namespace eggs::test::detail {
 
@@ -42,7 +43,7 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws(
 {
     try {
         fn();
-    } catch (require_failed const&) {
+    } catch (detail::unwind const&) {
         throw;
     } catch (...) {
         ++s.assertions_passed;
@@ -60,10 +61,15 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
     std::source_location const& loc
 )
 {
+    static_assert(
+        !std::is_same_v<ExcType, detail::unwind>,
+        "cannot catch eggs::test::detail::unwind"
+    );
+
     std::exception_ptr threw = nullptr;
     try {
         fn();
-    } catch (require_failed const&) {
+    } catch (detail::unwind const&) {
         throw;
     } catch (ExcType const&) {
         ++s.assertions_passed;
@@ -91,7 +97,7 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
 
         ++s.assertions_passed;
         return true;
-    } catch (require_failed const&) {
+    } catch (detail::unwind const&) {
         throw;
     } catch (...) {
         threw = std::current_exception();

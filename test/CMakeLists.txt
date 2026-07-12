@@ -551,7 +551,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# REQUIRE inside CHECK_THROWS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside CHECK_THROWS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     throws.require_propagated.fail
     SOURCES throws.fail.cpp
@@ -560,7 +560,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# REQUIRE inside REQUIRE_THROWS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside REQUIRE_THROWS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     throws.require_propagated.require.fail
     SOURCES throws.fail.cpp
@@ -640,7 +640,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false;: \""
     EXITS 1
 )
-# REQUIRE inside CHECK_THROWS_AS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside CHECK_THROWS_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     throws_as.require_propagated.fail
     SOURCES throws_as.fail.cpp
@@ -649,7 +649,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false" "threw unexpected exception"
     EXITS 1
 )
-# REQUIRE inside REQUIRE_THROWS_AS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside REQUIRE_THROWS_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     throws_as.require_propagated.require.fail
     SOURCES throws_as.fail.cpp
@@ -673,6 +673,20 @@ add_lib_test(
     COMPILE_FAIL REQUIRE_THROWS_AS_NOEXCEPT_COMPILE_FAIL
     PASS_REGEX
         "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
+)
+# CHECK_THROWS_AS(unwind, ...) must not compile: unwind cannot be caught.
+add_lib_test(
+    throws_as.unwind.check.compile_fail
+    SOURCES throws_as.compile_fail.cpp
+    COMPILE_FAIL CHECK_THROWS_AS_UNWIND
+    PASS_REGEX "cannot catch eggs::test::detail::unwind"
+)
+# REQUIRE_THROWS_AS(unwind, ...) must not compile: unwind cannot be caught.
+add_lib_test(
+    throws_as.unwind.require.compile_fail
+    SOURCES throws_as.compile_fail.cpp
+    COMPILE_FAIL REQUIRE_THROWS_AS_UNWIND
+    PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
@@ -731,7 +745,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false;: \""
     EXITS 1
 )
-# REQUIRE inside CHECK_CATCHES_AS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside CHECK_CATCHES_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     catches_as.require_propagated.fail
     SOURCES catches_as.fail.cpp
@@ -740,7 +754,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false"
     EXITS 1
 )
-# REQUIRE inside REQUIRE_CATCHES_AS propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside REQUIRE_CATCHES_AS propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     catches_as.require_propagated.require.fail
     SOURCES catches_as.fail.cpp
@@ -764,6 +778,20 @@ add_lib_test(
     COMPILE_FAIL REQUIRE_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
     PASS_REGEX
         "CHECK_THROWS_AS\\(std::runtime_error, 1 \\+ 1\\): expression is noexcept"
+)
+# CHECK_CATCHES_AS(unwind, ...) must not compile: unwind cannot be caught.
+add_lib_test(
+    catches_as.unwind.check.compile_fail
+    SOURCES catches_as.compile_fail.cpp
+    COMPILE_FAIL CHECK_CATCHES_AS_UNWIND
+    PASS_REGEX "cannot catch eggs::test::detail::unwind"
+)
+# REQUIRE_CATCHES_AS(unwind, ...) must not compile: unwind cannot be caught.
+add_lib_test(
+    catches_as.unwind.require.compile_fail
+    SOURCES catches_as.compile_fail.cpp
+    COMPILE_FAIL REQUIRE_CATCHES_AS_UNWIND
+    PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.
@@ -801,7 +829,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false;: \""
     EXITS 1
 )
-# REQUIRE inside CHECK_NOTHROW propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside CHECK_NOTHROW propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     nothrow.require_propagated.fail
     SOURCES nothrow.fail.cpp
@@ -810,7 +838,7 @@ add_lib_test(
     FAIL_REGEX "FAILED: false" "threw unexpectedly"
     EXITS 1
 )
-# REQUIRE inside REQUIRE_NOTHROW propagates out: require_failed is not swallowed as a throw.
+# REQUIRE inside REQUIRE_NOTHROW propagates out: unwind is not swallowed as a throw.
 add_lib_test(
     nothrow.require_propagated.require.fail
     SOURCES nothrow.fail.cpp

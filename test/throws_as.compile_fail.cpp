@@ -25,4 +25,18 @@ TEST_CASE(
 {
     REQUIRE_THROWS_AS(std::runtime_error, 1 + 1);
 }
+#elif defined(CHECK_THROWS_AS_UNWIND)
+TEST_CASE(
+    check_throws_as_unwind, "CHECK_THROWS_AS(unwind, ...) fails to compile"
+)
+{
+    CHECK_THROWS_AS(::eggs::test::detail::unwind, throw 2);
+}
+#elif defined(REQUIRE_THROWS_AS_UNWIND)
+TEST_CASE(
+    require_throws_as_unwind, "REQUIRE_THROWS_AS(unwind, ...) fails to compile"
+)
+{
+    REQUIRE_THROWS_AS(::eggs::test::detail::unwind, throw 2);
+}
 #endif

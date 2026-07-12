@@ -80,7 +80,7 @@ int registry::run(std::vector<test_entry> const& run)
         try {
             e.run();
             passed = !state.assertions_failed;
-        } catch (require_failed const&) {
+        } catch (detail::unwind const&) {
         } catch (std::exception const& ex) {
             detail::println(stdout, "  EXCEPTION: {}", ex.what());
         } catch (...) {

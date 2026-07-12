@@ -9,15 +9,14 @@
 
 namespace eggs::test::detail {
 
-// Exception thrown by REQUIRE to unwind the current test case without
-// terminating the process.  Caught by the runner per-test.
-struct require_failed final
+// Exception thrown by REQUIRE to unwind the current test case.
+struct unwind final
 {};
 
 template <typename T>
 inline T require(T value)
 {
-    return static_cast<bool>(value) ? value : throw require_failed{};
+    return static_cast<bool>(value) ? value : throw unwind{};
 }
 
 } // namespace eggs::test::detail
