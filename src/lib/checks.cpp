@@ -11,13 +11,15 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <cstdio>
 #include <exception>
 #include <filesystem>
 #include <format>
-#include <string>
+#include <source_location>
 #include <string_view>
 #include <typeinfo>
+#include <utility>
 
 namespace eggs::test::detail {
 
@@ -109,25 +111,28 @@ void print_stacktrace(
 
 } // namespace
 
-EGGS_TEST_NOINLINE void check_failed(
-    const char* expr, std::source_location const& loc, std::size_t entry_depth
+void check_failed(
+    const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st, std::size_t entry_depth
 )
 {
     print_failed(loc, "{}", expr);
-    print_stacktrace(detail::stacktrace::current(1), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
-EGGS_TEST_NOINLINE void throws_failed(
-    const char* expr, std::source_location const& loc, std::size_t entry_depth
+void check_throws_failed(
+    const char* expr, std::source_location const& loc,
+    detail::stacktrace const& st, std::size_t entry_depth
 )
 {
     print_failed(loc, "{} did not throw", expr);
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
-EGGS_TEST_NOINLINE void throws_as_failed(
-    const char* expr, const char* exc_type, std::exception_ptr threw,
-    std::source_location const& loc, std::size_t entry_depth
+void check_throws_as_failed(
+    const char* expr, const char* exc_type, std::exception_ptr const& threw,
+    std::source_location const& loc, detail::stacktrace const& st,
+    std::size_t entry_depth
 )
 {
     try {
@@ -142,11 +147,12 @@ EGGS_TEST_NOINLINE void throws_as_failed(
             loc, "{} threw unexpected exception (expected {})", expr, exc_type
         );
     }
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
-EGGS_TEST_NOINLINE void nothrow_failed(
-    const char* expr, std::exception_ptr threw, std::source_location const& loc,
+void check_nothrow_failed(
+    const char* expr, std::exception_ptr const& threw,
+    std::source_location const& loc, detail::stacktrace const& st,
     std::size_t entry_depth
 )
 {
@@ -160,7 +166,7 @@ EGGS_TEST_NOINLINE void nothrow_failed(
     } catch (...) {
         print_failed(loc, "{} threw unexpectedly", expr);
     }
-    print_stacktrace(detail::stacktrace::current(2), entry_depth);
+    print_stacktrace(st, entry_depth);
 }
 
 } // namespace eggs::test::detail

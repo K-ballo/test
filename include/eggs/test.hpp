@@ -10,7 +10,6 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
-#include <eggs/test/detail/run_state.hpp>
 
 #include <exception>
 #include <source_location>
@@ -53,16 +52,8 @@
 //
 // Uses #__VA_ARGS__ so that expressions containing commas (e.g. template
 // arguments) stringify correctly.
-#define CHECK(...)                                                          \
-    (static_cast<bool>(__VA_ARGS__)                                         \
-         ? (++::eggs::test::detail::run_state::current().assertions_passed, \
-            true)                                                           \
-         : (++::eggs::test::detail::run_state::current().assertions_failed, \
-            ::eggs::test::detail::check_failed(                             \
-                #__VA_ARGS__, ::std::source_location::current(),            \
-                ::eggs::test::detail::run_state::current().entry_depth      \
-            ),                                                              \
-            false))
+#define CHECK(...) \
+    ::eggs::test::detail::check(static_cast<bool>(__VA_ARGS__), #__VA_ARGS__)
 
 // REQUIRE(expr)
 //
@@ -83,8 +74,7 @@
             );                                                           \
             (void)(__VA_ARGS__);                                         \
         },                                                               \
-        #__VA_ARGS__, ::eggs::test::detail::run_state::current(),        \
-        ::std::source_location::current()                                \
+        #__VA_ARGS__                                                     \
     )
 
 // REQUIRE_THROWS(expr)
@@ -102,18 +92,17 @@
 //
 // ExcType is a single argument; template types containing commas require a
 // using-alias.
-#define CHECK_THROWS_AS(ExcType_, ...)                                       \
-    ::eggs::test::detail::check_throws_as<ExcType_>(                         \
-        [&]() {                                                              \
-            static_assert(                                                   \
-                !noexcept((__VA_ARGS__)),                                    \
-                "CHECK_THROWS_AS(" #ExcType_ ", " #__VA_ARGS__               \
-                "): expression is noexcept"                                  \
-            );                                                               \
-            (void)(__VA_ARGS__);                                             \
-        },                                                                   \
-        #__VA_ARGS__, ::eggs::test::detail::run_state::current(), #ExcType_, \
-        ::std::source_location::current()                                    \
+#define CHECK_THROWS_AS(ExcType_, ...)                         \
+    ::eggs::test::detail::check_throws_as<ExcType_>(           \
+        [&]() {                                                \
+            static_assert(                                     \
+                !noexcept((__VA_ARGS__)),                      \
+                "CHECK_THROWS_AS(" #ExcType_ ", " #__VA_ARGS__ \
+                "): expression is noexcept"                    \
+            );                                                 \
+            (void)(__VA_ARGS__);                               \
+        },                                                     \
+        #__VA_ARGS__, #ExcType_                                \
     )
 
 // REQUIRE_THROWS_AS(ExcType, expr)
@@ -155,11 +144,9 @@
 //
 // Evaluates expr and passes if it does not throw.  Fails with a diagnostic if
 // any exception escapes.  Returns bool.
-#define CHECK_NOTHROW(...)                            \
-    ::eggs::test::detail::check_nothrow(              \
-        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__, \
-        ::eggs::test::detail::run_state::current(),   \
-        ::std::source_location::current()             \
+#define CHECK_NOTHROW(...)                           \
+    ::eggs::test::detail::check_nothrow(             \
+        [&]() { (void)(__VA_ARGS__); }, #__VA_ARGS__ \
     )
 
 // REQUIRE_NOTHROW(expr)
