@@ -88,16 +88,17 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
     // start from the next frame.
-    for (std::size_t i = 1; i < limit; ++i) {
-        if (from_library(st[i], lib)) continue;
+    for (detail::stacktrace::size_type i = 1; i < limit; ++i) {
+        auto const& e = st[i];
+        if (from_library(e, lib)) continue;
 
-        if (auto const& file = st[i].source_file(); !file.empty()) {
+        if (auto const& file = e.source_file(); !file.empty()) {
             detail::println(
-                stdout, "    #{} {}  [{}:{}]", i, st[i].description(), file,
-                st[i].source_line()
+                stdout, "    #{} {}  [{}:{}]", i, e.description(), file,
+                e.source_line()
             );
         } else {
-            detail::println(stdout, "    #{} {}", i, st[i].description());
+            detail::println(stdout, "    #{} {}", i, e.description());
         }
     }
 }

@@ -31,8 +31,8 @@
         "CMAKE_CXX_COMPILER": "g++"
       },
       "environment": {
-        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=.",
-        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=."
+        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=.",
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=."
       }
     },
     {
@@ -44,8 +44,8 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
-        "CXXFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=."
+        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=."
       }
     },
     {
@@ -57,8 +57,8 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
-        "CXXFLAGS": "-stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
         "LDFLAGS": "-stdlib=libc++"
       }
     },
@@ -68,11 +68,13 @@
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl",
-        "CMAKE_CXX_COMPILER": "cl"
+        "CMAKE_CXX_COMPILER": "cl",
+        "CMAKE_CXX_FLAGS_RELEASE_INIT": "/wd4702",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "/wd4702"
       },
       "environment": {
-        "CFLAGS": "/d1trimfile:\"${sourceDir}\"",
-        "CXXFLAGS": "/d1trimfile:\"${sourceDir}\""
+        "CFLAGS": "/W4 /d1trimfile:\"${sourceDir}\"",
+        "CXXFLAGS": "/W4 /d1trimfile:\"${sourceDir}\""
       }
     },
     {
@@ -84,8 +86,8 @@
         "CMAKE_CXX_COMPILER": "clang-cl"
       },
       "environment": {
-        "CFLAGS": "/clang:-ffile-prefix-map=${sourceDir}=.",
-        "CXXFLAGS": "/clang:-ffile-prefix-map=${sourceDir}=."
+        "CFLAGS": "/W4 /clang:-ffile-prefix-map=${sourceDir}=.",
+        "CXXFLAGS": "/W4 /clang:-ffile-prefix-map=${sourceDir}=."
       }
     },
     {
@@ -98,7 +100,7 @@
       "displayName": "TSan / Clang",
       "inherits": "dev-clang",
       "environment": {
-        "CXXFLAGS": "-fsanitize=thread -fno-omit-frame-pointer"
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -fsanitize=thread -fno-omit-frame-pointer"
       }
     }
   ],

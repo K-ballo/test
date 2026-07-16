@@ -27,7 +27,7 @@ TEST_CASE(
 
 namespace {
 
-[[noreturn]] bool throw_42()
+bool throw_42()
 {
     throw 42;
 }
