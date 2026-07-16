@@ -10,6 +10,7 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
+#include <eggs/test/detail/warning.hpp>
 
 #include <exception>
 #include <source_location>
@@ -30,6 +31,7 @@
     {                                                      \
       private:                                             \
         static void run();                                 \
+        EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH      \
         inline static bool const registered_ =             \
             (::eggs::test::detail::registry::add({         \
                  .name = #name_,                           \
@@ -38,6 +40,7 @@
                  .loc = ::std::source_location::current(), \
              }),                                           \
              true);                                        \
+        EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_POP       \
     };                                                     \
     void name_::run()
 

@@ -6,6 +6,7 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
+#include <eggs/test/detail/no_destroy.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
@@ -55,8 +56,8 @@ registry::cases_type& registry::cases()
     // Meyers singleton - guaranteed to be constructed before first use,
     // which avoids the static-initialisation-order fiasco when test_entry
     // instances in different translation units register before main().
-    static registry::cases_type v;
-    return v;
+    static detail::no_destroy<registry::cases_type> holder;
+    return holder.get();
 }
 
 int registry::run(std::vector<test_entry> const& run)

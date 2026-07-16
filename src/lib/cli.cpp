@@ -9,11 +9,13 @@
 #include <eggs/test/cli.hpp>
 #include <eggs/test/detail/print.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <format>
 #include <initializer_list>
+#include <span>
 #include <string_view>
 
 #include "opts.hpp"
@@ -30,19 +32,20 @@ void print_option(
     // FIXME(C++26): !desc.empty()
     assert(desc.size() != 0);
 
-    auto it = desc.begin();
+    std::span<std::string_view const> const lines{desc};
+    auto rest = lines;
 
     // First line: print display alongside description if it fits, else wrap.
-    if (2 + disp.size() <= desc_col && it != desc.end()) {
-        detail::println(out, "  {:<{}} {}", disp, desc_col - 2, *it);
-        ++it;
+    if (2 + disp.size() <= desc_col && !lines.empty()) {
+        detail::println(out, "  {:<{}} {}", disp, desc_col - 2, lines.front());
+        rest = lines.subspan(1);
     } else {
         detail::println(out, "  {}", disp);
     }
 
     // Remaining lines: indent to description column.
-    for (; it != desc.end(); ++it) {
-        detail::println(out, "{:>{}} {}", "", desc_col, *it);
+    for (auto const& line : rest) {
+        detail::println(out, "{:>{}} {}", "", desc_col, line);
     }
 }
 
@@ -84,22 +87,27 @@ std::string_view extract_stem(std::string_view arg, std::string_view const ns)
 
 run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
 {
-    int outc = 1;
     run_options opts;
 
-    for (int i = 1; i < argc; ++i) {
-        auto const stem = extract_stem(argv[i], ns);
+    std::span<char const*> const args{argv, static_cast<std::size_t>(argc)};
+    auto const rest = args.subspan(1);
+
+    auto const consume = [&](char const* arg) {
+        auto const stem = extract_stem(arg, ns);
 
         if (stem == "list") {
             opts.list = true;
+            return true;
         } else if (stem.starts_with("run=")) {
             opts.run.push_back(stem.substr(4));
-        } else {
-            argv[outc++] = argv[i];
+            return true;
         }
-    }
+        return false;
+    };
 
-    argc = outc;
+    auto const new_end = std::remove_if(rest.begin(), rest.end(), consume);
+
+    argc = 1 + static_cast<int>(new_end - rest.begin());
     return opts;
 }
 

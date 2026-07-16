@@ -65,11 +65,14 @@ target_sources(
                 include/eggs/test/detail/require.hpp
                 include/eggs/test/detail/run_state.hpp
                 include/eggs/test/detail/stacktrace.hpp
+                include/eggs/test/detail/warning.hpp
     PRIVATE
         FILE_SET private_headers
             TYPE HEADERS
             BASE_DIRS include
-            FILES include/eggs/test/detail/print.hpp
+            FILES
+                include/eggs/test/detail/no_destroy.hpp
+                include/eggs/test/detail/print.hpp
         FILE_SET private_src_headers
             TYPE HEADERS
             BASE_DIRS src/lib

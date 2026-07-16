@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <string_view>
 
 namespace eggs::test {
@@ -50,11 +51,13 @@ int main(int argc, char const* argv[])
 
     std::optional<int> exit_code;
 
-    for (int i = 1; i < argc; ++i) {
-        std::string_view const arg = argv[i];
+    std::span<char const*> const args{argv, static_cast<std::size_t>(argc)};
+
+    for (char const* const arg_ptr : args.subspan(1)) {
+        std::string_view const arg = arg_ptr;
 
         if (arg == "--help" || arg == "-h") {
-            std::filesystem::path const path{argv[0] ? argv[0] : ""};
+            std::filesystem::path const path{args.front() ? args.front() : ""};
             auto const& usage = path.filename().string();
 
             test::print_help(stdout, usage);
