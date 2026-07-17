@@ -1,0 +1,35 @@
+# Copyright Agustin K-ballo Berge, Fusion Fenix 2026
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+name: lint
+
+on:
+  push:
+    branches: [ main, feature/** ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  orphan-sources:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "4.4.0"
+
+      - name: Enable CMake File API (codemodel-v2)
+        run: |
+          mkdir -p build/lint/.cmake/api/v1/query
+          touch build/lint/.cmake/api/v1/query/codemodel-v2
+
+      - name: Configure
+        run: cmake -S . -B build/lint
+
+      - name: Check every header/source file is referenced by a CMake target
+        run: python3 .github/scripts/check_orphan_sources.py build/lint
