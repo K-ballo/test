@@ -17,8 +17,30 @@
 #include <optional>
 #include <string_view>
 
+#if defined(_WIN32)
+#    define WIN32_LEAN_AND_MEAN
+#    include <crtdbg.h>
+#    include <windows.h>
+#endif
+
 namespace eggs::test {
 namespace {
+
+void suppress_debug_dialogs() noexcept
+{
+#if defined(_WIN32)
+    SetErrorMode(
+        SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX
+    );
+    _set_abort_behavior(0, _CALL_REPORTFAULT);
+
+    for (int const report_type : {_CRT_WARN, _CRT_ERROR, _CRT_ASSERT}) {
+        _CrtSetReportMode(report_type, _CRTDBG_MODE_FILE);
+        _CrtSetReportFile(report_type, _CRTDBG_FILE_STDERR);
+        (void)report_type; // NDEBUG
+    }
+#endif
+}
 
 void print_help(std::FILE* out, std::string_view const usage)
 {
@@ -68,6 +90,10 @@ int main(int argc, char const* argv[])
                 detail::println(stderr, "error: invalid exit code '{}'", val);
                 return EXIT_FAILURE;
             }
+            continue;
+        }
+        if (arg == "--non-interactive") {
+            test::suppress_debug_dialogs();
             continue;
         }
 

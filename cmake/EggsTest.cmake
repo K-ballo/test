@@ -173,7 +173,8 @@ function(eggs_discover_tests_impl)
     )
 
     execute_process(
-        COMMAND ${ARG_TEST_LAUNCHER} "${ARG_EXECUTABLE}" --list
+        COMMAND
+            ${ARG_TEST_LAUNCHER} "${ARG_EXECUTABLE}" --non-interactive --list
         WORKING_DIRECTORY "${ARG_WORKING_DIRECTORY}"
         OUTPUT_VARIABLE _output
         OUTPUT_STRIP_TRAILING_WHITESPACE

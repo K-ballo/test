@@ -170,13 +170,15 @@ function(add_lib_test name)
         eggs_discover_tests(
             _eggs_test.${_stem}
             TEST_PREFIX "eggs.test.${name}/"
-            EXTRA_ARGS ${_control_args} ${ARG_ARGS}
+            EXTRA_ARGS ${_control_args} --non-interactive ${ARG_ARGS}
             PROPERTIES LABELS unit
         )
     else()
         add_test(
             NAME eggs.test.${name}
-            COMMAND _eggs_test.${_stem} ${_control_args} ${ARG_ARGS}
+            COMMAND
+                _eggs_test.${_stem} ${_control_args} --non-interactive
+                ${ARG_ARGS}
         )
         set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
     endif()
@@ -446,6 +448,15 @@ add_lib_test(
     ARGS "--exit-code=42abc"
     PASS_REGEX "invalid exit code '42abc'"
     EXITS 1
+)
+
+# --non-interactive must be accepted.
+add_lib_test(
+    cli.non_interactive.pass
+    SOURCES check.pass.cpp
+    RUN check_bool_true
+    ARGS "--non-interactive"
+    EXITS 0
 )
 
 # --list must print exactly the registered test case names, one per line.
