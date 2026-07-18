@@ -7,6 +7,7 @@
 
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/context.hpp>
+#include <eggs/test/detail/no_destroy.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
@@ -103,7 +104,8 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     std::size_t const limit = st.size() - entry_depth;
     if (limit <= 1) return;
 
-    static auto const lib = library_root();
+    static detail::no_destroy const lib_holder{library_root()};
+    auto const& lib = lib_holder.get();
 
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
