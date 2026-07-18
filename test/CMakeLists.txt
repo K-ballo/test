@@ -31,24 +31,32 @@ set_tests_properties(
 
 include(EggsTest)
 
-# Helper - creates a test executable and registers it with CTest.
+# add_lib_test(<name> SOURCES <file>...
+#               [ARGS <arg>...] [RUN <name>...] [DISCOVER] [EXITS <code>]
+#               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
+# add_lib_test(<name> SOURCES <file>... COMPILE_FAIL <macro>...
+#               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
+#
+# Creates a test executable and registers it with CTest.
+#
+# SOURCES are the source files for the test executable.  RUN is test case names
+# to select, each passed as --run=<name>.  ARGS are extra command-line
+# arguments passed to the test executable.
 #
 # COMPILE_FAIL: the test passes when the source fails to compile.  Its value
-#               list is passed to the source as preprocessor definitions.
-#               Cannot be combined with ARGS, DISCOVER, or EXITS.
-# DISCOVER:   register one CTest test per TEST_CASE (discovered at test time).
-# EXITS C:    the expected exit code (defaults to 0).
-# FAIL_REGEX: the test fails if its output matches any of these patterns
-#             (repeatable).
-# PASS_REGEX: the test passes only if its output matches all of these patterns
-#             (repeatable).
+# list is passed to the source as preprocessor definitions.  Cannot be combined
+# with ARGS, DISCOVER, EXITS, or RUN.  DISCOVER registers one CTest test per
+# TEST_CASE (discovered at test time).  EXITS is the expected exit code
+# (defaults to 0).  FAIL_REGEX: the test fails if its output matches any of
+# these patterns.  PASS_REGEX: the test passes only if its output matches all
+# of these patterns.
 function(add_lib_test name)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
         "DISCOVER"
         "EXITS"
-        "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;SOURCES"
+        "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;RUN;SOURCES"
     )
     if("COMPILE_FAIL" IN_LIST ARG_KEYWORDS_MISSING_VALUES)
         set(ARG_COMPILE_FAIL "")
@@ -56,11 +64,16 @@ function(add_lib_test name)
     endif()
     if(
         DEFINED ARG_COMPILE_FAIL
-        AND (DEFINED ARG_ARGS OR ARG_DISCOVER OR DEFINED ARG_EXITS)
+        AND (
+            DEFINED ARG_ARGS
+            OR ARG_DISCOVER
+            OR DEFINED ARG_EXITS
+            OR DEFINED ARG_RUN
+        )
     )
         message(
             SEND_ERROR
-            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, or EXITS"
+            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, EXITS, or RUN"
         )
         return()
     endif()
@@ -85,6 +98,10 @@ function(add_lib_test name)
     else()
         set(_stem ${name})
     endif()
+
+    foreach(_case_name IN LISTS ARG_RUN)
+        list(APPEND ARG_ARGS "--run=${_case_name}")
+    endforeach()
 
     set(_test_launcher
         ${CMAKE_COMMAND}
@@ -186,7 +203,7 @@ add_lib_test(
 add_lib_test(
     registration.info.pass
     SOURCES registration.cpp
-    ARGS "--run=registration_one"
+    RUN registration_one
     PASS_REGEX
         "\\[ RUN  \\] registration_one -- first test case registers  .*registration\\.cpp:13."
     EXITS 0
@@ -198,7 +215,7 @@ add_lib_test(
 add_lib_test(
     summary.single_case.pass
     SOURCES summary.per_case.cpp
-    ARGS "--run=per_case_pass"
+    RUN per_case_pass
     PASS_REGEX "per_case_pass"
     FAIL_REGEX "test cases:"
     EXITS 0
@@ -208,7 +225,7 @@ add_lib_test(
 add_lib_test(
     summary.mixed.fail
     SOURCES summary.mixed.cpp
-    ARGS "--run=mixed_pass_one" "--run=mixed_fail" "--run=mixed_pass_two"
+    RUN mixed_pass_one mixed_fail mixed_pass_two
     PASS_REGEX
         "3 test cases: 2 passed \\(66%\\) \\| 1 failed \\(34%\\):\n- mixed_fail"
     FAIL_REGEX "- mixed_pass_one" "- mixed_pass_two"
@@ -228,7 +245,7 @@ add_lib_test(
 add_lib_test(
     summary.per_case.mixed.fail
     SOURCES summary.mixed.cpp
-    ARGS "--run=check_mixed"
+    RUN check_mixed
     PASS_REGEX
         "check_mixed -- 3 assertions: 2 passed \\(66%\\) \\| 1 failed \\(34%\\)"
     EXITS 1
@@ -238,7 +255,7 @@ add_lib_test(
 add_lib_test(
     summary.per_case.fail
     SOURCES summary.per_case.cpp
-    ARGS "--run=per_case_fail"
+    RUN per_case_fail
     PASS_REGEX
         "\\[ FAIL \\] per_case_fail -- 1 assertions: 0 passed \\(0%\\) \\| 1 failed \\(100%\\)"
     EXITS 1
@@ -248,7 +265,7 @@ add_lib_test(
 add_lib_test(
     summary.per_case.pass
     SOURCES summary.per_case.cpp
-    ARGS "--run=per_case_pass"
+    RUN per_case_pass
     PASS_REGEX "\\[ PASS \\] per_case_pass -- 1 assertions: 1 passed \\(100%\\)"
     EXITS 0
 )
@@ -258,7 +275,7 @@ add_lib_test(
 add_lib_test(
     summary.per_case.zero.pass
     SOURCES summary.zero_assertions.cpp
-    ARGS "--run=zero_assertions_pass"
+    RUN zero_assertions_pass
     PASS_REGEX "\\[ PASS \\] zero_assertions_pass -- 0 assertions"
     FAIL_REGEX "0 assertions:"
     EXITS 0
@@ -266,7 +283,7 @@ add_lib_test(
 add_lib_test(
     summary.per_case.zero.fail
     SOURCES summary.zero_assertions.cpp
-    ARGS "--run=zero_assertions_fail"
+    RUN zero_assertions_fail
     PASS_REGEX "\\[ FAIL \\] zero_assertions_fail -- 0 assertions"
     FAIL_REGEX "0 assertions:"
     EXITS 1
@@ -305,7 +322,7 @@ add_lib_test(
 add_lib_test(
     exceptions.fail.std
     SOURCES exceptions.fail.cpp
-    ARGS "--run=leaked_std_exception"
+    RUN leaked_std_exception
     PASS_REGEX "EXCEPTION: deliberate failure"
     EXITS 1
 )
@@ -313,7 +330,7 @@ add_lib_test(
 add_lib_test(
     exceptions.fail.unknown
     SOURCES exceptions.fail.cpp
-    ARGS "--run=leaked_unknown_exception"
+    RUN leaked_unknown_exception
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
 )
@@ -321,7 +338,7 @@ add_lib_test(
 add_lib_test(
     exceptions.fail.check
     SOURCES exceptions.fail.cpp
-    ARGS "--run=leaked_exception_check"
+    RUN leaked_exception_check
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
 )
@@ -329,7 +346,7 @@ add_lib_test(
 add_lib_test(
     exceptions.fail.require
     SOURCES exceptions.fail.cpp
-    ARGS "--run=leaked_exception_require"
+    RUN leaked_exception_require
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
 )
@@ -384,6 +401,7 @@ add_lib_test(
 add_lib_test(
     cli.exit_code.pass
     SOURCES check.fail.cpp
+    RUN check_false
     ARGS "--exit-code=0"
     EXITS 0
 )
@@ -392,6 +410,7 @@ add_lib_test(
 add_lib_test(
     cli.exit_code.fail
     SOURCES check.pass.cpp
+    RUN check_bool_true
     ARGS "--exit-code=1"
     EXITS 1
 )
@@ -434,7 +453,8 @@ add_lib_test(
 add_lib_test(
     cli.list.run.pass
     SOURCES registration.cpp
-    ARGS "--list" "--run=registration_one"
+    RUN registration_one
+    ARGS "--list"
     PASS_REGEX "^registration_one\n?$"
     FAIL_REGEX "registration_two" "registration_three"
     EXITS 0
@@ -450,7 +470,8 @@ string(
 add_lib_test(
     cli.list.run.order.pass
     SOURCES registration.cpp
-    ARGS "--list" "--run=registration_three" "--run=registration_one"
+    RUN registration_three registration_one
+    ARGS "--list"
     PASS_REGEX "${_list_run_order_regex}"
     FAIL_REGEX "registration_two"
 )
@@ -459,7 +480,7 @@ add_lib_test(
 add_lib_test(
     cli.run.pass
     SOURCES registration.cpp
-    ARGS "--run=registration_one"
+    RUN registration_one
     PASS_REGEX "registration_one"
     FAIL_REGEX "registration_two" "registration_three"
     EXITS 0
@@ -476,7 +497,7 @@ string(
 add_lib_test(
     cli.run.dedup.pass
     SOURCES registration.cpp
-    ARGS "--run=registration_one" "--run=registration_one"
+    RUN registration_one registration_one
     PASS_REGEX "warning: duplicate test case 'registration_one'"
     FAIL_REGEX "${_run_dedup_fail_regex}"
     EXITS 0
@@ -492,7 +513,7 @@ string(
 add_lib_test(
     cli.run.order.pass
     SOURCES registration.cpp
-    ARGS "--run=registration_three" "--run=registration_one"
+    RUN registration_three registration_one
     PASS_REGEX "${_run_order_regex}"
     FAIL_REGEX "registration_two"
 )
@@ -501,7 +522,7 @@ add_lib_test(
 add_lib_test(
     cli.run.unknown.fail
     SOURCES registration.cpp
-    ARGS "--run=unknown"
+    RUN unknown
     PASS_REGEX "error: unknown test case 'unknown'"
     FAIL_REGEX "\\[ RUN  \\]"
     EXITS 1
@@ -517,7 +538,7 @@ string(
 add_lib_test(
     cli.run.unknown_multi.fail
     SOURCES registration.cpp
-    ARGS "--run=unknown_a" "--run=unknown_b"
+    RUN unknown_a unknown_b
     PASS_REGEX "${_run_unknown_multi_regex}"
     FAIL_REGEX "\\[ RUN  \\]"
     EXITS 1
@@ -538,7 +559,7 @@ add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp DISCOVER)
 add_lib_test(
     throws.no_throw.check.fail
     SOURCES throws.fail.cpp
-    ARGS "--run=check_throws_no_throw"
+    RUN check_throws_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     EXITS 1
 )
@@ -546,7 +567,7 @@ add_lib_test(
 add_lib_test(
     throws.no_throw.require.fail
     SOURCES throws.fail.cpp
-    ARGS "--run=require_throws_no_throw"
+    RUN require_throws_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     FAIL_REGEX "FAILED: false"
     EXITS 1
@@ -555,7 +576,7 @@ add_lib_test(
 add_lib_test(
     throws.require_propagated.check.fail
     SOURCES throws.fail.cpp
-    ARGS "--run=check_throws_require_propagated"
+    RUN check_throws_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws<>"
     EXITS 1
@@ -564,7 +585,7 @@ add_lib_test(
 add_lib_test(
     throws.require_propagated.require.fail
     SOURCES throws.fail.cpp
-    ARGS "--run=require_throws_require_propagated"
+    RUN require_throws_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws<>"
     EXITS 1
@@ -588,7 +609,7 @@ add_lib_test(
 add_lib_test(
     throws_as.no_throw.check.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=check_throws_as_no_throw"
+    RUN check_throws_as_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     EXITS 1
 )
@@ -596,7 +617,7 @@ add_lib_test(
 add_lib_test(
     throws_as.no_throw.require.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=require_throws_as_no_throw"
+    RUN require_throws_as_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     FAIL_REGEX "FAILED: false"
     EXITS 1
@@ -605,7 +626,7 @@ add_lib_test(
 add_lib_test(
     throws_as.wrong_type.check.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=check_throws_as_wrong_type"
+    RUN check_throws_as_wrong_type
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     EXITS 1
@@ -614,7 +635,7 @@ add_lib_test(
 add_lib_test(
     throws_as.wrong_type.require.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=require_throws_as_wrong_type"
+    RUN require_throws_as_wrong_type
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     FAIL_REGEX "FAILED: false"
@@ -624,7 +645,7 @@ add_lib_test(
 add_lib_test(
     throws_as.wrong_unknown.check.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=check_throws_as_wrong_unknown"
+    RUN check_throws_as_wrong_unknown
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
     FAIL_REGEX ": \""
@@ -634,7 +655,7 @@ add_lib_test(
 add_lib_test(
     throws_as.wrong_unknown.require.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=require_throws_as_wrong_unknown"
+    RUN require_throws_as_wrong_unknown
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
     FAIL_REGEX "FAILED: false" ": \""
@@ -644,7 +665,7 @@ add_lib_test(
 add_lib_test(
     throws_as.require_propagated.check.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=check_throws_as_require_propagated"
+    RUN check_throws_as_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX
         "FAILED: false"
@@ -656,7 +677,7 @@ add_lib_test(
 add_lib_test(
     throws_as.require_propagated.require.fail
     SOURCES throws_as.fail.cpp
-    ARGS "--run=require_throws_as_require_propagated"
+    RUN require_throws_as_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX
         "FAILED: false"
@@ -699,7 +720,7 @@ add_lib_test(
 add_lib_test(
     catches_as.no_throw.check.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=check_catches_as_no_throw"
+    RUN check_catches_as_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     EXITS 1
 )
@@ -707,7 +728,7 @@ add_lib_test(
 add_lib_test(
     catches_as.no_throw.require.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=require_catches_as_no_throw"
+    RUN require_catches_as_no_throw
     PASS_REGEX "FAILED:.*did not throw"
     FAIL_REGEX "FAILED: false"
     EXITS 1
@@ -716,7 +737,7 @@ add_lib_test(
 add_lib_test(
     catches_as.wrong_type.check.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=check_catches_as_wrong_type"
+    RUN check_catches_as_wrong_type
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     EXITS 1
@@ -725,7 +746,7 @@ add_lib_test(
 add_lib_test(
     catches_as.wrong_type.require.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=require_catches_as_wrong_type"
+    RUN require_catches_as_wrong_type
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*\"wrong\".*expected std::runtime_error"
     FAIL_REGEX "FAILED: false"
@@ -735,7 +756,7 @@ add_lib_test(
 add_lib_test(
     catches_as.wrong_unknown.check.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=check_catches_as_wrong_unknown"
+    RUN check_catches_as_wrong_unknown
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
     FAIL_REGEX ": \""
@@ -745,7 +766,7 @@ add_lib_test(
 add_lib_test(
     catches_as.wrong_unknown.require.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=require_catches_as_wrong_unknown"
+    RUN require_catches_as_wrong_unknown
     PASS_REGEX
         "FAILED:.*threw unexpected exception.*expected std::runtime_error"
     FAIL_REGEX "FAILED: false" ": \""
@@ -755,7 +776,7 @@ add_lib_test(
 add_lib_test(
     catches_as.require_propagated.check.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=check_catches_as_require_propagated"
+    RUN check_catches_as_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
@@ -764,7 +785,7 @@ add_lib_test(
 add_lib_test(
     catches_as.require_propagated.require.fail
     SOURCES catches_as.fail.cpp
-    ARGS "--run=require_catches_as_require_propagated"
+    RUN require_catches_as_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false" "$<$<CONFIG:Debug>:check_throws_as<>"
     EXITS 1
@@ -804,7 +825,7 @@ add_lib_test(
 add_lib_test(
     nothrow.throws.check.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=check_nothrow_throws_std_exception"
+    RUN check_nothrow_throws_std_exception
     PASS_REGEX "FAILED:.*threw unexpectedly.*\"oops\""
     EXITS 1
 )
@@ -812,7 +833,7 @@ add_lib_test(
 add_lib_test(
     nothrow.throws.require.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=require_nothrow_throws_std_exception"
+    RUN require_nothrow_throws_std_exception
     PASS_REGEX "FAILED:.*threw unexpectedly.*\"oops\""
     FAIL_REGEX "FAILED: false"
     EXITS 1
@@ -821,7 +842,7 @@ add_lib_test(
 add_lib_test(
     nothrow.throws_unknown.check.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=check_nothrow_throws_unknown"
+    RUN check_nothrow_throws_unknown
     PASS_REGEX "FAILED:.*threw unexpectedly"
     FAIL_REGEX ": \""
     EXITS 1
@@ -830,7 +851,7 @@ add_lib_test(
 add_lib_test(
     nothrow.throws_unknown.require.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=require_nothrow_throws_unknown"
+    RUN require_nothrow_throws_unknown
     PASS_REGEX "FAILED:.*threw unexpectedly"
     FAIL_REGEX "FAILED: false" ": \""
     EXITS 1
@@ -839,7 +860,7 @@ add_lib_test(
 add_lib_test(
     nothrow.require_propagated.check.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=check_nothrow_require_propagated"
+    RUN check_nothrow_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX
         "FAILED: false"
@@ -851,7 +872,7 @@ add_lib_test(
 add_lib_test(
     nothrow.require_propagated.require.fail
     SOURCES nothrow.fail.cpp
-    ARGS "--run=require_nothrow_require_propagated"
+    RUN require_nothrow_require_propagated
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX
         "FAILED: false"
@@ -872,7 +893,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.check.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_check_zero_levels"
+        RUN stacktrace_check_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -881,7 +902,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.check.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_check_one_level"
+        RUN stacktrace_check_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_check_helper,FAILED:>"
         FAIL_REGEX "check_failed"
         EXITS 1
@@ -890,7 +911,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.check.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_check_two_levels"
+        RUN stacktrace_check_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_check_helper,FAILED:>"
         FAIL_REGEX "check_failed"
         EXITS 1
@@ -900,7 +921,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.require.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_require_zero_levels"
+        RUN stacktrace_require_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -909,7 +930,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.require.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_require_one_level"
+        RUN stacktrace_require_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_require_helper,FAILED:>"
         FAIL_REGEX "check_failed"
         EXITS 1
@@ -918,7 +939,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.require.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_require_two_levels"
+        RUN stacktrace_require_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_require_helper,FAILED:>"
         FAIL_REGEX "check_failed"
         EXITS 1
@@ -928,7 +949,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_zero_levels"
+        RUN stacktrace_throws_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -937,7 +958,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_one_level"
+        RUN stacktrace_throws_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_helper,FAILED:>"
         FAIL_REGEX "check_throws<"
         EXITS 1
@@ -946,7 +967,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_two_levels"
+        RUN stacktrace_throws_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_throws_helper,FAILED:>"
         FAIL_REGEX "check_throws<"
         EXITS 1
@@ -956,7 +977,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws_as.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_as_zero_levels"
+        RUN stacktrace_throws_as_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -965,7 +986,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws_as.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_as_one_level"
+        RUN stacktrace_throws_as_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_throws_as_helper,FAILED:>"
         FAIL_REGEX "check_throws_as<"
         EXITS 1
@@ -974,7 +995,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.throws_as.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_throws_as_two_levels"
+        RUN stacktrace_throws_as_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_throws_as_helper,FAILED:>"
         FAIL_REGEX "check_throws_as<"
         EXITS 1
@@ -984,7 +1005,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.catches_as.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_catches_zero_levels"
+        RUN stacktrace_catches_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -993,7 +1014,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.catches_as.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_catches_one_level"
+        RUN stacktrace_catches_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_catches_helper,FAILED:>"
         FAIL_REGEX "check_throws_as<"
         EXITS 1
@@ -1002,7 +1023,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.catches_as.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_catches_two_levels"
+        RUN stacktrace_catches_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_catches_helper,FAILED:>"
         FAIL_REGEX "check_throws_as<"
         EXITS 1
@@ -1012,7 +1033,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.nothrow.zero_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_nothrow_zero_levels"
+        RUN stacktrace_nothrow_zero_levels
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
@@ -1021,7 +1042,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.nothrow.one_level.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_nothrow_one_level"
+        RUN stacktrace_nothrow_one_level
         PASS_REGEX "$<IF:$<CONFIG:Debug>,failing_nothrow_helper,FAILED:>"
         FAIL_REGEX "check_nothrow<"
         EXITS 1
@@ -1030,7 +1051,7 @@ if(EGGS_HAS_CXX23_STACKTRACE)
     add_lib_test(
         stacktrace.nothrow.two_levels.fail
         SOURCES stacktrace.fail.cpp
-        ARGS "--run=stacktrace_nothrow_two_levels"
+        RUN stacktrace_nothrow_two_levels
         PASS_REGEX "$<IF:$<CONFIG:Debug>,outer_nothrow_helper,FAILED:>"
         FAIL_REGEX "check_nothrow<"
         EXITS 1

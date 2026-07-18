@@ -12,7 +12,7 @@ add_lib_test(cli/parse_cli.pass SOURCES parse_cli.pass.cpp DISCOVER EXITS 0)
 add_lib_test(
     cli/print_options.bare.pass
     SOURCES print_options.pass.cpp
-    ARGS "--run=print_options_bare"
+    RUN print_options_bare
     PASS_REGEX "--list.*list selected test case" "--run=<test_case>"
 )
 
@@ -20,7 +20,7 @@ add_lib_test(
 add_lib_test(
     cli/print_options.ns.pass
     SOURCES print_options.pass.cpp
-    ARGS "--run=print_options_ns"
+    RUN print_options_ns
     PASS_REGEX "--ns:list.*list selected test case" "--ns:run=<test_case>"
     FAIL_REGEX "  --list"
 )
@@ -29,7 +29,7 @@ add_lib_test(
 add_lib_test(
     cli/print_options.desc_col.pass
     SOURCES print_options.pass.cpp
-    ARGS "--run=print_options_desc_col"
+    RUN print_options_desc_col
     PASS_REGEX "--run=<test_case>\n"
     FAIL_REGEX "--run=<test_case> "
 )
