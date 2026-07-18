@@ -21,9 +21,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # -- Linux / GCC 14 --
+          # -- Linux / GCC 13 --
           - os: ubuntu-24.04
-            compiler: gcc-14
+            compiler: gcc-13
             preset: dev-gcc
 
           # -- Linux / GCC 16 --
@@ -96,6 +96,7 @@ jobs:
 
       - name: Cache APT packages
         if: runner.os == 'Linux'
+        continue-on-error: true
         uses: actions/cache@v5
         with:
           path: ~/.cache/apt/archives
@@ -119,16 +120,19 @@ jobs:
 
       - name: Install libc++-18
         if: matrix.compiler == 'clang-18+libc++'
-        run: |
-          sudo apt-get install -y libc++-18-dev libc++abi-18-dev
+        run: sudo apt-get install -y libc++-18-dev libc++abi-18-dev
 
-      - name: Install Clang 22 + libc++
+      - name: Install Clang 22
         if: startsWith(matrix.compiler, 'clang-22')
         run: |
           wget -q https://apt.llvm.org/llvm.sh
-          sudo bash llvm.sh 22 all
+          sudo bash llvm.sh 22
           sudo update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-22   200
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 200
+
+      - name: Install libc++-22
+        if: matrix.compiler == 'clang-22+libc++'
+        run: sudo apt-get install -y libc++-22-dev libc++abi-22-dev
 
       - name: Fix APT cache permissions
         if: always() && runner.os == 'Linux'
@@ -141,6 +145,8 @@ jobs:
         run: cmake --preset ${{ matrix.preset }} -B build/${{ matrix.preset }}
 
       - name: Build library (Debug)
+        id: build_lib_debug
+        continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Debug
                --target _eggs_test _eggs_test_main
 
@@ -150,6 +156,8 @@ jobs:
         run: cmake --build build/${{ matrix.preset }} --config Debug -- -k 0
 
       - name: Run header tests (Debug)
+        id: test_header_debug
+        continue-on-error: true
         if: steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex header
@@ -158,6 +166,8 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-debug-header.xml
 
       - name: Run unit tests (Debug)
+        id: test_unit_debug
+        continue-on-error: true
         if: steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex unit
@@ -166,6 +176,8 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-debug-unit.xml
 
       - name: Run examples (Debug)
+        id: test_example_debug
+        continue-on-error: true
         if: steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex example
@@ -174,17 +186,19 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-debug-example.xml
 
       - name: Build library (Release)
-        if: always()
+        id: build_lib_release
+        continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Release
                --target _eggs_test _eggs_test_main
 
       - name: Build tests (Release)
         id: build_release
-        if: always()
         continue-on-error: true
         run: cmake --build build/${{ matrix.preset }} --config Release -- -k 0
 
       - name: Run header tests (Release)
+        id: test_header_release
+        continue-on-error: true
         if: steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex header
@@ -193,6 +207,8 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-release-header.xml
 
       - name: Run unit tests (Release)
+        id: test_unit_release
+        continue-on-error: true
         if: steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex unit
@@ -201,6 +217,8 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-release-unit.xml
 
       - name: Run examples (Release)
+        id: test_example_release
+        continue-on-error: true
         if: steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex example
@@ -209,6 +227,8 @@ jobs:
                --output-junit test-results-${{ matrix.compiler }}-release-example.xml
 
       - name: Upload test results
+        id: upload_test_results
+        continue-on-error: true
         if: always()
         uses: actions/upload-artifact@v6
         with:
@@ -221,17 +241,22 @@ jobs:
       # (main only)
       # -----------------------------------------------------------------------
       - name: Copy Preset (FetchContent)
+        id: fc_copy_preset
+        continue-on-error: true
         if: github.ref == 'refs/heads/main'
         run: cp ./CMakePresets.json test/cmake-fetch_content
 
       - name: Test Consumer (FetchContent) - Configure
         id: fc_configure
+        continue-on-error: true
         if: github.ref == 'refs/heads/main'
         working-directory: test/cmake-fetch_content
         run: cmake --preset ${{ matrix.preset }} -B build-consumer-fetch_content
                -DEGGS_TEST_SOURCE_DIR=${{ github.workspace }}
 
       - name: Test Consumer (FetchContent) - Build (Debug)
+        id: fc_build_debug
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fc_configure.outcome == 'success'
@@ -239,6 +264,8 @@ jobs:
         run: cmake --build build-consumer-fetch_content --config Debug
 
       - name: Test Consumer (FetchContent) - Test (Debug)
+        id: fc_test_debug
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fc_configure.outcome == 'success'
@@ -246,6 +273,8 @@ jobs:
         run: ctest --test-dir build-consumer-fetch_content --build-config Debug -V
 
       - name: Test Consumer (FetchContent) - Build (Release)
+        id: fc_build_release
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fc_configure.outcome == 'success'
@@ -253,6 +282,8 @@ jobs:
         run: cmake --build build-consumer-fetch_content --config Release
 
       - name: Test Consumer (FetchContent) - Test (Release)
+        id: fc_test_release
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fc_configure.outcome == 'success'
@@ -265,19 +296,27 @@ jobs:
       # -----------------------------------------------------------------------
       - name: Test Install (Debug)
         id: install_debug
-        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        if: >-
+          github.ref == 'refs/heads/main'
+          && steps.build_lib_debug.outcome == 'success'
         run: cmake --install build/${{ matrix.preset }}
                --prefix ${{ runner.temp }}/eggs-test-install
                --config Debug
 
       - name: Test Install (Release)
         id: install_release
-        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        if: >-
+          github.ref == 'refs/heads/main'
+          && steps.build_lib_release.outcome == 'success'
         run: cmake --install build/${{ matrix.preset }}
                --prefix ${{ runner.temp }}/eggs-test-install
                --config Release
 
       - name: Upload installed package
+        id: upload_installed_package
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.install_debug.outcome == 'success'
@@ -290,15 +329,20 @@ jobs:
           retention-days: 7
 
       - name: Clean Source and Build Tree
+        id: clean_source_build_tree
+        continue-on-error: true
         if: github.ref == 'refs/heads/main'
         run: cmake -E rm -rf ./include ./src ./build
 
       - name: Copy Preset (find_package)
+        id: fp_copy_preset
+        continue-on-error: true
         if: github.ref == 'refs/heads/main'
         run: cp ./CMakePresets.json test/cmake-find_package
 
       - name: Test Consumer (find_package) - Configure
         id: fp_configure
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.install_debug.outcome == 'success'
@@ -309,6 +353,8 @@ jobs:
                --debug-find-pkg=Eggs.Test
 
       - name: Test Consumer (find_package) - Build (Debug)
+        id: fp_build_debug
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fp_configure.outcome == 'success'
@@ -316,6 +362,8 @@ jobs:
         run: cmake --build build-consumer-find_package --config Debug
 
       - name: Test Consumer (find_package) - Test (Debug)
+        id: fp_test_debug
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fp_configure.outcome == 'success'
@@ -323,6 +371,8 @@ jobs:
         run: ctest --test-dir build-consumer-find_package --build-config Debug -V
 
       - name: Test Consumer (find_package) - Build (Release)
+        id: fp_build_release
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fp_configure.outcome == 'success'
@@ -330,8 +380,19 @@ jobs:
         run: cmake --build build-consumer-find_package --config Release
 
       - name: Test Consumer (find_package) - Test (Release)
+        id: fp_test_release
+        continue-on-error: true
         if: >-
           github.ref == 'refs/heads/main'
           && steps.fp_configure.outcome == 'success'
         working-directory: test/cmake-find_package
         run: ctest --test-dir build-consumer-find_package --build-config Release -V
+
+      - name: Check all step outcomes
+        if: always()
+        shell: bash
+        run: |
+          if echo '${{ toJSON(steps) }}' | grep -qF '"outcome": "failure"'; then
+            echo "::error::One or more steps failed; failing the job."
+            exit 1
+          fi
