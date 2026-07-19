@@ -403,8 +403,14 @@ jobs:
     timeout-minutes: 6
     continue-on-error: true
 
+    env:
+      EGGS_TEST_SOURCE_DIR: ${{ github.workspace }}
+
     steps:
       - uses: actions/checkout@v5
+
+      - name: Make launcher executable
+        run: chmod +x .github/scripts/weverything-launcher.py
 
       - name: Install CMake
         uses: lukka/get-cmake@latest
@@ -439,6 +445,7 @@ jobs:
       - name: Configure
         run: cmake --preset dev-clang -B build/weverything
                -DCMAKE_COMPILE_WARNING_AS_ERROR=OFF
+               -DCMAKE_CXX_COMPILER_LAUNCHER=${{ github.workspace }}/.github/scripts/weverything-launcher.py
                -DCMAKE_CXX_FLAGS_INIT="-Weverything
                  -Wno-c++98-compat -Wno-c++98-compat-pedantic
                  -Wno-c++11-compat
@@ -452,3 +459,14 @@ jobs:
 
       - name: Build (Debug)
         run: cmake --build build/weverything --config Debug -- -k 0
+
+      - name: Merge SARIF fragments
+        run: python3 .github/scripts/weverything-merge-sarif.py
+               build/weverything build/weverything/weverything.sarif
+
+      - name: Upload SARIF
+        uses: actions/upload-artifact@v6
+        with:
+          name: warn-everything.sarif
+          path: build/weverything/weverything.sarif
+          retention-days: 7
