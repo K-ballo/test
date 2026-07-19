@@ -398,7 +398,7 @@ jobs:
           fi
 
   warn-everything:
-    name: Clang -Weverything (exploratory)
+    name: ubuntu-24.04 / clang-22 (-Weverything)
     runs-on: ubuntu-24.04
     timeout-minutes: 6
     continue-on-error: true
@@ -439,7 +439,16 @@ jobs:
       - name: Configure
         run: cmake --preset dev-clang -B build/weverything
                -DCMAKE_COMPILE_WARNING_AS_ERROR=OFF
-               -DCMAKE_CXX_FLAGS_INIT="-Weverything"
+               -DCMAKE_CXX_FLAGS_INIT="-Weverything
+                 -Wno-c++98-compat -Wno-c++98-compat-pedantic
+                 -Wno-c++11-compat
+                 -Wno-c++14-compat
+                 -Wno-pre-c++14-compat -Wno-pre-c++14-compat-pedantic
+                 -Wno-c++17-compat -Wno-c++17-compat-mangling
+                 -Wno-pre-c++17-compat -Wno-pre-c++17-compat-pedantic
+                 -Wno-c++20-compat
+                 -Wno-pre-c++20-compat -Wno-pre-c++20-compat-pedantic
+                 -Wno-pre-c++23-compat -Wno-pre-c++23-compat-pedantic"
 
       - name: Build (Debug)
         run: cmake --build build/weverything --config Debug -- -k 0
