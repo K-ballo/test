@@ -12,12 +12,44 @@
 #include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
+#include <concepts>
 #include <cstddef>
 #include <exception>
+#include <format>
 #include <source_location>
+#include <string>
 #include <type_traits>
+#include <typeinfo>
 
 namespace eggs::test::detail {
+
+void check_passed(const char* expr, std::source_location const& loc);
+
+// A caught exception's runtime type name, plus its formatted representation
+// if formattable, else std::exception::what(), else an empty value.
+struct exception_info
+{
+    std::string type_name;
+    std::string value;
+};
+
+// Describes a caught exception for --verbose reporting.
+template <typename Exc>
+exception_info describe_exception(Exc const& exc)
+{
+    if constexpr (std::formattable<Exc, char>) {
+        return {typeid(exc).name(), std::format("{}", exc)};
+    } else if constexpr (std::derived_from<Exc, std::exception>) {
+        return {typeid(exc).name(), exc.what()};
+    } else {
+        return {typeid(exc).name(), ""};
+    }
+}
+
+void check_throws_passed(
+    const char* expr, exception_info const& info,
+    std::source_location const& loc
+);
 
 void check_failed(
     const char* expr, std::source_location const& loc,
@@ -32,6 +64,7 @@ EGGS_TEST_NOINLINE inline bool check(
 {
     if (c) {
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return true;
     }
 
@@ -57,8 +90,13 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws(
         fn();
     } catch (detail::unwind const&) {
         throw;
+    } catch (std::exception const& exc) {
+        ++s.assertions_passed;
+        if (s.verbose) check_throws_passed(expr, describe_exception(exc), loc);
+        return std::current_exception();
     } catch (...) {
         ++s.assertions_passed;
+        if (s.verbose) check_throws_passed(expr, exception_info{}, loc);
         return std::current_exception();
     }
 
@@ -91,8 +129,9 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
         fn();
     } catch (detail::unwind const&) {
         throw;
-    } catch (ExcType const&) {
+    } catch (ExcType const& exc) {
         ++s.assertions_passed;
+        if (s.verbose) check_throws_passed(expr, describe_exception(exc), loc);
         return std::current_exception();
     } catch (...) {
         threw = std::current_exception();
@@ -125,6 +164,7 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
         fn();
 
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return true;
     } catch (detail::unwind const&) {
         throw;

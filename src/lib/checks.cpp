@@ -25,19 +25,37 @@ namespace eggs::test::detail {
 
 namespace {
 
-// Prints "FAILED: <message>" followed by "<function>  [<file>:<line>]".
+// Prints "<label>: <message>" followed by "<function>  [<file>:<line>]".
+template <typename... Args>
+void print_check(
+    const char* label, std::source_location const& loc,
+    std::format_string<Args...> fmt, Args&&... args
+)
+{
+    detail::print(stdout, "  {}: ", label);
+    detail::println(stdout, fmt, std::forward<Args>(args)...);
+    detail::println(
+        stdout, "    #0 {}  [{}:{}]", loc.function_name(), loc.file_name(),
+        loc.line()
+    );
+}
+
+template <typename... Args>
+void print_passed(
+    std::source_location const& loc, std::format_string<Args...> fmt,
+    Args&&... args
+)
+{
+    print_check("PASSED", loc, fmt, std::forward<Args>(args)...);
+}
+
 template <typename... Args>
 void print_failed(
     std::source_location const& loc, std::format_string<Args...> fmt,
     Args&&... args
 )
 {
-    detail::print(stdout, "  FAILED: ");
-    detail::println(stdout, fmt, std::forward<Args>(args)...);
-    detail::println(
-        stdout, "    #0 {}  [{}:{}]", loc.function_name(), loc.file_name(),
-        loc.line()
-    );
+    print_check("FAILED", loc, fmt, std::forward<Args>(args)...);
 }
 
 #ifdef __cpp_lib_stacktrace
@@ -111,6 +129,27 @@ void print_stacktrace(
 #endif
 
 } // namespace
+
+void check_passed(const char* expr, std::source_location const& loc)
+{
+    print_passed(loc, "{}", expr);
+}
+
+void check_throws_passed(
+    const char* expr, exception_info const& info,
+    std::source_location const& loc
+)
+{
+    if (info.type_name.empty()) {
+        print_passed(loc, "{}", expr);
+    } else if (info.value.empty()) {
+        print_passed(loc, "{}, EXCEPTION ({})", expr, info.type_name);
+    } else {
+        print_passed(
+            loc, "{}, EXCEPTION ({}): {}", expr, info.type_name, info.value
+        );
+    }
+}
 
 void check_failed(
     const char* expr, std::source_location const& loc,

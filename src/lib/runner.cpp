@@ -59,7 +59,7 @@ registry::cases_type& registry::cases()
     return v;
 }
 
-int registry::run(std::vector<test_entry> const& run)
+int registry::run(std::vector<test_entry> const& run, bool verbose)
 {
     std::size_t const entry_depth = detail::stacktrace::current().size();
 
@@ -74,6 +74,7 @@ int registry::run(std::vector<test_entry> const& run)
 
         run_state state;
         state.entry_depth = entry_depth;
+        state.verbose = verbose;
 
         run_state::set_current(&state);
         bool passed = false;
@@ -166,7 +167,7 @@ int run(run_options opts)
         return EXIT_SUCCESS;
     }
 
-    return detail::registry::run(selected_cases);
+    return detail::registry::run(selected_cases, opts.verbose);
 }
 
 } // namespace eggs::test
