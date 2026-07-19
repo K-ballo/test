@@ -302,10 +302,46 @@ add_lib_test(
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.
-add_lib_test(check.pass SOURCES check.pass.cpp DISCOVER EXITS 0)
+add_lib_test(
+    check.pass
+    SOURCES check.pass.cpp
+    DISCOVER
+    EXITS 0
+    FAIL_REGEX "PASSED:|FAILED:"
+)
+
+# CHECK with a true expression: the stringified expression must appear in
+# the output, when --verbose is given.
+add_lib_test(
+    check.verbose.pass
+    SOURCES check.pass.cpp
+    RUN check_bool_true
+    ARGS "--verbose"
+    EXITS 0
+    PASS_REGEX "PASSED: 1 \\+ 1 == 2"
+    FAIL_REGEX "FAILED:"
+)
 
 # REQUIRE with true expressions must exit 0 and not stop execution.
-add_lib_test(require.pass SOURCES require.pass.cpp DISCOVER EXITS 0)
+add_lib_test(
+    require.pass
+    SOURCES require.pass.cpp
+    DISCOVER
+    EXITS 0
+    FAIL_REGEX "PASSED:|FAILED:"
+)
+
+# REQUIRE with a true expression: the stringified expression must appear in
+# the output, when --verbose is given.
+add_lib_test(
+    require.verbose.pass
+    SOURCES require.pass.cpp
+    RUN require_expression
+    ARGS "--verbose"
+    EXITS 0
+    PASS_REGEX "PASSED: 1 \\+ 1 == 2"
+    FAIL_REGEX "FAILED:"
+)
 
 # --- failing tests -----------------------------------------------------------
 
@@ -359,99 +395,6 @@ add_lib_test(
     RUN leaked_exception_require
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
-)
-
-# --- verbose tests ------------------------------------------------------
-
-# "PASSED: <expr>" plus its source location must appear for a plain CHECK.
-add_lib_test(
-    verbose.check.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_check_pass" "--verbose"
-    PASS_REGEX "PASSED: 1 \\+ 1 == 2" "verbose\\.pass\\.cpp:"
-)
-# CHECK_THROWS also prints "EXCEPTION (<type>): <what()>" for a std::exception.
-# <type> is matched loosely: typeid().name() is mangled on GCC/Clang and
-# decorated on MSVC, so its exact spelling isn't portable.
-add_lib_test(
-    verbose.throws.std_exception.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_pass_std_exception" "--verbose"
-    PASS_REGEX
-        "PASSED: throw std::runtime_error\\(\"thrown\"\\), EXCEPTION \\([^)]*\\): thrown"
-)
-# CHECK_THROWS_AS prints "EXCEPTION (<type>): <formatted value>" for a
-# formattable builtin type.
-add_lib_test(
-    verbose.throws_as.formattable.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_as_pass_formattable" "--verbose"
-    PASS_REGEX "PASSED: throw 7, EXCEPTION \\([^)]*\\): 7"
-)
-# Same, for a formattable user-defined type (via a custom std::formatter).
-add_lib_test(
-    verbose.throws_as.formattable_udt.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_as_pass_formattable_udt" "--verbose"
-    PASS_REGEX
-        "PASSED: throw my_formattable_error\\{5\\}, EXCEPTION \\([^)]*\\): code 5"
-)
-# Same, for a std::exception (uses what(), since it isn't formattable).
-add_lib_test(
-    verbose.throws_as.std_exception.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_as_pass_std_exception" "--verbose"
-    PASS_REGEX
-        "PASSED: throw std::runtime_error\\(\"oops\"\\), EXCEPTION \\([^)]*\\): oops"
-)
-# Neither formattable nor a std::exception: only the type name is printed,
-# with no value.
-add_lib_test(
-    verbose.throws_as.unknown.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_as_pass_unknown" "--verbose"
-    PASS_REGEX "PASSED: throw my_error\\{\\}, EXCEPTION \\([^)]*\\)\n"
-    FAIL_REGEX "EXCEPTION \\([^)]*\\):"
-)
-# CHECK_THROWS falls back to catch(...) for a non-std::exception type, which
-# carries no type information at all: no EXCEPTION suffix is printed.
-add_lib_test(
-    verbose.throws.unknown.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_throws_pass_unknown" "--verbose"
-    PASS_REGEX "PASSED: throw my_error\\{\\}\n"
-    FAIL_REGEX "EXCEPTION"
-)
-# Same, via REQUIRE_THROWS.
-add_lib_test(
-    verbose.require_throws.unknown.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_require_throws_pass_unknown" "--verbose"
-    PASS_REGEX "PASSED: throw my_error\\{\\}\n"
-    FAIL_REGEX "EXCEPTION"
-)
-# CHECK_CATCHES_AS gets the same EXCEPTION reporting as CHECK_THROWS_AS.
-add_lib_test(
-    verbose.catches_as.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_catches_as_pass" "--verbose"
-    PASS_REGEX
-        "PASSED: throw std::runtime_error\\(\"caught\"\\), EXCEPTION \\([^)]*\\): caught"
-)
-# CHECK_NOTHROW prints no exception info, having caught nothing.
-add_lib_test(
-    verbose.nothrow.pass
-    SOURCES verbose.pass.cpp
-    ARGS "--run=verbose_nothrow_pass" "--verbose"
-    PASS_REGEX "PASSED: 1 \\+ 1"
-)
-
-# Without --verbose, successful checks must stay silent.
-add_lib_test(
-    verbose.default.pass
-    SOURCES verbose.pass.cpp
-    PASS_REGEX "10 test cases: 10 passed \\(100%\\)"
-    FAIL_REGEX "PASSED:|EXCEPTION"
 )
 
 # --- cli tests -----------------------------------------------------------
@@ -663,6 +606,28 @@ add_lib_test(catches_as.pass SOURCES catches_as.pass.cpp DISCOVER)
 # CHECK_NOTHROW / REQUIRE_NOTHROW pass when the expression does not throw.
 add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp DISCOVER)
 
+# CHECK_THROWS with a std::exception: the stringified expression must appear
+# in the output, along with "EXCEPTION (<type>): <what()>", when --verbose
+# is given.
+add_lib_test(
+    throws.std_exception.check.pass
+    SOURCES throws.pass.cpp
+    RUN check_throws_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\}, EXCEPTION \\([^)]*\\): oops"
+)
+# CHECK_THROWS with a non-std::exception type: the stringified expression
+# must appear in the output, with no EXCEPTION suffix -- catch(...) carries
+# no type information at all -- when --verbose is given.
+add_lib_test(
+    throws.unknown.check.pass
+    SOURCES throws.pass.cpp
+    RUN check_throws_custom_exception
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw my_error\\{\\}\n"
+    FAIL_REGEX "EXCEPTION"
+)
 # CHECK_THROWS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     throws.no_throw.check.fail
@@ -713,6 +678,50 @@ add_lib_test(
     PASS_REGEX "CHECK_THROWS\\(1 \\+ 1\\): expression is noexcept"
 )
 
+# CHECK_THROWS_AS with a formattable builtin type: the stringified expression
+# must appear in the output, along with "EXCEPTION (<type>): <formatted
+# value>", when --verbose is given.
+add_lib_test(
+    throws_as.formattable.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42, EXCEPTION \\([^)]*\\): 42"
+)
+# CHECK_THROWS_AS with a formattable user-defined type: the stringified
+# expression must appear in the output, along with "EXCEPTION (<type>):
+# <formatted value>", when --verbose is given.
+add_lib_test(
+    throws_as.formattable_udt.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_formattable_udt
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw my_formattable_error\\{42\\}, EXCEPTION \\([^)]*\\): value 42"
+)
+# CHECK_THROWS_AS with a std::exception (uses what(), since it isn't
+# formattable): the stringified expression must appear in the output, along
+# with "EXCEPTION (<type>): <what()>", when --verbose is given.
+add_lib_test(
+    throws_as.std_exception.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\}, EXCEPTION \\([^)]*\\): oops"
+)
+# CHECK_THROWS_AS with a type that's neither formattable nor a std::exception:
+# the stringified expression must appear in the output, along with
+# "EXCEPTION (<type>)" -- only the type name, no value -- when --verbose is
+# given.
+add_lib_test(
+    throws_as.unknown.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_custom_exception
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw my_error\\{42\\}, EXCEPTION \\([^)]*\\)\n"
+    FAIL_REGEX "EXCEPTION \\([^)]*\\):"
+)
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     throws_as.no_throw.check.fail
@@ -824,6 +833,50 @@ add_lib_test(
     PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
+# CHECK_CATCHES_AS with a formattable builtin type: the stringified
+# expression must appear in the output, along with "EXCEPTION (<type>):
+# <formatted value>", same as CHECK_THROWS_AS, when --verbose is given.
+add_lib_test(
+    catches_as.formattable.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42, EXCEPTION \\([^)]*\\): 42"
+)
+# CHECK_CATCHES_AS with a formattable user-defined type: the stringified
+# expression must appear in the output, along with "EXCEPTION (<type>):
+# <formatted value>", when --verbose is given.
+add_lib_test(
+    catches_as.formattable_udt.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_formattable_udt
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw my_formattable_error\\{42\\}, EXCEPTION \\([^)]*\\): value 42"
+)
+# CHECK_CATCHES_AS with a std::exception (uses what(), since it isn't
+# formattable): the stringified expression must appear in the output, along
+# with "EXCEPTION (<type>): <what()>", when --verbose is given.
+add_lib_test(
+    catches_as.std_exception.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\}, EXCEPTION \\([^)]*\\): oops"
+)
+# CHECK_CATCHES_AS with a type that's neither formattable nor a
+# std::exception: the stringified expression must appear in the output,
+# along with "EXCEPTION (<type>)" -- only the type name, no value -- when
+# --verbose is given.
+add_lib_test(
+    catches_as.unknown.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_custom_exception
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw my_error\\{42\\}, EXCEPTION \\([^)]*\\)\n"
+    FAIL_REGEX "EXCEPTION \\([^)]*\\):"
+)
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     catches_as.no_throw.check.fail
@@ -929,6 +982,14 @@ add_lib_test(
     PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
+# CHECK_NOTHROW: the stringified expression must appear in the output, when --verbose is given.
+add_lib_test(
+    nothrow.check.pass
+    SOURCES nothrow.pass.cpp
+    RUN check_nothrow_pass
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: 1 \\+ 1"
+)
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.
 add_lib_test(
     nothrow.throws.check.fail

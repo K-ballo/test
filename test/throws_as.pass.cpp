@@ -7,7 +7,9 @@
 
 #include <eggs/test.hpp>
 
+#include <format>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 TEST_CASE(check_throws_as_int, "CHECK_THROWS_AS passes for exact type int")
@@ -58,7 +60,9 @@ TEST_CASE(
 
 namespace {
 struct my_error
-{};
+{
+    int value = 0;
+};
 } // namespace
 
 TEST_CASE(
@@ -66,7 +70,7 @@ TEST_CASE(
     "CHECK_THROWS_AS passes for exact custom type"
 )
 {
-    CHECK_THROWS_AS(my_error, throw my_error{});
+    CHECK_THROWS_AS(my_error, throw my_error{42});
 }
 
 TEST_CASE(
@@ -74,7 +78,7 @@ TEST_CASE(
     "REQUIRE_THROWS_AS passes without stopping the test"
 )
 {
-    REQUIRE_THROWS_AS(my_error, throw my_error{});
+    REQUIRE_THROWS_AS(my_error, throw my_error{42});
     CHECK(true);
 }
 
@@ -88,7 +92,7 @@ TEST_CASE(
     "CHECK_THROWS_AS passes for derived custom type"
 )
 {
-    CHECK_THROWS_AS(my_error, throw my_derived_error{});
+    CHECK_THROWS_AS(my_error, throw my_derived_error{42});
 }
 
 TEST_CASE(
@@ -96,7 +100,41 @@ TEST_CASE(
     "REQUIRE_THROWS_AS passes without stopping the test"
 )
 {
-    REQUIRE_THROWS_AS(my_error, throw my_derived_error{});
+    REQUIRE_THROWS_AS(my_error, throw my_derived_error{42});
+    CHECK(true);
+}
+
+namespace {
+struct my_formattable_error : my_error
+{};
+} // namespace
+
+template <>
+struct std::formatter<my_formattable_error> : std::formatter<std::string>
+{
+    template <typename FormatContext>
+    auto format(my_formattable_error const& e, FormatContext& ctx) const
+    {
+        return std::formatter<std::string>::format(
+            std::format("value {}", e.value), ctx
+        );
+    }
+};
+
+TEST_CASE(
+    check_throws_as_formattable_udt,
+    "CHECK_THROWS_AS passes for exact type with a custom formatter"
+)
+{
+    CHECK_THROWS_AS(my_formattable_error, throw my_formattable_error{42});
+}
+
+TEST_CASE(
+    require_throws_as_formattable_udt,
+    "REQUIRE_THROWS_AS passes without stopping the test"
+)
+{
+    REQUIRE_THROWS_AS(my_formattable_error, throw my_formattable_error{42});
     CHECK(true);
 }
 
@@ -110,7 +148,7 @@ TEST_CASE(
     "CHECK_THROWS_AS passes for a final exception type"
 )
 {
-    CHECK_THROWS_AS(my_final_error, throw my_final_error{});
+    CHECK_THROWS_AS(my_final_error, throw my_final_error{42});
 }
 
 TEST_CASE(
@@ -118,7 +156,7 @@ TEST_CASE(
     "REQUIRE_THROWS_AS passes without stopping the test"
 )
 {
-    REQUIRE_THROWS_AS(my_final_error, throw my_final_error{});
+    REQUIRE_THROWS_AS(my_final_error, throw my_final_error{42});
     CHECK(true);
 }
 

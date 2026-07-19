@@ -7,7 +7,9 @@
 
 #include <eggs/test.hpp>
 
+#include <format>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 
 TEST_CASE(
@@ -155,6 +157,51 @@ TEST_CASE(
 {
     bool caught = false;
     REQUIRE_CATCHES_AS(my_error, throw my_derived_error{42})
+    {
+        caught = true;
+        CHECK(exc.value == 42);
+    }
+    CHECK(caught);
+}
+
+namespace {
+struct my_formattable_error : my_error
+{};
+} // namespace
+
+template <>
+struct std::formatter<my_formattable_error> : std::formatter<std::string>
+{
+    template <typename FormatContext>
+    auto format(my_formattable_error const& e, FormatContext& ctx) const
+    {
+        return std::formatter<std::string>::format(
+            std::format("value {}", e.value), ctx
+        );
+    }
+};
+
+TEST_CASE(
+    check_catches_as_formattable_udt,
+    "CHECK_CATCHES_AS passes and binds an exception with a custom formatter"
+)
+{
+    bool caught = false;
+    CHECK_CATCHES_AS(my_formattable_error, throw my_formattable_error{42})
+    {
+        caught = true;
+        CHECK(exc.value == 42);
+    }
+    CHECK(caught);
+}
+
+TEST_CASE(
+    require_catches_as_formattable_udt,
+    "REQUIRE_CATCHES_AS passes without stopping the test"
+)
+{
+    bool caught = false;
+    REQUIRE_CATCHES_AS(my_formattable_error, throw my_formattable_error{42})
     {
         caught = true;
         CHECK(exc.value == 42);
