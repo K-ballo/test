@@ -84,34 +84,52 @@ function(eggs_discover_tests target)
         set(_ctest_tests_file "${_ctest_file_base}_tests-$<CONFIG>.cmake")
     endif()
 
+    set(_impl_args "\n")
+    string(
+        APPEND _impl_args
+        "    EXECUTABLE [==[$<TARGET_FILE:${target}>]==]\n"
+    )
+    string(APPEND _impl_args "    OUTPUT [==[${_ctest_tests_file}]==]\n")
+    string(
+        APPEND _impl_args
+        "    WORKING_DIRECTORY [==[${ARG_WORKING_DIRECTORY}]==]\n"
+    )
+    if(ARG_TEST_PREFIX)
+        string(APPEND _impl_args "    TEST_PREFIX [==[${ARG_TEST_PREFIX}]==]\n")
+    endif()
+    if(ARG_TEST_SUFFIX)
+        string(APPEND _impl_args "    TEST_SUFFIX [==[${ARG_TEST_SUFFIX}]==]\n")
+    endif()
+    if(ARG_EXTRA_ARGS)
+        string(APPEND _impl_args "    EXTRA_ARGS [==[${ARG_EXTRA_ARGS}]==]\n")
+    endif()
+    if(ARG_PROPERTIES)
+        string(APPEND _impl_args "    PROPERTIES [==[${ARG_PROPERTIES}]==]\n")
+    endif()
+    string(APPEND _impl_args "    TEST_LIST [==[${ARG_TEST_LIST}]==]\n")
+    string(
+        APPEND _impl_args
+        "$<$<BOOL:$<TARGET_PROPERTY:${target},TEST_LAUNCHER>>:    TEST_LAUNCHER [==[$<TARGET_PROPERTY:${target},TEST_LAUNCHER>]==]\n>"
+    )
+    string(APPEND _impl_args "  ")
+
     # ${CMAKE_CURRENT_LIST_FILE} is intentionally left unexpanded (escaped)
     # here: it must resolve to the generated file itself when ctest later
     # include()s it, so that reconfiguring forces a fresh discovery even if
     # the executable's mtime did not change.
     string(
         CONCAT _ctest_include_content
-        "cmake_policy(SET CMP0011 NEW)\n"
-        "if(EXISTS \"$<TARGET_FILE:${target}>\")\n"
-        "  if(NOT EXISTS \"${_ctest_tests_file}\" OR\n"
-        "     NOT \"${_ctest_tests_file}\" IS_NEWER_THAN \"$<TARGET_FILE:${target}>\" OR\n"
-        "     NOT \"${_ctest_tests_file}\" IS_NEWER_THAN \"\${CMAKE_CURRENT_LIST_FILE}\")\n"
-        "    include(\"${CMAKE_CURRENT_FUNCTION_LIST_FILE}\")\n"
-        "    eggs_discover_tests_impl(\n"
-        "      EXECUTABLE [==[$<TARGET_FILE:${target}>]==]\n"
-        "      OUTPUT [==[${_ctest_tests_file}]==]\n"
-        "      TEST_PREFIX [==[${ARG_TEST_PREFIX}]==]\n"
-        "      TEST_SUFFIX [==[${ARG_TEST_SUFFIX}]==]\n"
-        "      EXTRA_ARGS [==[${ARG_EXTRA_ARGS}]==]\n"
-        "      WORKING_DIRECTORY [==[${ARG_WORKING_DIRECTORY}]==]\n"
-        "      PROPERTIES [==[${ARG_PROPERTIES}]==]\n"
-        "      TEST_LIST [==[${ARG_TEST_LIST}]==]\n"
-        "      TEST_LAUNCHER [==[$<TARGET_PROPERTY:${target},TEST_LAUNCHER>]==]\n"
-        "    )\n"
-        "  endif()\n"
-        "  include(\"${_ctest_tests_file}\")\n"
-        "else()\n"
+        "if(NOT EXISTS \"$<TARGET_FILE:${target}>\")\n"
         "  add_test(${target}_NOT_BUILT ${target}_NOT_BUILT)\n"
+        "  return()\n"
         "endif()\n"
+        "if(NOT EXISTS \"${_ctest_tests_file}\" OR\n"
+        "   NOT \"${_ctest_tests_file}\" IS_NEWER_THAN \"$<TARGET_FILE:${target}>\" OR\n"
+        "   NOT \"${_ctest_tests_file}\" IS_NEWER_THAN \"\${CMAKE_CURRENT_LIST_FILE}\")\n"
+        "  include(\"${CMAKE_CURRENT_FUNCTION_LIST_FILE}\")\n"
+        "  eggs_discover_tests_impl(${_impl_args})\n"
+        "endif()\n"
+        "include(\"${_ctest_tests_file}\")\n"
     )
 
     if(_multi_config)
@@ -146,7 +164,6 @@ endfunction()
 # name - this is what actually runs '<target> --list' and (re)writes the
 # tests file.
 function(eggs_discover_tests_impl)
-    cmake_policy(SET CMP0174 NEW)
     cmake_parse_arguments(
         PARSE_ARGV 0
         ARG
