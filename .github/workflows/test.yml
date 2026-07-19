@@ -401,13 +401,14 @@ jobs:
     name: ubuntu-24.04 / clang-22 (-Weverything)
     runs-on: ubuntu-24.04
     timeout-minutes: 6
-    continue-on-error: true
 
     env:
       EGGS_TEST_SOURCE_DIR: ${{ github.workspace }}
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Make launcher executable
         run: chmod +x .github/scripts/weverything-launcher.py
@@ -470,3 +471,9 @@ jobs:
           name: warn-everything.sarif
           path: build/weverything/weverything.sarif
           retention-days: 7
+
+      - name: Check warnings on changed lines
+        if: github.ref != 'refs/heads/main'
+        run: git fetch origin main
+               && python3 .github/scripts/weverything-check-changed.py
+                    build/weverything/weverything.sarif origin/main
