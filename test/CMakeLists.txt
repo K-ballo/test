@@ -91,6 +91,16 @@ function(add_lib_test name)
         )
         return()
     endif()
+    if(
+        DEFINED ARG_EXITS
+        AND (NOT ARG_EXITS MATCHES "^[0-9]+$" OR ARG_EXITS GREATER 255)
+    )
+        message(
+            SEND_ERROR
+            "add_lib_test(${name}): EXITS must be in the range 0-255 (got '${ARG_EXITS}')"
+        )
+        return()
+    endif()
 
     list(LENGTH ARG_SOURCES _n)
     if(_n EQUAL 1 AND NOT DEFINED ARG_COMPILE_FAIL)
@@ -403,6 +413,9 @@ add_lib_test(
     SOURCES check.fail.cpp
     RUN check_false
     ARGS "--exit-code=0"
+    PASS_REGEX
+        "FAILED: 1 \\+ 2 == 4"
+        "\\[ FAIL \\] check_false -- 1 assertions: 0 passed \\(0%\\) \\| 1 failed \\(100%\\)"
     EXITS 0
 )
 
@@ -412,6 +425,8 @@ add_lib_test(
     SOURCES check.pass.cpp
     RUN check_bool_true
     ARGS "--exit-code=1"
+    PASS_REGEX
+        "\\[ PASS \\] check_bool_true -- 3 assertions: 3 passed \\(100%\\)"
     EXITS 1
 )
 
