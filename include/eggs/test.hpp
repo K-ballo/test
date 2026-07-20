@@ -22,7 +22,10 @@
 namespace eggs::test::detail {
 
 template <typename T>
-bool auto_register(char const* name, char const* desc, std::source_location loc)
+bool auto_register(
+    char const* name, char const* desc,
+    std::source_location loc = ::std::source_location::current()
+)
 {
     if constexpr (requires { T::run(); }) {
         registry::add({
@@ -32,7 +35,7 @@ bool auto_register(char const* name, char const* desc, std::source_location loc)
                 state.entry_depth = stacktrace::current().size();
                 T::run();
             },
-            loc,
+            std::move(loc),
         });
     }
     return true;
@@ -54,16 +57,14 @@ bool auto_register(char const* name, char const* desc, std::source_location loc)
 // With required params no auto-registration happens; use REGISTER_P / REGISTER_R:
 //   TEST_CASE(add, "adds two integers", int const& a, int const& b) { CHECK(a + b == b + a); }
 //   REGISTER_P(add, "one-two", 1, 2);
-#define TEST_CASE(name_, desc_, ...)                             \
-    struct name_                                                 \
-    {                                                            \
-        static constexpr const char* case_desc_ = desc_;         \
-        static void run(__VA_ARGS__);                            \
-        inline static bool const registered_ =                   \
-            ::eggs::test::detail::auto_register<name_>(          \
-                #name_, desc_, ::std::source_location::current() \
-            );                                                   \
-    };                                                           \
+#define TEST_CASE(name_, desc_, ...)                                   \
+    struct name_                                                       \
+    {                                                                  \
+        static constexpr const char* case_desc_ = desc_;               \
+        static void run(__VA_ARGS__);                                  \
+        inline static bool const registered_ =                         \
+            ::eggs::test::detail::auto_register<name_>(#name_, desc_); \
+    };                                                                 \
     void name_::run(__VA_ARGS__)
 
 // REGISTER_P(name, "instance", args...)
