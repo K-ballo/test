@@ -357,13 +357,16 @@ jobs:
           && steps.configure.outcome == 'success'
         run: cmake -E rm -rf ./include ./src ./build
 
-      - name: Copy Preset (find_package)
-        id: fp_copy_preset
+      - name: Install CMake (find_package minimum)
+        id: fp_install_cmake_min
         if: >-
           always()
           && github.ref == 'refs/heads/main'
-          && steps.configure.outcome == 'success'
-        run: cp ./CMakePresets.json test/cmake-find_package
+          && steps.install_debug.outcome == 'success'
+          && steps.install_release.outcome == 'success'
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.21.0"
 
       - name: Test Consumer (find_package) - Configure
         id: fp_configure
@@ -372,10 +375,16 @@ jobs:
           && github.ref == 'refs/heads/main'
           && steps.install_debug.outcome == 'success'
           && steps.install_release.outcome == 'success'
+          && steps.fp_install_cmake_min.outcome == 'success'
         working-directory: test/cmake-find_package
-        run: cmake --preset ${{ matrix.preset }} -B build-consumer-find_package
-               -DCMAKE_PREFIX_PATH=${{ runner.temp }}/eggs-test-install
-               --debug-find-pkg=Eggs.Test
+        env:
+          CXX: ${{ startsWith(matrix.compiler, 'gcc') && 'g++' || startsWith(matrix.compiler, 'clang-cl') && 'clang-cl' || startsWith(matrix.compiler, 'clang') && 'clang++' || 'cl' }}
+          CXXFLAGS: ${{ contains(matrix.compiler, 'libc++') && '-stdlib=libc++' || '' }}
+          LDFLAGS: ${{ contains(matrix.compiler, 'libc++') && '-stdlib=libc++' || '' }}
+          CMAKE_PREFIX_PATH: ${{ runner.temp }}/eggs-test-install
+        run: cmake -S . -B build-consumer-find_package
+               -G "Ninja Multi-Config"
+               --debug-find
 
       - name: Test Consumer (find_package) - Build (Debug)
         id: fp_build_debug

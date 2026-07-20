@@ -40,27 +40,30 @@ add_executable(consumer_verify main.cpp)
 target_link_libraries(consumer_verify PRIVATE Eggs::Test Eggs::TestMain)
 
 # -------------------------------------------------------------------------
-# Confirm that the FetchContent target exposes the same properties as the
-# installed one (no accidental in-tree-only paths).
+# Print target properties at configure time so ctest -V shows them.
 # -------------------------------------------------------------------------
-foreach(
-    _prop
-    IN
-    ITEMS
-        INTERFACE_INCLUDE_DIRECTORIES
-        INTERFACE_COMPILE_DEFINITIONS
-        INTERFACE_COMPILE_FEATURES
-        INTERFACE_LINK_LIBRARIES
-)
-    get_target_property(_val Eggs::TestMain ${_prop})
-    message(STATUS "Eggs::TestMain (FetchContent) ${_prop}: ${_val}")
-endforeach()
+function(print_target_properties target)
+    foreach(
+        _prop
+        IN
+        ITEMS
+            INTERFACE_INCLUDE_DIRECTORIES
+            INTERFACE_COMPILE_DEFINITIONS
+            INTERFACE_COMPILE_FEATURES
+            INTERFACE_LINK_LIBRARIES
+    )
+        get_target_property(_val ${target} ${_prop})
+        message(STATUS "${target} ${_prop}: ${_val}")
+    endforeach()
+endfunction()
 
-enable_testing()
+print_target_properties(Eggs::Test)
+print_target_properties(Eggs::TestMain)
 
 # -------------------------------------------------------------------------
 # Confirm eggs_discover_tests() is available and works via add_subdirectory
 # (FetchContent). Consumers must include(EggsTest) explicitly.
 # -------------------------------------------------------------------------
+enable_testing()
 include(EggsTest)
 eggs_discover_tests(consumer_verify)
