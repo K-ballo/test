@@ -53,7 +53,7 @@ class context_guard
 };
 
 // Recognizes string, character, numeric, and boolean literal tokens (the
-// whole token, not just its leading character — "5 + x" must not be mistaken
+// whole token, not just its leading character -- "5 + x" must not be mistaken
 // for a literal on account of starting with a digit), so CONTEXT("message")
 // doesn't repeat itself as `"message" -> message`.
 [[nodiscard]] bool is_literal_expr(std::string_view expr) noexcept;
@@ -74,7 +74,7 @@ make_context(std::string_view expr, std::source_location loc, T&& value)
 }
 
 // Builds the context_frame for CONTEXT(fmt, args...): fmt is used directly as
-// the format string, with no auto-label — there is no single "expr" to show,
+// the format string, with no auto-label -- there is no single "expr" to show,
 // the format string already is the message. std::format_string's compile-time
 // format-string check applies here, at the CONTEXT(...) call site, since fmt
 // is this overload's own (not forwarded-through) parameter.

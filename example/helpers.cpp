@@ -11,17 +11,21 @@
 
 // CHECK and REQUIRE can be called from helper functions outside the TEST_CASE
 // body.  When an assertion fails, the framework captures a stacktrace of all
-// user-code frames above it so the failure site is easy to locate.
+// user-code frames above it so the failure site is easy to locate.  CONTEXT
+// further pins down which call, among several to the same helper, is the one
+// that failed.
 
 namespace {
 
 void check_equal(int a, int b)
 {
+    CONTEXT("a={} b={}", a, b);
     CHECK(a == b);
 }
 
 void require_non_empty(std::string_view s)
 {
+    CONTEXT(s);
     REQUIRE(!s.empty());
 }
 
