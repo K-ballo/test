@@ -234,6 +234,34 @@ add_lib_test(
     EXITS 0
 )
 
+# TEST_CASE must be followed by a function body.
+add_lib_test(
+    test_case.no_body.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_NO_BODY_COMPILE_FAIL
+)
+
+# TEST_CASE requires a name and a description.
+add_lib_test(
+    test_case.no_desc.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_NO_DESC_COMPILE_FAIL
+)
+
+# TEST_CASE requires an identifier as a name.
+add_lib_test(
+    test_case.invalid_name.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_INVALID_NAME_COMPILE_FAIL
+)
+
+# TEST_CASE requires a string literal as a description.
+add_lib_test(
+    test_case.invalid_desc.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_INVALID_DESC_COMPILE_FAIL
+)
+
 # --- summary tests ------------------------------------------------------------
 
 # A single-case run must not print the test-cases summary.

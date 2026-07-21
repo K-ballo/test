@@ -26,6 +26,7 @@
 //       CHECK(1 + 1 == 2);
 //   }
 #define TEST_CASE(name_, desc_)                            \
+    struct name_;                                          \
     struct name_                                           \
     {                                                      \
       private:                                             \
@@ -33,7 +34,7 @@
         inline static bool const registered_ =             \
             (::eggs::test::detail::registry::add({         \
                  .name = #name_,                           \
-                 .desc = desc_,                            \
+                 .desc = "" desc_,                         \
                  .run = &name_::run,                       \
                  .loc = ::std::source_location::current(), \
              }),                                           \
