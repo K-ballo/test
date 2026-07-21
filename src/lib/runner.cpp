@@ -8,6 +8,7 @@
 #include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/run_state.hpp>
 
 #include <cstddef>
 #include <cstdio>

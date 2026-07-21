@@ -11,15 +11,26 @@
 
 #if defined(REGISTER_P_NONLITERAL_INSTANCE_COMPILE_FAIL)
 
-TEST_CASE(nonliteral_instance, "zero-parameter parameterized test")
+TEST_CASE(nonliteral_instance, "parameterized test", int const& n)
 {
-    CHECK(1 + 1 == 2);
+    CHECK(n == n);
 }
 
 // #name_ "/" instance_ relies on adjacent string-literal concatenation, so
 // instance_ must be a string-literal token, not a variable holding a string.
 char const* const instance = "first";
-REGISTER_P(nonliteral_instance, instance);
+REGISTER_P(nonliteral_instance, instance, 0);
+
+#elif defined(REGISTER_P_AUTO_REGISTERED_COMPILE_FAIL)
+
+TEST_CASE(auto_registered, "zero-parameter test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// A TEST_CASE with no params already auto-registers under its bare name;
+// REGISTER_P is only for TEST_CASEs with required params.
+REGISTER_P(auto_registered, "second");
 
 #elif defined(REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL)
 

@@ -12,34 +12,22 @@
 #include <eggs/test/detail/require.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
+#include <cstddef>
 #include <exception>
+#include <initializer_list>
 #include <ranges>
 #include <source_location>
+#include <string>
 #include <string_view>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace eggs::test::detail {
 
+// A parameterized TEST_CASE requires arguments to run.
 template <typename T>
-bool auto_register(
-    char const* name, char const* desc,
-    std::source_location loc = ::std::source_location::current()
-)
-{
-    if constexpr (requires { T::run(); }) {
-        registry::add({
-            name,
-            desc,
-            [](run_state& state) {
-                state.entry_depth = stacktrace::current().size();
-                T::run();
-            },
-            std::move(loc),
-        });
-    }
-    return true;
-}
+inline constexpr bool is_parameterized = !requires { T::run(); };
 
 } // namespace eggs::test::detail
 
@@ -57,14 +45,28 @@ bool auto_register(
 // With required params no auto-registration happens; use REGISTER_P / REGISTER_R:
 //   TEST_CASE(add, "adds two integers", int const& a, int const& b) { CHECK(a + b == b + a); }
 //   REGISTER_P(add, "one-two", 1, 2);
-#define TEST_CASE(name_, desc_, ...)                                   \
-    struct name_                                                       \
-    {                                                                  \
-        static constexpr const char* case_desc_ = desc_;               \
-        static void run(__VA_ARGS__);                                  \
-        inline static bool const registered_ =                         \
-            ::eggs::test::detail::auto_register<name_>(#name_, desc_); \
-    };                                                                 \
+#define TEST_CASE(name_, desc_, ...)                                          \
+    struct name_                                                              \
+    {                                                                         \
+        static constexpr const char* case_desc_ = desc_;                      \
+        static void run(__VA_ARGS__);                                         \
+        inline static bool const registered_ = []<typename T = name_>() {     \
+            if constexpr (!::eggs::test::detail::is_parameterized<T>) {       \
+                ::eggs::test::detail::registry::add({                         \
+                    #name_,                                                   \
+                    desc_,                                                    \
+                    [](::eggs::test::detail::run_state& state) {              \
+                        state.entry_depth =                                   \
+                            ::eggs::test::detail::stacktrace::current().size( \
+                            );                                                \
+                        return T::run();                                      \
+                    },                                                        \
+                    ::std::source_location::current(),                        \
+                });                                                           \
+            }                                                                 \
+            return true;                                                      \
+        }();                                                                  \
+    };                                                                        \
     void name_::run(__VA_ARGS__)
 
 // REGISTER_P(name, "instance", args...)
@@ -72,16 +74,23 @@ bool auto_register(
 // Registers one instance of the parameterized test case `name`, passing args
 // directly to run().  Appears in the registry as "name/instance".
 //
+// `name` must be a parameterized TEST_CASE; calling REGISTER_P on a
+// TEST_CASE with no params is a compile error.
+//
 //   REGISTER_P(add, "small",    1,  2);
 //   REGISTER_P(add, "negative", -3, 5);
 #define REGISTER_P(name_, instance_, ...)                                \
     static bool const _EGGS_CAT(_eggs_reg_, __LINE__) = [] {             \
+        static_assert(                                                   \
+            ::eggs::test::detail::is_parameterized<name_>,               \
+            "REGISTER_P can only be used with a parameterized TEST_CASE" \
+        );                                                               \
         ::eggs::test::detail::registry::add({                            \
             #name_ "/" instance_,                                        \
             name_::case_desc_,                                           \
             [](::eggs::test::detail::run_state& state) {                 \
                 state.entry_depth =                                      \
-                    ::eggs::test::detail::stacktrace ::current().size(); \
+                    ::eggs::test::detail::stacktrace::current().size();  \
                 return name_::run(__VA_ARGS__);                          \
             },                                                           \
             ::std::source_location::current(),                           \
@@ -105,9 +114,9 @@ auto make_ranges(std::initializer_list<T> il)
 
 template <typename T, typename... Rest>
 void make_ranges(std::initializer_list<T>, Rest&&...)
-#if __cpp_deleted_function >= 202403L
-    = delete ("only a single braced-init-list is supported; use "
-              "std::vector{...} for multiple ranges");
+#if __cpp_deleted_function >= 202403L && __cplusplus > 202302L
+    = delete("only a single braced-init-list is supported; use "
+             "std::vector{...} for multiple ranges");
 #else
     = delete;
 #endif
@@ -122,10 +131,17 @@ void make_ranges(std::initializer_list<T>, Rest&&...)
 // std::apply.  Ranges may be braced-init-lists ({1, 4, 9}), std::array,
 // std::vector, or any other range; different ranges may have different types.
 //
+// `name` must be a parameterized TEST_CASE; calling REGISTER_R on a
+// TEST_CASE with no params is a compile error.
+//
 //   REGISTER_R(square, "small",  {1, 4, 9});
 //   REGISTER_R(add,    "grid",   {0, 1, 2}, {0, 1, 2});
 #define REGISTER_R(name_, instance_, ...)                                     \
     static bool const _EGGS_CAT(_eggs_reg_, __LINE__) = [] {                  \
+        static_assert(                                                        \
+            ::eggs::test::detail::is_parameterized<name_>,                    \
+            "REGISTER_R can only be used with a parameterized TEST_CASE"      \
+        );                                                                    \
         std::size_t _i_ = 0;                                                  \
         auto _rngs_ = ::eggs::test::detail::make_ranges(__VA_ARGS__);         \
         for (auto const& _v_ : std::apply(                                    \
@@ -145,7 +161,7 @@ void make_ranges(std::initializer_list<T>, Rest&&...)
                     return std::apply(                                        \
                         [&state](auto const&... _vs_) {                       \
                             state.entry_depth =                               \
-                                ::eggs::test::detail::stacktrace ::current()  \
+                                ::eggs::test::detail::stacktrace::current()   \
                                     .size();                                  \
                             return name_::run(_vs_...);                       \
                         },                                                    \

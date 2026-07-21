@@ -31,4 +31,15 @@ TEST_CASE(wrong_arity, "addition is commutative", int const& a, int const& b)
 // needs one range per parameter.
 REGISTER_R(wrong_arity, "bad", std::vector<int>{1, 2, 3});
 
+#elif defined(REGISTER_R_AUTO_REGISTERED_COMPILE_FAIL)
+
+TEST_CASE(auto_registered, "zero-parameter test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// A TEST_CASE with no params already auto-registers under its bare name;
+// REGISTER_R is only for TEST_CASEs with required params.
+REGISTER_R(auto_registered, "second");
+
 #endif

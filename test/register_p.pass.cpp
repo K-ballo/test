@@ -9,14 +9,12 @@
 
 #include <concepts>
 
-// Zero-parameter instances: REGISTER_P with no value arguments.
+// TEST_CASE with no params auto-registers under its bare name; REGISTER_P
+// cannot be used on it (see register_p.compile_fail.cpp).
 TEST_CASE(stateless, "zero-parameter test")
 {
     CHECK(1 + 1 == 2);
 }
-
-// Registers stateless/second.
-REGISTER_P(stateless, "second");
 
 // Single-parameter test: each REGISTER_P passes one value directly.
 TEST_CASE(square, "n squared is non-negative", int const& n)

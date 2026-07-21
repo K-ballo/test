@@ -268,8 +268,8 @@ add_lib_test(register_p SOURCES register_p.pass.cpp DISCOVER)
 add_lib_test(
     register_p.name.instance
     SOURCES register_p.pass.cpp
-    RUN stateless/second
-    PASS_REGEX "\\[ RUN  \\] stateless/second -- "
+    RUN square/zero
+    PASS_REGEX "\\[ RUN  \\] square/zero -- "
     EXITS 0
 )
 
@@ -292,6 +292,14 @@ add_lib_test(
     register_p.wrong_arity.compile_fail
     SOURCES register_p.compile_fail.cpp
     COMPILE_FAIL REGISTER_P_WRONG_ARITY_COMPILE_FAIL
+)
+
+# REGISTER_P cannot be used on a TEST_CASE with no params: it already
+# auto-registers under its bare name.
+add_lib_test(
+    register_p.auto_registered.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_AUTO_REGISTERED_COMPILE_FAIL
 )
 
 # Parameterized test cases registered via REGISTER_R.
@@ -318,6 +326,14 @@ add_lib_test(
     register_r.wrong_arity.compile_fail
     SOURCES register_r.compile_fail.cpp
     COMPILE_FAIL REGISTER_R_WRONG_ARITY_COMPILE_FAIL
+)
+
+# REGISTER_R cannot be used on a TEST_CASE with no params: it already
+# auto-registers under its bare name.
+add_lib_test(
+    register_r.auto_registered.compile_fail
+    SOURCES register_r.compile_fail.cpp
+    COMPILE_FAIL REGISTER_R_AUTO_REGISTERED_COMPILE_FAIL
 )
 
 # --- summary tests ------------------------------------------------------------
