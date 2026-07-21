@@ -32,7 +32,8 @@ set_tests_properties(
 include(EggsTest)
 
 # add_lib_test(<name> SOURCES <file>...
-#               [ARGS <arg>...] [RUN <name>...] [DISCOVER] [EXITS <code>]
+#               [ARGS <arg>...] [RUN <name>...] [DISCOVER]
+#               [EXITS <code>] [WILL_ABORT]
 #               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
 # add_lib_test(<name> SOURCES <file>... COMPILE_FAIL <macro>...
 #               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
@@ -45,16 +46,17 @@ include(EggsTest)
 #
 # COMPILE_FAIL: the test passes when the source fails to compile.  Its value
 # list is passed to the source as preprocessor definitions.  Cannot be combined
-# with ARGS, DISCOVER, EXITS, or RUN.  DISCOVER registers one CTest test per
-# TEST_CASE (discovered at test time).  EXITS is the expected exit code
-# (defaults to 0).  FAIL_REGEX: the test fails if its output matches any of
-# these patterns.  PASS_REGEX: the test passes only if its output matches all
-# of these patterns.
+# with ARGS, DISCOVER, EXITS, RUN, or WILL_ABORT.  DISCOVER registers one
+# CTest test per TEST_CASE (discovered at test time).  EXITS is the expected
+# exit code (defaults to 0).  WILL_ABORT expects the process to aborte; cannot
+# be combined with EXITS or DISCOVER.  FAIL_REGEX: the test fails if its output
+# matches any of these patterns.  PASS_REGEX: the test passes only if its
+# output matches all of these patterns.
 function(add_lib_test name)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "DISCOVER"
+        "DISCOVER;WILL_ABORT"
         "EXITS"
         "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;RUN;SOURCES"
     )
@@ -69,11 +71,12 @@ function(add_lib_test name)
             OR ARG_DISCOVER
             OR DEFINED ARG_EXITS
             OR DEFINED ARG_RUN
+            OR ARG_WILL_ABORT
         )
     )
         message(
             SEND_ERROR
-            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, EXITS, or RUN"
+            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, EXITS, RUN, or WILL_ABORT"
         )
         return()
     endif()
@@ -98,6 +101,13 @@ function(add_lib_test name)
         message(
             SEND_ERROR
             "add_lib_test(${name}): EXITS must be in the range 0-255 (got '${ARG_EXITS}')"
+        )
+        return()
+    endif()
+    if(ARG_WILL_ABORT AND (DEFINED ARG_EXITS OR ARG_DISCOVER))
+        message(
+            SEND_ERROR
+            "add_lib_test(${name}): WILL_ABORT cannot be combined with EXITS or DISCOVER"
         )
         return()
     endif()
@@ -164,6 +174,9 @@ function(add_lib_test name)
 
     if(DEFINED ARG_EXITS)
         list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
+    endif()
+    if(ARG_WILL_ABORT)
+        list(APPEND _control_args "--eggs-run-test-will-abort")
     endif()
 
     if(ARG_DISCOVER)
@@ -361,6 +374,22 @@ add_lib_test(
     RUN leaked_exception_require
     PASS_REGEX "UNKNOWN EXCEPTION"
     EXITS 1
+)
+
+# --- run_state guard tests ----------------------------------------------------
+
+# CHECK with no active run_state must abort.
+add_lib_test(
+    check.null_state.will_abort
+    SOURCES check.null_state.will_abort.cpp
+    WILL_ABORT
+)
+
+# REQUIRE with no active run_state must abort.
+add_lib_test(
+    require.null_state.will_abort
+    SOURCES require.null_state.will_abort.cpp
+    WILL_ABORT
 )
 
 # --- cli tests -----------------------------------------------------------
