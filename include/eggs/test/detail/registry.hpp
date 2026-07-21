@@ -9,12 +9,15 @@
 
 #include <eggs/test/detail/run_state.hpp>
 
+#include <cassert>
 #include <cstddef>
+#include <cstdlib>
 #include <functional>
 #include <source_location>
 #include <string>
 #include <string_view>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace eggs::test::detail {
@@ -69,7 +72,13 @@ struct registry
 
     static cases_type& cases();
 
-    static void add(test_entry e) { cases().insert(e); }
+    static void add(test_entry e)
+    {
+        bool const inserted = cases().insert(std::move(e)).second;
+        assert(inserted && "duplicate test case name");
+        if (!inserted) [[unlikely]]
+            std::abort();
+    }
 
     static int run(std::vector<test_entry> const& run);
 };

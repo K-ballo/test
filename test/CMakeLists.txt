@@ -33,6 +33,7 @@ include(EggsTest)
 
 # add_lib_test(<name> SOURCES <file>...
 #               [ARGS <arg>...] [RUN <name>...] [DISCOVER] [EXITS <code>]
+#               [WILL_ABORT]
 #               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
 # add_lib_test(<name> SOURCES <file>... COMPILE_FAIL <macro>...
 #               [FAIL_REGEX <pattern>...] [PASS_REGEX <pattern>...])
@@ -45,16 +46,18 @@ include(EggsTest)
 #
 # COMPILE_FAIL: the test passes when the source fails to compile.  Its value
 # list is passed to the source as preprocessor definitions.  Cannot be combined
-# with ARGS, DISCOVER, EXITS, or RUN.  DISCOVER registers one CTest test per
-# TEST_CASE (discovered at test time).  EXITS is the expected exit code
-# (defaults to 0).  FAIL_REGEX: the test fails if its output matches any of
-# these patterns.  PASS_REGEX: the test passes only if its output matches all
-# of these patterns.
+# with ARGS, DISCOVER, EXITS, RUN, or WILL_ABORT.  DISCOVER registers one
+# CTest test per TEST_CASE (discovered at test time).  EXITS is the expected
+# exit code (defaults to 0).  WILL_ABORT expects the process to have aborted
+# (SIGABRT / CRT abort()) instead; cannot be combined with EXITS or DISCOVER
+# (discovery's own '--list' invocation would abort too).  FAIL_REGEX: the test
+# fails if its output matches any of these patterns.  PASS_REGEX: the test
+# passes only if its output matches all of these patterns.
 function(add_lib_test name)
     cmake_parse_arguments(
         PARSE_ARGV 1
         ARG
-        "DISCOVER"
+        "DISCOVER;WILL_ABORT"
         "EXITS"
         "ARGS;COMPILE_FAIL;FAIL_REGEX;PASS_REGEX;RUN;SOURCES"
     )
@@ -69,11 +72,12 @@ function(add_lib_test name)
             OR ARG_DISCOVER
             OR DEFINED ARG_EXITS
             OR DEFINED ARG_RUN
+            OR ARG_WILL_ABORT
         )
     )
         message(
             SEND_ERROR
-            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, EXITS, or RUN"
+            "add_lib_test(${name}): COMPILE_FAIL cannot be combined with ARGS, DISCOVER, EXITS, RUN, or WILL_ABORT"
         )
         return()
     endif()
@@ -98,6 +102,20 @@ function(add_lib_test name)
         message(
             SEND_ERROR
             "add_lib_test(${name}): EXITS must be in the range 0-255 (got '${ARG_EXITS}')"
+        )
+        return()
+    endif()
+    if(ARG_WILL_ABORT AND DEFINED ARG_EXITS)
+        message(
+            SEND_ERROR
+            "add_lib_test(${name}): WILL_ABORT cannot be combined with EXITS"
+        )
+        return()
+    endif()
+    if(ARG_WILL_ABORT AND ARG_DISCOVER)
+        message(
+            SEND_ERROR
+            "add_lib_test(${name}): WILL_ABORT cannot be combined with DISCOVER - discovery's own '--list' invocation would abort"
         )
         return()
     endif()
@@ -165,6 +183,9 @@ function(add_lib_test name)
     if(DEFINED ARG_EXITS)
         list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
     endif()
+    if(ARG_WILL_ABORT)
+        list(APPEND _control_args "--eggs-run-test-will-abort")
+    endif()
 
     if(ARG_DISCOVER)
         eggs_discover_tests(
@@ -198,6 +219,14 @@ add_lib_test(
     SOURCES registration.cpp
     DISCOVER
     FAIL_REGEX "test cases:"
+)
+
+# Two REGISTER_P instances registering the same "name/instance" abort during
+# static initialization, before main() runs.
+add_lib_test(
+    registration.duplicate.fail
+    SOURCES registration.duplicate.fail.cpp
+    WILL_ABORT
 )
 
 # Test cases defined across two translation units both register and run.
