@@ -8,7 +8,7 @@
 #include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
-#include <eggs/test/detail/stacktrace.hpp>
+#include <eggs/test/detail/run_state.hpp>
 
 #include <cstddef>
 #include <cstdio>
@@ -61,8 +61,6 @@ registry::cases_type& registry::cases()
 
 int registry::run(std::vector<test_entry> const& run)
 {
-    std::size_t const entry_depth = detail::stacktrace::current().size();
-
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
 
@@ -73,12 +71,11 @@ int registry::run(std::vector<test_entry> const& run)
         );
 
         run_state state;
-        state.entry_depth = entry_depth;
 
         run_state::set_current(&state);
         bool passed = false;
         try {
-            e.run();
+            e.run(state);
             passed = !state.assertions_failed;
         } catch (detail::unwind const&) {
         } catch (std::exception const& ex) {
