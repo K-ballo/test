@@ -28,6 +28,7 @@ function(_eggs_try_stacktrace lib var)
 endfunction()
 
 set(EGGS_HAS_CXX23_STACKTRACE FALSE)
+set(EGGS_CXX23_STACKTRACE_LIB "")
 
 _eggs_try_stacktrace("" EGGS_CXX23_STACKTRACE_NO_LIB)
 if(EGGS_CXX23_STACKTRACE_NO_LIB)
