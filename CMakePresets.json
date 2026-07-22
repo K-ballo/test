@@ -1,8 +1,8 @@
 {
-  "version": 6,
+  "version": 12,
   "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 29,
+    "major": 4,
+    "minor": 4,
     "patch": 0
   },
   "configurePresets": [
@@ -11,13 +11,24 @@
       "hidden": true,
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/${presetName}",
+      "warnings": {
+        "author": true,
+        "deprecated": true,
+        "uninitialized": true,
+        "unusedCli": true
+      },
+      "errors": {
+        "author": true,
+        "deprecated": true,
+        "uninitialized": true
+      },
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_EXTENSIONS": "OFF",
         "CMAKE_COMPILE_WARNING_AS_ERROR": "ON",
         "CMAKE_LINK_WARNING_AS_ERROR": "ON",
-        "BUILD_EXAMPLE": "ON",
+        "BUILD_EXAMPLES": "ON",
         "BUILD_TESTING": "ON",
         "ENABLE_INSTALL": "ON"
       }
@@ -27,11 +38,9 @@
       "displayName": "GCC",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc",
         "CMAKE_CXX_COMPILER": "g++"
       },
       "environment": {
-        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=.",
         "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=."
       }
     },
@@ -40,11 +49,9 @@
       "displayName": "Clang",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
         "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=."
       }
     },
@@ -53,11 +60,9 @@
       "displayName": "Clang + libc++",
       "inherits": "dev-clang",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
         "CXXFLAGS": "-Wall -Wextra -Wpedantic -stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
         "LDFLAGS": "-stdlib=libc++"
       }
@@ -67,13 +72,11 @@
       "displayName": "MSVC x64",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
         "CMAKE_CXX_FLAGS_RELEASE_INIT": "/wd4702",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "/wd4702"
       },
       "environment": {
-        "CFLAGS": "/W4 /d1trimfile:\"${sourceDir}\"",
         "CXXFLAGS": "/W4 /d1trimfile:\"${sourceDir}\""
       }
     },
@@ -82,11 +85,9 @@
       "displayName": "Clang-CL x64",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "clang-cl",
         "CMAKE_CXX_COMPILER": "clang-cl"
       },
       "environment": {
-        "CFLAGS": "/W4 /clang:-ffile-prefix-map=${sourceDir}=.",
         "CXXFLAGS": "/W4 /clang:-ffile-prefix-map=${sourceDir}=."
       }
     },
