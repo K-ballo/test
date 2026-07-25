@@ -10,37 +10,88 @@
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
+#include <eggs/test/detail/run_state.hpp>
 
 #include <exception>
 #include <source_location>
 #include <string_view>
 #include <vector>
 
-// TEST_CASE(name, "description")
+namespace eggs::test::detail {
+
+// A parameterized TEST_CASE requires arguments to run.
+template <typename T>
+inline constexpr bool is_parameterized = !requires { T::run(); };
+
+} // namespace eggs::test::detail
+
+// Internal helpers
+#define EGGS_PP_CAT_(a, b) a##b
+#define EGGS_PP_CAT(a, b) EGGS_PP_CAT_(a, b)
+
+// TEST_CASE(name, "description" [, params...])
 //
-// Defines a struct named `name` with a static run() member and an inline
-// static data member whose initialiser registers the test case before main().
-// Follow the macro with a function body:
+// Defines a struct named `name` with a static run() member.
 //
-//   TEST_CASE(my_test, "adds two integers") {
-//       CHECK(1 + 1 == 2);
+// Without required parameters the test auto-registers as a single case:
+//   TEST_CASE(my_test, "adds two integers") { CHECK(1 + 1 == 2); }
+//
+// With required parameters no auto-registration happens; use REGISTER_P:
+//   TEST_CASE(add, "adds two integers", int const& a, int const& b) {
+//       CHECK(a + b == b + a);
 //   }
-#define TEST_CASE(name_, desc_)                            \
-    struct name_;                                          \
-    struct name_                                           \
-    {                                                      \
-      private:                                             \
-        static void run();                                 \
-        inline static bool const registered_ =             \
-            (::eggs::test::detail::registry::add({         \
-                 .name = #name_,                           \
-                 .desc = "" desc_,                         \
-                 .run = &name_::run,                       \
-                 .loc = ::std::source_location::current(), \
-             }),                                           \
-             true);                                        \
-    };                                                     \
-    void name_::run()
+//   REGISTER_P(add, "one-two", 1, 2);
+#define TEST_CASE(name_, desc_, ...)                                    \
+    struct name_;                                                       \
+    struct name_                                                        \
+    {                                                                   \
+        static constexpr const char* case_desc_ = desc_;                \
+        static void run(__VA_ARGS__);                                   \
+        inline static auto const* reg_ = []<typename T = name_>()       \
+            -> ::eggs::test::detail::test_entry const* {                \
+            if constexpr (!::eggs::test::detail::is_parameterized<T>) { \
+                return ::eggs::test::detail::registry::add({            \
+                    #name_,                                             \
+                    "" desc_,                                           \
+                    [](::eggs::test::detail::run_state& state) {        \
+                        state.mark_entry();                             \
+                        return T::run();                                \
+                    },                                                  \
+                    ::std::source_location::current(),                  \
+                });                                                     \
+            } else {                                                    \
+                return nullptr;                                         \
+            }                                                           \
+        }();                                                            \
+    };                                                                  \
+    void name_::run(__VA_ARGS__)
+
+// REGISTER_P(name, "instance", args...)
+//
+// Registers one instance of the parameterized test case `name`, passing args
+// directly to run().  Appears in the registry as "name/instance".
+//
+// `name` must be a parameterized TEST_CASE.
+//
+//   REGISTER_P(add, "small", 1, 2);
+//   REGISTER_P(add, "negative", -3, 5);
+#define REGISTER_P(name_, instance_, ...)                            \
+    static_assert(                                                   \
+        ::eggs::test::detail::is_parameterized<name_>,               \
+        "REGISTER_P can only be used with a parameterized TEST_CASE" \
+    );                                                               \
+    static auto const* EGGS_PP_CAT(_eggs_test_reg_, __LINE__) = []   \
+        -> ::eggs::test::detail::test_entry const* {                 \
+            return ::eggs::test::detail::registry::add({             \
+                #name_ "/" instance_,                                \
+                name_::case_desc_,                                   \
+                [](::eggs::test::detail::run_state& state) {         \
+                    state.mark_entry();                              \
+                    return name_::run(__VA_ARGS__);                  \
+                },                                                   \
+                ::std::source_location::current(),                   \
+            });                                                      \
+        }()
 
 // CHECK(expr)
 //

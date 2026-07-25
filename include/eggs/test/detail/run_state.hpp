@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <eggs/test/detail/stacktrace.hpp>
+
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -19,6 +21,8 @@ class run_state
     std::size_t entry_depth = 0;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+
+    void mark_entry() { entry_depth = stacktrace::current().size(); }
 
     // Points at the run_state of the currently-executing test on this thread.
     // nullptr between test cases.
