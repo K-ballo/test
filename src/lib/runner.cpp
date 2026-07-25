@@ -139,6 +139,16 @@ int run(run_options opts)
         std::unordered_set<std::string_view> seen;
         seen.reserve(opts.run.size());
         for (auto const& name : opts.run) {
+
+            if (!detail::is_valid_instance_name(name)) {
+                detail::println(
+                    stderr,
+                    "warning: '{}' is not a valid test case name or "
+                    "wildcard pattern; it will not match any test case",
+                    name
+                );
+            }
+
             auto const it = all_cases.find(name);
             if (it == all_cases.end()) {
                 detail::println(stderr, "error: unknown test case '{}'", name);

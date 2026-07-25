@@ -23,6 +23,30 @@ namespace eggs::test::detail {
 template <typename T>
 inline constexpr bool is_parameterized = !requires { T::run(); };
 
+// Letters, digits, '_', '.', '/', '-'; non-empty; must start with a letter
+// or '_' (so instance names never look like a numeric literal, a path, or a
+// CLI option, and always survive verbatim through CMake test-name
+// discovery).
+constexpr bool is_valid_instance_name(std::string_view name)
+{
+    if (name.empty()) return false;
+
+    char const first = name.front();
+    bool const first_is_letter =
+        (first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z');
+    if (!first_is_letter && first != '_') return false;
+
+    for (char const c : name) {
+        bool const is_upper = c >= 'A' && c <= 'Z';
+        bool const is_lower = c >= 'a' && c <= 'z';
+        bool const is_digit = c >= '0' && c <= '9';
+        bool const is_symbol = c == '_' || c == '.' || c == '/' || c == '-';
+        if (!is_upper && !is_lower && !is_digit && !is_symbol) return false;
+    }
+
+    return true;
+}
+
 } // namespace eggs::test::detail
 
 // Internal helpers
@@ -79,6 +103,12 @@ inline constexpr bool is_parameterized = !requires { T::run(); };
     static_assert(                                                   \
         ::eggs::test::detail::is_parameterized<name_>,               \
         "REGISTER_P can only be used with a parameterized TEST_CASE" \
+    );                                                               \
+    static_assert(                                                   \
+        ::eggs::test::detail::is_valid_instance_name(instance_),     \
+        "REGISTER_P(" #name_ ", " instance_ ", " #__VA_ARGS__        \
+        "): instance name must be a non-empty string of letters, "   \
+        "digits, '_', '.', '/', '-', starting with a letter or '_'"  \
     );                                                               \
     static auto const* EGGS_PP_CAT(_eggs_test_reg_, __LINE__) = []   \
         -> ::eggs::test::detail::test_entry const* {                 \

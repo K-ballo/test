@@ -55,6 +55,48 @@ TEST_CASE(
 // REGISTER_P rejects registration with the wrong number of arguments.
 REGISTER_P(wrong_arity_more, "too_many", 1, 2, 3);
 
+#elif defined(REGISTER_P_EMPTY_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(empty_instance, "zero-parameter parameterized test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// instance names must be non-empty.
+REGISTER_P(empty_instance, "");
+
+#elif defined(REGISTER_P_LEADING_DIGIT_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(leading_digit_instance, "zero-parameter parameterized test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// instance names must start with a letter or '_'.
+REGISTER_P(leading_digit_instance, "1st");
+
+#elif defined(REGISTER_P_LEADING_SYMBOL_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(leading_symbol_instance, "zero-parameter parameterized test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// instance names must start with a letter or '_'; '-', '.', and '/' are
+// allowed elsewhere in the name but not as the first character.
+REGISTER_P(leading_symbol_instance, "-first");
+
+#elif defined(REGISTER_P_INVALID_CHAR_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(invalid_char_instance, "zero-parameter parameterized test")
+{
+    CHECK(1 + 1 == 2);
+}
+
+// instance names may only contain letters, digits, '_', '.', '/', '-'; a
+// space is not among them.
+REGISTER_P(invalid_char_instance, "two words");
+
 #elif defined(REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL)
 
 TEST_CASE(

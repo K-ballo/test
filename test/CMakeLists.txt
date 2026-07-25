@@ -334,6 +334,38 @@ add_lib_test(
     COMPILE_FAIL REGISTER_P_WRONG_ARITY_MORE_COMPILE_FAIL
 )
 
+# instance names must be non-empty.
+add_lib_test(
+    register_p.empty_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_EMPTY_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be a non-empty string"
+)
+
+# instance names must start with a letter or '_'.
+add_lib_test(
+    register_p.leading_digit_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_LEADING_DIGIT_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be a non-empty string"
+)
+
+# instance names must start with a letter or '_'; '-', '.', '/' don't count.
+add_lib_test(
+    register_p.leading_symbol_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_LEADING_SYMBOL_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be a non-empty string"
+)
+
+# instance names may only contain letters, digits, '_', '.', '/', '-'.
+add_lib_test(
+    register_p.invalid_char_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_INVALID_CHAR_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be a non-empty string"
+)
+
 # REGISTER_P rejects arguments that do not satisfy the constrains.
 add_lib_test(
     register_p.integral_auto.compile_fail
@@ -703,7 +735,7 @@ add_lib_test(
     SOURCES registration.cpp
     RUN unknown
     PASS_REGEX "error: unknown test case 'unknown'"
-    FAIL_REGEX "\\[ RUN  \\]"
+    FAIL_REGEX "\\[ RUN  \\]" "warning:"
     EXITS 1
 )
 
@@ -719,6 +751,19 @@ add_lib_test(
     SOURCES registration.cpp
     RUN unknown_a unknown_b
     PASS_REGEX "${_run_unknown_multi_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<name> containing characters no test case name can ever contain (and
+# unrelated to wildcards) also warns before reporting the name as unknown.
+add_lib_test(
+    cli.run.invalid_chars.fail
+    SOURCES registration.cpp
+    RUN "registration one"
+    PASS_REGEX
+        "warning: 'registration one' is not a valid test case name or wildcard pattern"
+        "error: unknown test case 'registration one'"
     FAIL_REGEX "\\[ RUN  \\]"
     EXITS 1
 )
