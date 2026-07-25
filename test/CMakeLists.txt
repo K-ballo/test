@@ -248,6 +248,13 @@ add_lib_test(
     COMPILE_FAIL TEST_CASE_NO_DESC_COMPILE_FAIL
 )
 
+# TEST_CASE rejects a parameter in place of a description.
+add_lib_test(
+    test_case.no_desc_with_params.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_NO_DESC_WITH_PARAMS_COMPILE_FAIL
+)
+
 # TEST_CASE requires an identifier as a name.
 add_lib_test(
     test_case.invalid_name.compile_fail
@@ -260,6 +267,78 @@ add_lib_test(
     test_case.invalid_desc.compile_fail
     SOURCES test_case.compile_fail.cpp
     COMPILE_FAIL TEST_CASE_INVALID_DESC_COMPILE_FAIL
+)
+
+# TEST_CASE parameters cannot be defaulted.
+add_lib_test(
+    test_case.defaulted_param.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_DEFAULTED_PARAM_COMPILE_FAIL
+)
+
+# --- parameterized tests -----------------------------------------------------
+
+# Parameterized test cases registered via REGISTER_P.
+add_lib_test(register_p SOURCES register_p.pass.cpp DISCOVER)
+
+# REGISTER_P - name is base/instance.
+add_lib_test(
+    register_p.name.instance
+    SOURCES register_p.pass.cpp
+    RUN square/zero
+    PASS_REGEX "\\[ RUN  \\] square/zero -- "
+    EXITS 0
+)
+
+# REGISTER_P base test name isn't registered.
+add_lib_test(
+    register_p.name
+    SOURCES register_p.pass.cpp
+    RUN square
+    PASS_REGEX "error: unknown test case 'square'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# REGISTER_P rejects a duplicate instance name for the same test case.
+add_lib_test(
+    register_p.duplicate.will_abort
+    SOURCES register_p.will_abort.cpp
+    WILL_ABORT
+)
+
+# REGISTER_P instance must be a string literal.
+add_lib_test(
+    register_p.nonliteral_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_NONLITERAL_INSTANCE_COMPILE_FAIL
+)
+
+# REGISTER_P cannot be used on a TEST_CASE with no parameters.
+add_lib_test(
+    register_p.auto_registered.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_AUTO_REGISTERED_COMPILE_FAIL
+    PASS_REGEX "REGISTER_P can only be used with a parameterized TEST_CASE"
+)
+
+# REGISTER_P rejects registration with the wrong number of arguments.
+add_lib_test(
+    register_p.wrong_arity_less.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_WRONG_ARITY_LESS_COMPILE_FAIL
+)
+add_lib_test(
+    register_p.wrong_arity_more.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_WRONG_ARITY_MORE_COMPILE_FAIL
+)
+
+# REGISTER_P rejects arguments that do not satisfy the constrains.
+add_lib_test(
+    register_p.integral_auto.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL
 )
 
 # --- summary tests ------------------------------------------------------------
@@ -824,6 +903,15 @@ add_lib_test(
     EXITS 0
 )
 
+# --list must print REGISTER_P's "base/instance" names verbatim.
+add_lib_test(
+    cli.list.register_p.pass
+    SOURCES register_p.pass.cpp
+    ARGS "--list"
+    PASS_REGEX "(^|\n)square/zero(\n|$)" "(^|\n)square/positive(\n|$)"
+    EXITS 0
+)
+
 # --list --run=<name> must list only the matching test case.
 add_lib_test(
     cli.list.run.pass
@@ -858,6 +946,16 @@ add_lib_test(
     RUN registration_one
     PASS_REGEX "registration_one"
     FAIL_REGEX "registration_two" "registration_three"
+    EXITS 0
+)
+
+# --run=<base/instance> must run only the exact REGISTER_P instance.
+add_lib_test(
+    cli.run.register_p.pass
+    SOURCES register_p.pass.cpp
+    RUN square/zero
+    PASS_REGEX "\\[ RUN  \\] square/zero -- "
+    FAIL_REGEX "square/positive"
     EXITS 0
 )
 
@@ -1304,6 +1402,15 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         stacktrace.check.zero_levels.fail
         SOURCES stacktrace.fail.cpp
         RUN stacktrace_check_zero_levels
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "#1 "
+        EXITS 1
+    )
+    # CHECK failure directly in parametric TEST_CASE body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.check.zero_levels.register_p.fail
+        SOURCES stacktrace.fail.cpp
+        RUN stacktrace_check_zero_levels_parametric/p
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1
