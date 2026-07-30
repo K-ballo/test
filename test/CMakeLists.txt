@@ -1700,3 +1700,23 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         EXITS 1
     )
 endif()
+
+# --- TEMPORARY: sanitizer CI smoke test --------------------------------------
+
+# Deliberately triggers ASan/UBSan reports to verify the `sanitize` workflow
+# fails as expected. Only registered under a sanitizer build. Remove once the
+# CI run has been confirmed red.
+if(CMAKE_CXX_FLAGS MATCHES "fsanitize")
+    add_executable(
+        _eggs_test.ci_sanitizer_smoke_temp
+        ci_sanitizer_smoke.temp.cpp
+    )
+    set_target_properties(
+        _eggs_test.ci_sanitizer_smoke_temp
+        PROPERTIES FOLDER "test"
+    )
+    add_test(
+        NAME eggs.test.ci_sanitizer_smoke.temp
+        COMMAND _eggs_test.ci_sanitizer_smoke_temp
+    )
+endif()
