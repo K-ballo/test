@@ -166,6 +166,8 @@ struct run_options
     std::vector<std::string_view> run;
     // list matching test case names instead of running them
     bool list = false;
+    // report successful assertions
+    bool verbose = false;
 };
 
 // Public entry point - call this from main().

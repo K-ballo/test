@@ -16,6 +16,7 @@ namespace eggs::test::detail {
 class run_state
 {
   public:
+    bool verbose = false;
     std::size_t entry_depth = 0;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;

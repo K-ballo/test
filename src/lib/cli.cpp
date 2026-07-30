@@ -94,6 +94,8 @@ run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
             opts.list = true;
         } else if (stem.starts_with("run=")) {
             opts.run.push_back(stem.substr(4));
+        } else if (stem == "verbose") {
+            opts.verbose = true;
         } else {
             argv[outc++] = argv[i];
         }

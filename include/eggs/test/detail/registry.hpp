@@ -67,7 +67,7 @@ struct registry
 
     static void add(test_entry e) { cases().insert(e); }
 
-    static int run(std::vector<test_entry> const& run);
+    static int run(std::vector<test_entry> const& run, bool verbose);
 };
 
 } // namespace eggs::test::detail

@@ -19,6 +19,8 @@
 
 namespace eggs::test::detail {
 
+void check_passed(const char* expr, std::source_location const& loc);
+
 void check_failed(
     const char* expr, std::source_location const& loc,
     detail::stacktrace const& st, std::size_t entry_depth
@@ -32,6 +34,7 @@ EGGS_TEST_NOINLINE inline bool check(
 {
     if (c) {
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return true;
     }
 
@@ -59,6 +62,7 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws(
         throw;
     } catch (...) {
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return std::current_exception();
     }
 
@@ -93,6 +97,7 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
         throw;
     } catch (ExcType const&) {
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return std::current_exception();
     } catch (...) {
         threw = std::current_exception();
@@ -125,6 +130,7 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
         fn();
 
         ++s.assertions_passed;
+        if (s.verbose) check_passed(expr, loc);
         return true;
     } catch (detail::unwind const&) {
         throw;

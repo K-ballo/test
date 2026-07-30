@@ -36,6 +36,26 @@ TEST_CASE(parse_cli_ns_list, "--ns:list is consumed and sets opts.list")
     CHECK(argc == 1);
 }
 
+TEST_CASE(parse_cli_verbose, "--verbose is consumed and sets opts.verbose")
+{
+    char const* argv[] = {"prog", "--verbose"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv);
+    CHECK(opts.verbose == true);
+    CHECK(argc == 1);
+}
+
+TEST_CASE(
+    parse_cli_ns_verbose, "--ns:verbose is consumed and sets opts.verbose"
+)
+{
+    char const* argv[] = {"prog", "--ns:verbose"};
+    int argc = countof(argv);
+    auto opts = eggs::test::parse_cli(argc, argv, "ns");
+    CHECK(opts.verbose == true);
+    CHECK(argc == 1);
+}
+
 TEST_CASE(parse_cli_run, "--run=foo is consumed and populates opts.run")
 {
     char const* argv[] = {"prog", "--run=foo"};
@@ -70,6 +90,7 @@ TEST_CASE(parse_cli_unknown, "unknown arg is left in argv")
     auto opts = eggs::test::parse_cli(argc, argv);
     CHECK(opts.list == false);
     CHECK(opts.run.empty());
+    CHECK(opts.verbose == false);
     CHECK(argc == 2);
     CHECK(std::string_view{argv[1]} == "--unknown");
 }

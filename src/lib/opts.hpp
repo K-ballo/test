@@ -39,10 +39,14 @@ constexpr
              }},
         {.flag = "run=",
          .value = "<test_case>",
-         .desc = {
-             "run only the specified test cases (repeatable).",
-             "all test cases will run if omitted",
-         }},
+         .desc =
+             {
+                 "run only the specified test cases (repeatable).",
+                 "all test cases will run if omitted",
+             }},
+        {.flag = "verbose",
+         .value = {},
+         .desc = {"report successful assertions"}},
 };
 
 } // namespace eggs::test

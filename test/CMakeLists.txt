@@ -345,10 +345,46 @@ add_lib_test(
 # --- passing tests -----------------------------------------------------------
 
 # CHECK with true expressions must exit 0.
-add_lib_test(check.pass SOURCES check.pass.cpp DISCOVER EXITS 0)
+add_lib_test(
+    check.pass
+    SOURCES check.pass.cpp
+    DISCOVER
+    EXITS 0
+    FAIL_REGEX "PASSED:|FAILED:"
+)
+
+# CHECK with a true expression: the stringified expression must appear in
+# the output, when --verbose is given.
+add_lib_test(
+    check.verbose.pass
+    SOURCES check.pass.cpp
+    RUN check_bool_true
+    ARGS "--verbose"
+    EXITS 0
+    PASS_REGEX "PASSED: 1 \\+ 1 == 2"
+    FAIL_REGEX "FAILED:"
+)
 
 # REQUIRE with true expressions must exit 0 and not stop execution.
-add_lib_test(require.pass SOURCES require.pass.cpp DISCOVER EXITS 0)
+add_lib_test(
+    require.pass
+    SOURCES require.pass.cpp
+    DISCOVER
+    EXITS 0
+    FAIL_REGEX "PASSED:|FAILED:"
+)
+
+# REQUIRE with a true expression: the stringified expression must appear in
+# the output, when --verbose is given.
+add_lib_test(
+    require.verbose.pass
+    SOURCES require.pass.cpp
+    RUN require_expression
+    ARGS "--verbose"
+    EXITS 0
+    PASS_REGEX "PASSED: 1 \\+ 1 == 2"
+    FAIL_REGEX "FAILED:"
+)
 
 # --- failing tests -----------------------------------------------------------
 
@@ -636,6 +672,15 @@ add_lib_test(catches_as.pass SOURCES catches_as.pass.cpp DISCOVER)
 # CHECK_NOTHROW / REQUIRE_NOTHROW pass when the expression does not throw.
 add_lib_test(nothrow.pass SOURCES nothrow.pass.cpp DISCOVER)
 
+# CHECK_THROWS: the stringified expression must appear in the output, when
+# --verbose is given.
+add_lib_test(
+    throws.verbose.check.pass
+    SOURCES throws.pass.cpp
+    RUN check_throws_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42\n"
+)
 # CHECK_THROWS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     throws.no_throw.check.fail
@@ -686,6 +731,15 @@ add_lib_test(
     PASS_REGEX "CHECK_THROWS\\(1 \\+ 1\\): expression is noexcept"
 )
 
+# CHECK_THROWS_AS: the stringified expression must appear in the output,
+# when --verbose is given.
+add_lib_test(
+    throws_as.verbose.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42\n"
+)
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     throws_as.no_throw.check.fail
@@ -797,6 +851,15 @@ add_lib_test(
     PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
+# CHECK_CATCHES_AS: the stringified expression must appear in the output,
+# when --verbose is given.
+add_lib_test(
+    catches_as.verbose.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42\n"
+)
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
     catches_as.no_throw.check.fail
@@ -902,6 +965,14 @@ add_lib_test(
     PASS_REGEX "cannot catch eggs::test::detail::unwind"
 )
 
+# CHECK_NOTHROW: the stringified expression must appear in the output, when --verbose is given.
+add_lib_test(
+    nothrow.check.pass
+    SOURCES nothrow.pass.cpp
+    RUN check_nothrow_pass
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: 1 \\+ 1"
+)
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.
 add_lib_test(
     nothrow.throws.check.fail
