@@ -95,14 +95,10 @@
     {
       "name": "asan",
       "displayName": "ASan + UBSan / Clang",
-      "inherits": "dev-clang"
-    },
-    {
-      "name": "tsan",
-      "displayName": "TSan / Clang",
       "inherits": "dev-clang",
       "environment": {
-        "CXXFLAGS": "-Wall -Wextra -Wpedantic -fsanitize=thread -fno-omit-frame-pointer"
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer",
+        "LDFLAGS": "-fsanitize=address,undefined"
       }
     }
   ],
@@ -157,11 +153,8 @@
     },
     {
       "name": "asan",
-      "configurePreset": "asan"
-    },
-    {
-      "name": "tsan",
-      "configurePreset": "tsan"
+      "configurePreset": "asan",
+      "configuration": "Debug"
     }
   ],
   "testPresets": [
@@ -256,15 +249,6 @@
       "environment": {
         "ASAN_OPTIONS": "strict_string_checks=1:detect_stack_use_after_return=1",
         "UBSAN_OPTIONS": "print_stacktrace=1:halt_on_error=1"
-      }
-    },
-    {
-      "name": "tsan",
-      "displayName": "Test (TSan / Clang)",
-      "inherits": "base-test",
-      "configurePreset": "tsan",
-      "environment": {
-        "TSAN_OPTIONS": "halt_on_error=1"
       }
     }
   ]
