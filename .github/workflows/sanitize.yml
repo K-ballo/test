@@ -59,4 +59,10 @@ jobs:
         run: cmake --build --preset asan
 
       - name: Test
-        run: ctest --preset asan
+        run: |
+          set -o pipefail
+          ctest --preset asan --output-on-failure | tee ctest-asan.log
+
+      - name: Annotate sanitizer diagnostics
+        if: always()
+        run: python3 .github/scripts/sanitize/annotate.py ctest-asan.log "${{ github.workspace }}"
