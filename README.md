@@ -29,6 +29,8 @@ int main() {
 
 Every `CHECK_*` macro has a `REQUIRE_*` variant that stops the test case on failure.
 
+`CONTEXT(fmt, args...)` - records a scoped diagnostic message shown alongside every `CHECK`/`REQUIRE` diagnostic produced while still in scope.
+
 ## Build
 
 ```bash

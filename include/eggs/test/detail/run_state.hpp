@@ -10,16 +10,26 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
+#include <utility>
 
 namespace eggs::test::detail {
+
+class context_frame;
 
 class run_state
 {
   public:
     bool verbose = false;
     std::size_t entry_depth = 0;
+    context_frame const* context_top = nullptr;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+
+    // Installs `frame` as the current context, returning the previous one.
+    context_frame const* exchange_context(context_frame const* frame) noexcept
+    {
+        return std::exchange(context_top, frame);
+    }
 
     // Points at the run_state of the currently-executing test on this thread.
     // nullptr between test cases.

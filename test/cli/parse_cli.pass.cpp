@@ -9,6 +9,7 @@
 #include <eggs/test/cli.hpp>
 
 #include <cstddef>
+#include <span>
 #include <string_view>
 #include <vector>
 
@@ -91,6 +92,10 @@ TEST_CASE(parse_cli_unknown, "unknown arg is left in argv")
     CHECK(opts.list == false);
     CHECK(opts.run.empty());
     CHECK(opts.verbose == false);
+
+#if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
+    CONTEXT("argv={}", std::span(argv, argc));
+#endif
     CHECK(argc == 2);
     CHECK(std::string_view{argv[1]} == "--unknown");
 }
@@ -113,6 +118,10 @@ TEST_CASE(parse_cli_mixed, "known flags consumed, unknowns preserved in order")
     auto opts = eggs::test::parse_cli(argc, argv);
     CHECK(opts.list == true);
     CHECK(opts.run == std::vector<std::string_view>{"foo"});
+
+#if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
+    CONTEXT("argv={}", std::span(argv, argc));
+#endif
     CHECK(argc == 3);
     CHECK(std::string_view{argv[1]} == "--unknown-a");
     CHECK(std::string_view{argv[2]} == "--unknown-b");
@@ -129,6 +138,10 @@ TEST_CASE(
     auto opts = eggs::test::parse_cli(argc, argv, "eggs");
     CHECK(opts.list == true);
     CHECK(opts.run == std::vector<std::string_view>{"foo"});
+
+#if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
+    CONTEXT("argv={}", std::span(argv, argc));
+#endif
     CHECK(argc == 3);
     CHECK(std::string_view{argv[1]} == "--unknown");
     CHECK(std::string_view{argv[2]} == "--list");
@@ -170,6 +183,10 @@ TEST_CASE(
     auto opts = eggs::test::parse_cli(argc, argv, "ns");
     CHECK(opts.list == false);
     CHECK(opts.run.empty());
+
+#if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
+    CONTEXT("argv={}", std::span(argv, argc));
+#endif
     CHECK(argc == 3);
     CHECK(std::string_view{argv[1]} == "--list");
     CHECK(std::string_view{argv[2]} == "--run=foo");
@@ -210,6 +227,10 @@ TEST_CASE(
     auto opts = eggs::test::parse_cli(argc, argv, "ns");
     CHECK(opts.list == false);
     CHECK(opts.run.empty());
+
+#if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
+    CONTEXT("argv={}", std::span(argv, argc));
+#endif
     CHECK(argc == 3);
     CHECK(std::string_view{argv[1]} == "--xyz:list");
     CHECK(std::string_view{argv[2]} == "--xyz:run=foo");

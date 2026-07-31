@@ -344,7 +344,7 @@ add_lib_test(
 
 # --- passing tests -----------------------------------------------------------
 
-# CHECK with true expressions must exit 0.
+# CHECK with true expressions must EXITS 0.
 add_lib_test(
     check.pass
     SOURCES check.pass.cpp
@@ -365,7 +365,7 @@ add_lib_test(
     FAIL_REGEX "FAILED:"
 )
 
-# REQUIRE with true expressions must exit 0 and not stop execution.
+# REQUIRE with true expressions must EXITS 0 and not stop execution.
 add_lib_test(
     require.pass
     SOURCES require.pass.cpp
@@ -454,6 +454,252 @@ add_lib_test(
     WILL_ABORT
 )
 
+# --- context tests -------------------------------------------------------
+
+string(
+    CONCAT _context_id_pass_regex
+    "CONTEXT:\n"
+    "    id=42  \\[.*context\\.pass\\.cpp:[0-9]+\\]\n"
+)
+string(
+    CONCAT _context_id_fail_regex
+    "CONTEXT:\n"
+    "    id=42  \\[.*context\\.fail\\.cpp:[0-9]+\\]\n"
+)
+
+# CONTEXT(...) appears alongside CHECK diagnostics.
+add_lib_test(
+    context.check.pass
+    SOURCES context.pass.cpp
+    RUN context_check_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: id == 42"
+    EXITS 0
+)
+add_lib_test(
+    context.check.fail
+    SOURCES context.fail.cpp
+    RUN context_check_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: id == 7"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside REQUIRE diagnostics.
+add_lib_test(
+    context.require.pass
+    SOURCES context.pass.cpp
+    RUN context_require_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: id == 42"
+    EXITS 0
+)
+add_lib_test(
+    context.require.fail
+    SOURCES context.fail.cpp
+    RUN context_require_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: id == 7"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside CHECK_THROWS diagnostics.
+add_lib_test(
+    context.throws.check.pass
+    SOURCES context.pass.cpp
+    RUN context_check_throws_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
+    EXITS 0
+)
+add_lib_test(
+    context.throws.check.fail
+    SOURCES context.fail.cpp
+    RUN context_check_throws_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside REQUIRE_THROWS diagnostics.
+add_lib_test(
+    context.throws.require.pass
+    SOURCES context.pass.cpp
+    RUN context_require_throws_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
+    EXITS 0
+)
+add_lib_test(
+    context.throws.require.fail
+    SOURCES context.fail.cpp
+    RUN context_require_throws_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside CHECK_THROWS_AS diagnostics.
+add_lib_test(
+    context.throws_as.check.pass
+    SOURCES context.pass.cpp
+    RUN context_check_throws_as_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
+    EXITS 0
+)
+add_lib_test(
+    context.throws_as.check.fail
+    SOURCES context.fail.cpp
+    RUN context_check_throws_as_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside REQUIRE_THROWS_AS diagnostics.
+add_lib_test(
+    context.throws_as.require.pass
+    SOURCES context.pass.cpp
+    RUN context_require_throws_as_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
+    EXITS 0
+)
+add_lib_test(
+    context.throws_as.require.fail
+    SOURCES context.fail.cpp
+    RUN context_require_throws_as_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside CHECK_CATCHES_AS diagnostics.
+add_lib_test(
+    context.catches_as.check.pass
+    SOURCES context.pass.cpp
+    RUN context_check_catches_as_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: exc == id"
+    EXITS 0
+)
+add_lib_test(
+    context.catches_as.check.fail
+    SOURCES context.fail.cpp
+    RUN context_check_catches_as_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside REQUIRE_CATCHES_AS diagnostics.
+add_lib_test(
+    context.catches_as.require.pass
+    SOURCES context.pass.cpp
+    RUN context_require_catches_as_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: exc == id"
+    EXITS 0
+)
+add_lib_test(
+    context.catches_as.require.fail
+    SOURCES context.fail.cpp
+    RUN context_require_catches_as_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: does_not_throw\\(\\) did not throw"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside CHECK_NOTHROW diagnostics.
+add_lib_test(
+    context.nothrow.check.pass
+    SOURCES context.pass.cpp
+    RUN context_check_nothrow_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: id"
+    EXITS 0
+)
+add_lib_test(
+    context.nothrow.check.fail
+    SOURCES context.fail.cpp
+    RUN context_check_nothrow_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: throw id threw unexpectedly"
+    EXITS 1
+)
+
+# CONTEXT(...) appears alongside REQUIRE_NOTHROW diagnostics.
+add_lib_test(
+    context.nothrow.require.pass
+    SOURCES context.pass.cpp
+    RUN context_require_nothrow_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_id_pass_regex}" "PASSED: id"
+    EXITS 0
+)
+add_lib_test(
+    context.nothrow.require.fail
+    SOURCES context.fail.cpp
+    RUN context_require_nothrow_fail
+    PASS_REGEX "${_context_id_fail_regex}" "FAILED: throw id threw unexpectedly"
+    FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# CONTEXT(fmt, args...) prints the formatted result.
+string(
+    CONCAT _context_fmt_pass_regex
+    "CONTEXT:\n"
+    "    i=1 j=2  \\[.*context\\.pass\\.cpp:[0-9]+\\]"
+)
+add_lib_test(
+    context.fmt.pass
+    SOURCES context.pass.cpp
+    RUN context_fmt_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_fmt_pass_regex}"
+    EXITS 0
+)
+
+# Multiple CONTEXT calls are active at once, innermost appears first.
+string(
+    CONCAT _context_sequential_regex
+    "CONTEXT:\n"
+    "    inner  \\[.*context\\.pass\\.cpp:[0-9]+\\]\n"
+    "    outer"
+)
+add_lib_test(
+    context.sequential.pass
+    SOURCES context.pass.cpp
+    RUN context_sequential_pass
+    ARGS "--verbose"
+    PASS_REGEX "${_context_sequential_regex}"
+    EXITS 0
+)
+
+# CONTEXT only applies within its scope.
+add_lib_test(
+    context.scoped.pass
+    SOURCES context.pass.cpp
+    RUN context_scoped_pass
+    ARGS "--verbose"
+    FAIL_REGEX "scoped out"
+    EXITS 0
+)
+
+# CONTEXT declared inside a loop reflects only the current iteration, not
+# a stale frame left over from a prior one.
+string(
+    CONCAT _context_loop_fail_regex
+    "CONTEXT:\n"
+    "    i=1  \\[.*context\\.fail\\.cpp:[0-9]+\\]\n"
+)
+add_lib_test(
+    context.loop.fail
+    SOURCES context.fail.cpp
+    RUN context_loop_fail
+    PASS_REGEX "${_context_loop_fail_regex}" "FAILED: i != 1"
+    FAIL_REGEX "i=0" "i=2"
+    EXITS 1
+)
+
 # --- cli tests -----------------------------------------------------------
 
 add_subdirectory(cli)
@@ -523,7 +769,7 @@ add_lib_test(
     EXITS 1
 )
 
-# --exit-code=<non-integer> must print an error and exit 1.
+# --exit-code=<non-integer> must print an error and EXITS 1.
 add_lib_test(
     cli.exit_code.invalid.fail
     SOURCES check.pass.cpp
@@ -532,7 +778,7 @@ add_lib_test(
     EXITS 1
 )
 
-# --exit-code=<integer with trailing junk> must print an error and exit 1.
+# --exit-code=<integer with trailing junk> must print an error and EXITS 1.
 add_lib_test(
     cli.exit_code.trailing_junk.fail
     SOURCES check.pass.cpp

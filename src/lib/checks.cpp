@@ -6,6 +6,7 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/context.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
@@ -25,7 +26,23 @@ namespace eggs::test::detail {
 
 namespace {
 
-// Prints "<label>: <message>" followed by "<function>  [<file>:<line>]".
+// Prints a single "CONTEXT:" header followed by one
+// "<message>  [<file>:<line>]" line per active context call.  
+// Prints nothing if there are no active frames.
+void print_context(context_frame const* frame)
+{
+    if (!frame) return;
+
+    detail::println(stdout, "  CONTEXT:");
+    for (; frame; frame = frame->prev) {
+        detail::println(
+            stdout, "    {}  [{}:{}]", frame->message, frame->loc.file_name(),
+            frame->loc.line()
+        );
+    }
+}
+
+// Prints "<label>: <message>", "<function>  [<file>:<line>]".
 template <typename... Args>
 void print_check(
     const char* label, std::source_location const& loc,
@@ -42,19 +59,21 @@ void print_check(
 
 template <typename... Args>
 void print_passed(
-    std::source_location const& loc, std::format_string<Args...> fmt,
-    Args&&... args
+    context_frame const* ctx, std::source_location const& loc,
+    std::format_string<Args...> fmt, Args&&... args
 )
 {
+    print_context(ctx);
     print_check("PASSED", loc, fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
 void print_failed(
-    std::source_location const& loc, std::format_string<Args...> fmt,
-    Args&&... args
+    context_frame const* ctx, std::source_location const& loc,
+    std::format_string<Args...> fmt, Args&&... args
 )
 {
+    print_context(ctx);
     print_check("FAILED", loc, fmt, std::forward<Args>(args)...);
 }
 
@@ -130,52 +149,55 @@ void print_stacktrace(
 
 } // namespace
 
-void check_passed(const char* expr, std::source_location const& loc)
+void check_passed(
+    const char* expr, context_frame const* ctx, std::source_location const& loc
+)
 {
-    print_passed(loc, "{}", expr);
+    print_passed(ctx, loc, "{}", expr);
 }
 
 void check_failed(
-    const char* expr, std::source_location const& loc,
+    const char* expr, context_frame const* ctx, std::source_location const& loc,
     detail::stacktrace const& st, std::size_t entry_depth
 )
 {
-    print_failed(loc, "{}", expr);
+    print_failed(ctx, loc, "{}", expr);
     print_stacktrace(st, entry_depth);
 }
 
 void check_throws_failed(
-    const char* expr, std::source_location const& loc,
+    const char* expr, context_frame const* ctx, std::source_location const& loc,
     detail::stacktrace const& st, std::size_t entry_depth
 )
 {
-    print_failed(loc, "{} did not throw", expr);
+    print_failed(ctx, loc, "{} did not throw", expr);
     print_stacktrace(st, entry_depth);
 }
 
 void check_throws_as_failed(
     const char* expr, const char* exc_type, std::exception_ptr const& threw,
-    std::source_location const& loc, detail::stacktrace const& st,
-    std::size_t entry_depth
+    context_frame const* ctx, std::source_location const& loc,
+    detail::stacktrace const& st, std::size_t entry_depth
 )
 {
     try {
         std::rethrow_exception(threw);
     } catch (std::exception const& exc) {
         print_failed(
-            loc, "{} threw unexpected exception ({}: \"{}\", expected {})",
+            ctx, loc, "{} threw unexpected exception ({}: \"{}\", expected {})",
             expr, typeid(exc).name(), exc.what(), exc_type
         );
     } catch (...) {
         print_failed(
-            loc, "{} threw unexpected exception (expected {})", expr, exc_type
+            ctx, loc, "{} threw unexpected exception (expected {})", expr,
+            exc_type
         );
     }
     print_stacktrace(st, entry_depth);
 }
 
 void check_nothrow_failed(
-    const char* expr, std::exception_ptr const& threw,
+    const char* expr, std::exception_ptr const& threw, context_frame const* ctx,
     std::source_location const& loc, detail::stacktrace const& st,
     std::size_t entry_depth
 )
@@ -184,11 +206,11 @@ void check_nothrow_failed(
         std::rethrow_exception(threw);
     } catch (std::exception const& exc) {
         print_failed(
-            loc, "{} threw unexpectedly ({}: \"{}\")", expr, typeid(exc).name(),
-            exc.what()
+            ctx, loc, "{} threw unexpectedly ({}: \"{}\")", expr,
+            typeid(exc).name(), exc.what()
         );
     } catch (...) {
-        print_failed(loc, "{} threw unexpectedly", expr);
+        print_failed(ctx, loc, "{} threw unexpectedly", expr);
     }
     print_stacktrace(st, entry_depth);
 }
