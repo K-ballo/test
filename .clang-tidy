@@ -1,0 +1,52 @@
+# Eggs.Test
+#
+# Copyright Agustin K-ballo Berge, Fusion Fenix 2026
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+# Exclusions, beyond checks that just don't apply (e.g. llvm-*, fuchsia-*):
+#   bugprone-throwing-static-initialization the self-registering TEST_CASE idiom is inherently
+#   cert-err58-cpp                          static-init; the same finding under two check names
+#   cppcoreguidelines-avoid-c-arrays        the GSL span/at() bounds-safety profile isn't in use;
+#   modernize-avoid-c-arrays                 CLI code deals in argv-shaped C arrays by nature
+#   cppcoreguidelines-avoid-magic-numbers   ad hoc literals (test expectations, column widths)
+#   readability-magic-numbers                are idiomatic here, not worth naming
+#   cppcoreguidelines-macro-usage           the public API is macros (CHECK/REQUIRE/...)
+#   cppcoreguidelines-pro-bounds-*          the GSL span/at() bounds-safety profile isn't in use
+#   modernize-use-trailing-return-type      not this codebase's return-type style
+#   portability-avoid-pragma-once          `#pragma once` is this codebase's header-guard style
+#   readability-avoid-const-params-in-decls conflicts with the east-const style used consistently
+#                                            across both declarations and definitions
+#   readability-braces-around-statements   conflicts with AllowShortIfStatementsOnASingleLine
+#   readability-identifier-length           short names (e, s, fn, ...) are used deliberately
+#   readability-implicit-bool-conversion    flags idiomatic pointer truthiness (if (ptr))
+Checks: >
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-throwing-static-initialization,
+  -cert-err58-cpp,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  -portability-avoid-pragma-once,
+  -readability-avoid-const-params-in-decls,
+  -readability-braces-around-statements,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers
+
+HeaderFilterRegex: '.*'
+WarningsAsErrors: ''
