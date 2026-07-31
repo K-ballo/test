@@ -31,20 +31,22 @@ jobs:
             compiler: gcc-16
             preset: dev-gcc
 
-          # -- Linux / Clang 18 --
+          # -- Linux / Clang 18 (+ libstdc++ 13) --
           - os: ubuntu-24.04
             compiler: clang-18
             preset: dev-clang
+            gcc_toolchain: "13"
 
           # -- Linux / Clang 18 + libc++ --
           - os: ubuntu-24.04
             compiler: clang-18+libc++
             preset: dev-clang-libcxx
 
-          # -- Linux / Clang 22 --
+          # -- Linux / Clang 22 (+ libstdc++ 16) --
           - os: ubuntu-24.04
             compiler: clang-22
             preset: dev-clang
+            gcc_toolchain: "16"
 
           # -- Linux / Clang 22 + libc++ --
           - os: ubuntu-24.04
@@ -104,7 +106,7 @@ jobs:
           restore-keys: apt-${{ matrix.os }}-${{ matrix.compiler }}-
 
       - name: Install GCC 16
-        if: matrix.compiler == 'gcc-16'
+        if: matrix.compiler == 'gcc-16' || matrix.compiler == 'clang-22'
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
           sudo apt-get update -q
@@ -144,6 +146,7 @@ jobs:
       - name: Configure
         id: configure
         run: cmake --preset ${{ matrix.preset }} -B build/${{ matrix.preset }}
+               ${{ matrix.gcc_toolchain && format('-DCMAKE_CXX_FLAGS_INIT=--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/{0}', matrix.gcc_toolchain) || '' }}
 
       - name: Build library (Debug)
         id: build_lib_debug
