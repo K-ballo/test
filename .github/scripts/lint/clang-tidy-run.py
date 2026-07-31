@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+# Copyright Agustin K-ballo Berge, Fusion Fenix 2026
+#
+# Distributed under the Boost Software License, Version 1.0. (See accompanying
+# file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+
+"""Run clang-tidy over every translation unit in a compilation database and
+emit a single conforming SARIF 2.1.0 log of its warnings.
+"""
+
+import concurrent.futures
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+
+DIAGNOSTIC_RE = re.compile(
+    r"^(?P<file>[^:\n]+):(?P<line>\d+):(?P<column>\d+): warning: "
+    r"(?P<message>.*) \[(?P<check>[\w,.\-]+)\]$"
+)
+
+
+def unique_files(build_dir: pathlib.Path) -> list[str]:
+    compile_commands = json.loads(
+        (build_dir / "compile_commands.json").read_text(encoding="utf-8")
+    )
+    seen = set()
+    files = []
+    for entry in compile_commands:
+        if entry["file"] in seen:
+            continue
+        seen.add(entry["file"])
+        files.append(entry["file"])
+    return files
+
+
+def run_clang_tidy(build_dir: pathlib.Path, file: str) -> list[dict]:
+    proc = subprocess.run(
+        ["clang-tidy", "-p", str(build_dir), "--quiet", file],
+        capture_output=True,
+        text=True,
+    )
+
+    source_dir = os.environ.get("EGGS_TEST_SOURCE_DIR")
+    results = []
+    for line in proc.stdout.splitlines():
+        match = DIAGNOSTIC_RE.match(line)
+        if not match:
+            continue
+
+        path = match["file"]
+        if source_dir:
+            try:
+                path = os.path.relpath(path, source_dir)
+            except ValueError:
+                pass
+
+        results.append(
+            {
+                "ruleId": match["check"],
+                "level": "warning",
+                "message": {"text": match["message"]},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": path.replace(os.sep, "/")},
+                            "region": {
+                                "startLine": int(match["line"]),
+                                "startColumn": int(match["column"]),
+                            },
+                        },
+                    }
+                ],
+            }
+        )
+    return results
+
+
+def main() -> int:
+    if len(sys.argv) != 3:
+        sys.exit(f"usage: {sys.argv[0]} <build-dir> <output-sarif>")
+
+    build_dir = pathlib.Path(sys.argv[1])
+    output = pathlib.Path(sys.argv[2])
+
+    files = unique_files(build_dir)
+
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+        futures = [pool.submit(run_clang_tidy, build_dir, file) for file in files]
+        for future in futures:
+            results.extend(future.result())
+
+    rules = [
+        {"id": rule_id, "name": rule_id}
+        for rule_id in sorted({r["ruleId"] for r in results})
+    ]
+
+    sarif = {
+        "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "clang-tidy",
+                        "informationUri": "https://clang.llvm.org/extra/clang-tidy/",
+                        "rules": rules,
+                    }
+                },
+                "results": results,
+            }
+        ],
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(sarif, indent=2), encoding="utf-8")
+
+    counts: dict[str, int] = {}
+    for result in results:
+        counts[result["ruleId"]] = counts.get(result["ruleId"], 0) + 1
+    for rule_id, count in sorted(counts.items(), key=lambda kv: -kv[1]):
+        print(f"{count:4d}  {rule_id}")
+    print(
+        f"{len(results)} warning(s) across {len(files)} translation unit(s) -> {output}"
+    )
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
