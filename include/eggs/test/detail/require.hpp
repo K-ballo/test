@@ -14,7 +14,7 @@ struct unwind final
 {};
 
 template <typename T>
-inline T require(T value)
+inline T require(T const& value)
 {
     return static_cast<bool>(value) ? value : throw unwind{};
 }

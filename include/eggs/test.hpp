@@ -171,7 +171,7 @@ struct run_options
 };
 
 // Public entry point - call this from main().
-int run(run_options opts = {});
+int run(run_options const& opts = {});
 
 // Full default main: parse_cli + --help handling + run.
 // Link Eggs::TestMain to get this wired up automatically, or

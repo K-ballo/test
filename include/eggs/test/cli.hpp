@@ -28,7 +28,7 @@ void print_option(
 // Print the built-in options table to stdout, aligning descriptions at desc_col.
 // If ns is non-empty, flags are shown in --<ns>:<flag> form.
 void print_options(
-    std::FILE* out, std::string_view ns = {}, std::size_t desc_col = 29u
+    std::FILE* out, std::string_view ns = {}, std::size_t desc_col = 29U
 );
 
 // Parse known test-runner flags from argv, removing them in-place.

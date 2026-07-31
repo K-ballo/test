@@ -21,6 +21,10 @@
 #include <typeinfo>
 #include <utility>
 
+#ifdef __cpp_lib_stacktrace
+#    include <stacktrace>
+#endif
+
 namespace eggs::test::detail {
 
 namespace {
@@ -85,9 +89,7 @@ bool from_library(
     auto const normalized =
         std::filesystem::path(e.source_file()).lexically_normal();
 
-    auto const [lib_end, file_end] = std::mismatch(
-        lib.begin(), lib.end(), normalized.begin(), normalized.end()
-    );
+    auto const [lib_end, file_end] = std::ranges::mismatch(lib, normalized);
     return lib_end == lib.end() && file_end != normalized.end() &&
            (*file_end == "src" || *file_end == "include");
 }
@@ -106,7 +108,7 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
     // start from the next frame.
-    for (detail::stacktrace::size_type i = 1; i < limit; ++i) {
+    for (std::size_t i = 1; i < limit; ++i) {
         auto const& e = st[i];
         if (from_library(e, lib)) continue;
 

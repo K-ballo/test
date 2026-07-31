@@ -7,12 +7,12 @@
 
 #include <eggs/test.hpp>
 
-#if defined(TEST_CASE_NO_BODY_COMPILE_FAIL)
+#ifdef TEST_CASE_NO_BODY_COMPILE_FAIL
 
 // TEST_CASE must be followed by a function body.
 TEST_CASE(no_body, "test case with no body")
 
-#elif defined(TEST_CASE_NO_DESC_COMPILE_FAIL)
+#elifdef TEST_CASE_NO_DESC_COMPILE_FAIL
 
 #    if defined(_MSC_VER) && !defined(__clang__)
 #        if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
@@ -27,7 +27,7 @@ TEST_CASE(no_desc)
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_INVALID_NAME_COMPILE_FAIL)
+#elifdef TEST_CASE_INVALID_NAME_COMPILE_FAIL
 
 // TEST_CASE name must be an identifier.
 TEST_CASE(invalid name, "test case with an invalid name")
@@ -35,7 +35,7 @@ TEST_CASE(invalid name, "test case with an invalid name")
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_INVALID_DESC_COMPILE_FAIL)
+#elifdef TEST_CASE_INVALID_DESC_COMPILE_FAIL
 
 // TEST_CASE description must be a string literal.
 char const* const desc = "test case with an invalid description";

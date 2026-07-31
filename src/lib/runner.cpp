@@ -8,6 +8,8 @@
 #include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
+#include <eggs/test/detail/require.hpp>
+#include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
 #include <cstddef>
@@ -81,7 +83,9 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
         try {
             e.run();
             passed = !state.assertions_failed;
-        } catch (detail::unwind const&) {
+        } catch (detail::unwind const&) { // NOLINT(bugprone-empty-catch)
+            // Deliberately swallows the unwind used to abort a failing
+            // REQUIRE; execution continues with the next test case.
         } catch (std::exception const& ex) {
             detail::println(stdout, "  EXCEPTION: {}", ex.what());
         } catch (...) {
@@ -129,7 +133,7 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
 
 } // namespace detail
 
-int run(run_options opts)
+int run(run_options const& opts)
 {
     auto const& all_cases = detail::registry::cases();
 

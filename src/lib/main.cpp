@@ -16,8 +16,9 @@
 #include <filesystem>
 #include <optional>
 #include <string_view>
+#include <system_error>
 
-#if defined(_WIN32)
+#ifdef _WIN32
 #    define WIN32_LEAN_AND_MEAN
 #    include <crtdbg.h>
 #    include <windows.h>
@@ -28,7 +29,7 @@ namespace {
 
 void suppress_debug_dialogs() noexcept
 {
-#if defined(_WIN32)
+#ifdef _WIN32
     SetErrorMode(
         SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX
     );
@@ -44,7 +45,7 @@ void suppress_debug_dialogs() noexcept
 
 void print_help(std::FILE* out, std::string_view const usage)
 {
-    static constexpr std::size_t k_desc_col = 29u;
+    static constexpr std::size_t k_desc_col = 29U;
 
     detail::println(
         out, "Usage: {} [options]\n\nOptions:",

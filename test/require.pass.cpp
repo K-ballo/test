@@ -18,8 +18,8 @@ TEST_CASE(require_bool_true, "REQUIRE passes and does not stop execution")
 
 TEST_CASE(require_pointer, "REQUIRE passes with non-null pointer")
 {
-    int x = 0;
-    int* p = &x;
+    int const x = 0;
+    int const* p = &x;
     REQUIRE(p != nullptr);
     CHECK(*p == x);
 }

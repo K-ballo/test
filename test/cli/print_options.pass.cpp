@@ -8,8 +8,6 @@
 #include <eggs/test.hpp>
 #include <eggs/test/cli.hpp>
 
-#include <cstdio>
-
 TEST_CASE(
     print_options_bare, "print_options without namespace lists bare flags"
 )
