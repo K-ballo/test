@@ -24,6 +24,6 @@ struct run_options
 };
 
 // Public entry point - call this from main().
-int run(run_options opts = {});
+int run(run_options const& opts = {});
 
 } // namespace eggs::test

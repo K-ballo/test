@@ -18,8 +18,8 @@ TEST_CASE(check_bool_true, "CHECK passes when expression is true")
 
 TEST_CASE(check_pointer_nonnull, "CHECK works with pointer comparisons")
 {
-    int x = 42;
-    int* p = &x;
+    int const x = 42;
+    int const* p = &x;
     CHECK(p != nullptr);
     CHECK(*p == 42);
 }

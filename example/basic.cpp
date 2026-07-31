@@ -21,7 +21,7 @@ TEST_CASE(arithmetic, "basic arithmetic checks")
 TEST_CASE(string_view, "string comparison checks")
 {
     using namespace std::string_view_literals;
-    std::string_view greeting = "hello";
+    std::string_view const greeting = "hello";
     CHECK(greeting == "hello"sv);
     CHECK(greeting.size() == 5);
     REQUIRE(!greeting.empty());

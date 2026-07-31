@@ -23,7 +23,7 @@
 #include <system_error>
 #include <vector>
 
-#if defined(_WIN32)
+#ifdef _WIN32
 #    define WIN32_LEAN_AND_MEAN
 #    include <crtdbg.h>
 #    include <windows.h>
@@ -76,7 +76,7 @@ main_result parse_main_cli(std::span<char const* const> args)
 
 void print_help(std::FILE* out, std::string_view const usage)
 {
-    static constexpr std::size_t k_desc_col = 29u;
+    static constexpr std::size_t k_desc_col = 29U;
 
     detail::println(
         out, "Usage: {} [options]\n\nOptions:",
@@ -90,7 +90,7 @@ void print_help(std::FILE* out, std::string_view const usage)
 
 void suppress_debug_dialogs() noexcept
 {
-#if defined(_WIN32)
+#ifdef _WIN32
     SetErrorMode(
         SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX | SEM_NOOPENFILEERRORBOX
     );

@@ -33,7 +33,7 @@ void print_option(
     // FIXME(C++26): !desc.empty()
     assert(desc.size() != 0);
 
-    auto it = desc.begin();
+    auto const* it = desc.begin();
 
     // First line: print display alongside description if it fits, else wrap.
     if (2 + disp.size() <= desc_col && it != desc.end()) {

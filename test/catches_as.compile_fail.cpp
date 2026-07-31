@@ -6,10 +6,11 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
+#include <eggs/test/detail/require.hpp>
 
 #include <stdexcept>
 
-#if defined(CHECK_CATCHES_AS_NOEXCEPT_COMPILE_FAIL)
+#ifdef CHECK_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
 TEST_CASE(
     check_catches_as_noexcept_compile_fail,
     "CHECK_CATCHES_AS rejects noexcept expressions"
@@ -17,7 +18,7 @@ TEST_CASE(
 {
     CHECK_CATCHES_AS(std::runtime_error, 1 + 1) {}
 }
-#elif defined(REQUIRE_CATCHES_AS_NOEXCEPT_COMPILE_FAIL)
+#elifdef REQUIRE_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
 TEST_CASE(
     require_catches_as_noexcept_compile_fail,
     "REQUIRE_CATCHES_AS rejects noexcept expressions"
@@ -25,7 +26,7 @@ TEST_CASE(
 {
     REQUIRE_CATCHES_AS(std::runtime_error, 1 + 1) {}
 }
-#elif defined(CHECK_CATCHES_AS_UNWIND)
+#elifdef CHECK_CATCHES_AS_UNWIND
 TEST_CASE(
     check_catches_as_unwind, "CHECK_CATCHES_AS(unwind, ...) fails to compile"
 )
@@ -35,7 +36,7 @@ TEST_CASE(
         CHECK(false);
     }
 }
-#elif defined(REQUIRE_CATCHES_AS_UNWIND)
+#elifdef REQUIRE_CATCHES_AS_UNWIND
 TEST_CASE(
     require_catches_as_unwind,
     "REQUIRE_CATCHES_AS(unwind, ...) fails to compile"

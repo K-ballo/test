@@ -74,7 +74,9 @@ int run(std::vector<test_entry> const& run, bool verbose)
         try {
             e.run(state);
             passed = !state.assertions_failed;
-        } catch (detail::unwind const&) {
+        } catch (detail::unwind const&) { // NOLINT(bugprone-empty-catch)
+            // Deliberately swallows the unwind used to abort a failing
+            // REQUIRE; execution continues with the next test case.
         } catch (std::exception const& ex) {
             detail::println(stdout, "  EXCEPTION: {}", ex.what());
         } catch (...) {
@@ -125,7 +127,7 @@ int run(std::vector<test_entry> const& run, bool verbose)
 } // namespace
 } // namespace detail
 
-int run(run_options opts)
+int run(run_options const& opts)
 {
     auto const& all_cases = detail::registry::cases();
 
