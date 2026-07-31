@@ -20,6 +20,10 @@
 #include <typeinfo>
 #include <utility>
 
+#ifdef __cpp_lib_stacktrace
+#    include <stacktrace>
+#endif
+
 namespace eggs::test::detail {
 
 namespace {
@@ -90,7 +94,7 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
     // start from the next frame.
-    for (detail::stacktrace::size_type i = 1; i < limit; ++i) {
+    for (std::size_t i = 1; i < limit; ++i) {
         auto const& e = st[i];
 
         auto const source_file = e.source_file();

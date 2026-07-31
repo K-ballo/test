@@ -7,7 +7,7 @@
 
 #include <eggs/test.hpp>
 
-#if defined(CHECK_THROWS_NOEXCEPT_COMPILE_FAIL)
+#ifdef CHECK_THROWS_NOEXCEPT_COMPILE_FAIL
 TEST_CASE(
     check_throws_noexcept_compile_fail,
     "CHECK_THROWS rejects noexcept expressions"
@@ -15,7 +15,7 @@ TEST_CASE(
 {
     CHECK_THROWS(1 + 1);
 }
-#elif defined(REQUIRE_THROWS_NOEXCEPT_COMPILE_FAIL)
+#elifdef REQUIRE_THROWS_NOEXCEPT_COMPILE_FAIL
 TEST_CASE(
     require_throws_noexcept_compile_fail,
     "REQUIRE_THROWS rejects noexcept expressions"

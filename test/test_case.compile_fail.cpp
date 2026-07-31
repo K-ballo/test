@@ -7,12 +7,12 @@
 
 #include <eggs/test.hpp>
 
-#if defined(TEST_CASE_NO_BODY_COMPILE_FAIL)
+#ifdef TEST_CASE_NO_BODY_COMPILE_FAIL
 
 // TEST_CASE must be followed by a function body.
 TEST_CASE(no_body, "test case with no body")
 
-#elif defined(TEST_CASE_NO_DESC_COMPILE_FAIL)
+#elifdef TEST_CASE_NO_DESC_COMPILE_FAIL
 
 #    if defined(_MSC_VER) && !defined(__clang__)
 #        if defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL
@@ -27,7 +27,7 @@ TEST_CASE(no_desc)
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_NO_DESC_WITH_PARAMS_COMPILE_FAIL)
+#elifdef TEST_CASE_NO_DESC_WITH_PARAMS_COMPILE_FAIL
 
 // TEST_CASE rejects a parameter in place of a description.
 TEST_CASE(no_desc_with_params, int const& a)
@@ -35,7 +35,7 @@ TEST_CASE(no_desc_with_params, int const& a)
     CHECK(a + 1 == 1 + a);
 }
 
-#elif defined(TEST_CASE_INVALID_NAME_COMPILE_FAIL)
+#elifdef TEST_CASE_INVALID_NAME_COMPILE_FAIL
 
 // TEST_CASE name must be an identifier.
 TEST_CASE(invalid name, "test case with an invalid name")
@@ -43,7 +43,7 @@ TEST_CASE(invalid name, "test case with an invalid name")
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_QUALIFIED_NAME_COMPILE_FAIL)
+#elifdef TEST_CASE_QUALIFIED_NAME_COMPILE_FAIL
 
 namespace test_case_qualified_name_compile_fail {
 struct qualified_name;
@@ -58,7 +58,7 @@ TEST_CASE(
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_STRING_NAME_COMPILE_FAIL)
+#elifdef TEST_CASE_STRING_NAME_COMPILE_FAIL
 
 // TEST_CASE requires an identifier as a name, not a string literal.
 TEST_CASE("string_name", "test case rejects a string literal as name")
@@ -66,7 +66,7 @@ TEST_CASE("string_name", "test case rejects a string literal as name")
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_LEADING_DIGIT_NAME_COMPILE_FAIL)
+#elifdef TEST_CASE_LEADING_DIGIT_NAME_COMPILE_FAIL
 
 // TEST_CASE names must start with a letter.
 TEST_CASE(1abc, "test case rejects a name starting with a digit")
@@ -74,7 +74,7 @@ TEST_CASE(1abc, "test case rejects a name starting with a digit")
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_INVALID_DESC_COMPILE_FAIL)
+#elifdef TEST_CASE_INVALID_DESC_COMPILE_FAIL
 
 // TEST_CASE description must be a string literal.
 char const* const desc = "test case with an invalid description";

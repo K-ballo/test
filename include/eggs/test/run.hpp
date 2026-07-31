@@ -30,6 +30,6 @@ struct run_options
 EGGS_TEST_WARNING_NO_PADDED_POP
 
 // Public entry point - call this from main().
-int run(run_options opts = {});
+int run(run_options const& opts = {});
 
 } // namespace eggs::test
