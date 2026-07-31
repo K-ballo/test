@@ -8,13 +8,18 @@
 #pragma once
 
 #include <eggs/test/detail/checks.hpp>
+#include <eggs/test/detail/context.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/require.hpp>
 
 #include <exception>
+#include <format>
 #include <source_location>
 #include <string_view>
 #include <vector>
+
+#define EGGS_TEST_PP_CAT_(a, b) a##b
+#define EGGS_TEST_PP_CAT(a, b) EGGS_TEST_PP_CAT_(a, b)
 
 // TEST_CASE(name, "description")
 //
@@ -41,6 +46,24 @@
              true);                                        \
     };                                                     \
     void name_::run()
+
+// CONTEXT(fmt, args...)
+//
+// Records a scoped diagnostic message, shown alongside every CHECK/REQUIRE
+// diagnostic produced while still in scope. Nested CONTEXT calls all remain
+// active until their scope ends.
+//
+// fmt is a std::format format string and args its arguments (possibly none):
+//
+//   void push_item(int id) {
+//       CONTEXT("processing item {}", id);
+//       CHECK(id > 0);
+//   }
+#define CONTEXT(...)                                                  \
+    ::eggs::test::detail::context_frame const                         \
+    EGGS_TEST_PP_CAT(eggs_test_context_frame_, __LINE__)(             \
+        ::std::format(__VA_ARGS__), ::std::source_location::current() \
+    )
 
 // CHECK(expr)
 //
