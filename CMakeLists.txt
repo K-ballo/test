@@ -66,6 +66,7 @@ target_sources(
                 include/eggs/test/detail/require.hpp
                 include/eggs/test/detail/run_state.hpp
                 include/eggs/test/detail/stacktrace.hpp
+                include/eggs/test/detail/warning.hpp
     PRIVATE
         FILE_SET private_headers
             TYPE HEADERS
