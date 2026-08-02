@@ -82,6 +82,7 @@ set_target_properties(
         EXPORT_NAME Test
         DEBUG_POSTFIX d
         VERIFY_INTERFACE_HEADER_SETS ${BUILD_TESTING}
+        VERIFY_PRIVATE_HEADER_SETS ${BUILD_TESTING}
 )
 if(MSVC)
     set_target_properties(

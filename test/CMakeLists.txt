@@ -5,13 +5,13 @@
 # Distributed under the Boost Software License, Version 1.0. (See accompanying
 # file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-# -- Verify interface header sets --------------------------------------------
+# -- Verify header sets -------------------------------------------------------
 
 add_test(
     NAME eggs.test.verify_headers
     COMMAND
         ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target
-        all_verify_interface_header_sets --config $<CONFIG>
+        all_verify_header_sets --config $<CONFIG>
 )
 set_tests_properties(
     eggs.test.verify_headers
