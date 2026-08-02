@@ -153,9 +153,45 @@ void check_failed(const char* expr, diagnostic_info const& info)
     print_check(label_failed, info, "{}", expr);
 }
 
+void check_throws_passed(
+    const char* expr, std::exception_ptr const& threw,
+    diagnostic_info const& info
+)
+{
+    try {
+        std::rethrow_exception(threw);
+    } catch (std::exception const& exc) {
+        print_check(
+            label_passed, info, "{} threw ({}: \"{}\")", expr,
+            typeid(exc).name(), exc.what()
+        );
+    } catch (...) {
+        print_check(label_passed, info, "{} threw", expr);
+    }
+}
+
 void check_throws_failed(const char* expr, diagnostic_info const& info)
 {
     print_check(label_failed, info, "{} did not throw", expr);
+}
+
+void check_throws_as_passed(
+    const char* expr, const char* exc_type, std::exception_ptr const& threw,
+    diagnostic_info const& info
+)
+{
+    try {
+        std::rethrow_exception(threw);
+    } catch (std::exception const& exc) {
+        print_check(
+            label_passed, info, "{} threw {} as expected (\"{}\")", expr,
+            exc_type, exc.what()
+        );
+    } catch (...) {
+        print_check(
+            label_passed, info, "{} threw {} as expected", expr, exc_type
+        );
+    }
 }
 
 void check_throws_as_failed(
@@ -177,6 +213,11 @@ void check_throws_as_failed(
             expr, exc_type
         );
     }
+}
+
+void check_nothrow_passed(const char* expr, diagnostic_info const& info)
+{
+    print_check(label_passed, info, "{} did not throw", expr);
 }
 
 void check_nothrow_failed(

@@ -937,7 +937,34 @@ add_lib_test(
     SOURCES throws.pass.cpp
     RUN check_throws_int
     ARGS "--verbose"
-    PASS_REGEX "PASSED: throw 42\n"
+    PASS_REGEX "PASSED: throw 42 threw\n"
+)
+# CHECK_THROWS when a std::exception is thrown: type and message appear.
+add_lib_test(
+    throws.verbose_std_exception.check.pass
+    SOURCES throws.pass.cpp
+    RUN check_throws_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw \\(.*runtime_error: \"oops\"\\)"
+)
+# REQUIRE_THROWS: the stringified expression must appear in the output, when
+# --verbose is given.
+add_lib_test(
+    throws.verbose.require.pass
+    SOURCES throws.pass.cpp
+    RUN require_throws_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42 threw\n"
+)
+# REQUIRE_THROWS when a std::exception is thrown: type and message appear.
+add_lib_test(
+    throws.verbose_std_exception.require.pass
+    SOURCES throws.pass.cpp
+    RUN require_throws_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw \\(.*runtime_error: \"oops\"\\)"
 )
 # CHECK_THROWS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -996,7 +1023,34 @@ add_lib_test(
     SOURCES throws_as.pass.cpp
     RUN check_throws_as_int
     ARGS "--verbose"
-    PASS_REGEX "PASSED: throw 42\n"
+    PASS_REGEX "PASSED: throw 42 threw int as expected\n"
+)
+# CHECK_THROWS_AS when a std::exception is thrown: message appears.
+add_lib_test(
+    throws_as.verbose_std_exception.check.pass
+    SOURCES throws_as.pass.cpp
+    RUN check_throws_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw std::runtime_error as expected \\(\"oops\"\\)"
+)
+# REQUIRE_THROWS_AS: the stringified expression must appear in the output,
+# when --verbose is given.
+add_lib_test(
+    throws_as.verbose.require.pass
+    SOURCES throws_as.pass.cpp
+    RUN require_throws_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42 threw int as expected\n"
+)
+# REQUIRE_THROWS_AS when a std::exception is thrown: message appears.
+add_lib_test(
+    throws_as.verbose_std_exception.require.pass
+    SOURCES throws_as.pass.cpp
+    RUN require_throws_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw std::runtime_error as expected \\(\"oops\"\\)"
 )
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -1116,7 +1170,40 @@ add_lib_test(
     SOURCES catches_as.pass.cpp
     RUN check_catches_as_int
     ARGS "--verbose"
-    PASS_REGEX "PASSED: throw 42\n"
+    PASS_REGEX "PASSED: throw 42 threw int as expected\n"
+)
+# CHECK_CATCHES_AS when a std::exception is thrown: the underlying
+# CHECK_THROWS_AS message (with exc.what()) appears, followed by the checks
+# in the catch body.
+add_lib_test(
+    catches_as.verbose_std_exception.check.pass
+    SOURCES catches_as.pass.cpp
+    RUN check_catches_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw std::runtime_error as expected \\(\"oops\"\\)"
+        "PASSED: std::string_view\\(exc\\.what\\(\\)\\) == \"oops\""
+)
+# REQUIRE_CATCHES_AS: the stringified expression must appear in the output,
+# when --verbose is given.
+add_lib_test(
+    catches_as.verbose.require.pass
+    SOURCES catches_as.pass.cpp
+    RUN require_catches_as_int
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: throw 42 threw int as expected\n"
+)
+# REQUIRE_CATCHES_AS when a std::exception is thrown: the underlying
+# REQUIRE_THROWS_AS message (with exc.what()) appears, followed by the checks
+# in the catch body.
+add_lib_test(
+    catches_as.verbose_std_exception.require.pass
+    SOURCES catches_as.pass.cpp
+    RUN require_catches_as_std_exception
+    ARGS "--verbose"
+    PASS_REGEX
+        "PASSED: throw std::runtime_error\\{\"oops\"\\} threw std::runtime_error as expected \\(\"oops\"\\)"
+        "PASSED: std::string_view\\(exc\\.what\\(\\)\\) == \"oops\""
 )
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
 add_lib_test(
@@ -1229,7 +1316,15 @@ add_lib_test(
     SOURCES nothrow.pass.cpp
     RUN check_nothrow_pass
     ARGS "--verbose"
-    PASS_REGEX "PASSED: 1 \\+ 1"
+    PASS_REGEX "PASSED: 1 \\+ 1 did not throw"
+)
+# REQUIRE_NOTHROW: the stringified expression must appear in the output, when --verbose is given.
+add_lib_test(
+    nothrow.require.pass
+    SOURCES nothrow.pass.cpp
+    RUN require_nothrow_pass
+    ARGS "--verbose"
+    PASS_REGEX "PASSED: 1 \\+ 1 did not throw"
 )
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.
 add_lib_test(
