@@ -26,6 +26,9 @@ namespace eggs::test::detail {
 
 namespace {
 
+char const* const label_passed = "PASSED";
+char const* const label_failed = "FAILED";
+
 // Prints a single "CONTEXT:" header followed by one
 // "<message>  [<file>:<line>]" line per active context call.
 // Prints nothing if there are no active frames.
@@ -44,7 +47,7 @@ void print_context(context_frame const* frame)
 
 // Prints "<label>: <message>", "<function>  [<file>:<line>]".
 template <typename... Args>
-void print_check(
+void print_outcome(
     const char* label, std::source_location const& loc,
     std::format_string<Args...> fmt, Args&&... args
 )
@@ -55,26 +58,6 @@ void print_check(
         stdout, "    #0 {}  [{}:{}]", loc.function_name(), loc.file_name(),
         loc.line()
     );
-}
-
-template <typename... Args>
-void print_passed(
-    context_frame const* ctx, std::source_location const& loc,
-    std::format_string<Args...> fmt, Args&&... args
-)
-{
-    print_context(ctx);
-    print_check("PASSED", loc, fmt, std::forward<Args>(args)...);
-}
-
-template <typename... Args>
-void print_failed(
-    context_frame const* ctx, std::source_location const& loc,
-    std::format_string<Args...> fmt, Args&&... args
-)
-{
-    print_context(ctx);
-    print_check("FAILED", loc, fmt, std::forward<Args>(args)...);
 }
 
 #ifdef __cpp_lib_stacktrace
@@ -147,72 +130,70 @@ void print_stacktrace(
 }
 #endif
 
+template <typename... Args>
+void print_check(
+    const char* label, diagnostic_info const& info,
+    std::format_string<Args...> fmt, Args&&... args
+)
+{
+    print_context(info.ctx);
+    print_outcome(label, info.loc, fmt, std::forward<Args>(args)...);
+    print_stacktrace(info.st, info.entry_depth);
+}
+
 } // namespace
 
-void check_passed(
-    const char* expr, context_frame const* ctx, std::source_location const& loc
-)
+void check_passed(const char* expr, diagnostic_info const& info)
 {
-    print_passed(ctx, loc, "{}", expr);
+    print_check(label_passed, info, "{}", expr);
 }
 
-void check_failed(
-    const char* expr, context_frame const* ctx, std::source_location const& loc,
-    detail::stacktrace const& st, std::size_t entry_depth
-)
+void check_failed(const char* expr, diagnostic_info const& info)
 {
-    print_failed(ctx, loc, "{}", expr);
-    print_stacktrace(st, entry_depth);
+    print_check(label_failed, info, "{}", expr);
 }
 
-void check_throws_failed(
-    const char* expr, context_frame const* ctx, std::source_location const& loc,
-    detail::stacktrace const& st, std::size_t entry_depth
-)
+void check_throws_failed(const char* expr, diagnostic_info const& info)
 {
-    print_failed(ctx, loc, "{} did not throw", expr);
-    print_stacktrace(st, entry_depth);
+    print_check(label_failed, info, "{} did not throw", expr);
 }
 
 void check_throws_as_failed(
     const char* expr, const char* exc_type, std::exception_ptr const& threw,
-    context_frame const* ctx, std::source_location const& loc,
-    detail::stacktrace const& st, std::size_t entry_depth
+    diagnostic_info const& info
 )
 {
     try {
         std::rethrow_exception(threw);
     } catch (std::exception const& exc) {
-        print_failed(
-            ctx, loc, "{} threw unexpected exception ({}: \"{}\", expected {})",
-            expr, typeid(exc).name(), exc.what(), exc_type
+        print_check(
+            label_failed, info,
+            "{} threw unexpected exception ({}: \"{}\", expected {})", expr,
+            typeid(exc).name(), exc.what(), exc_type
         );
     } catch (...) {
-        print_failed(
-            ctx, loc, "{} threw unexpected exception (expected {})", expr,
-            exc_type
+        print_check(
+            label_failed, info, "{} threw unexpected exception (expected {})",
+            expr, exc_type
         );
     }
-    print_stacktrace(st, entry_depth);
 }
 
 void check_nothrow_failed(
-    const char* expr, std::exception_ptr const& threw, context_frame const* ctx,
-    std::source_location const& loc, detail::stacktrace const& st,
-    std::size_t entry_depth
+    const char* expr, std::exception_ptr const& threw,
+    diagnostic_info const& info
 )
 {
     try {
         std::rethrow_exception(threw);
     } catch (std::exception const& exc) {
-        print_failed(
-            ctx, loc, "{} threw unexpectedly ({}: \"{}\")", expr,
+        print_check(
+            label_failed, info, "{} threw unexpectedly ({}: \"{}\")", expr,
             typeid(exc).name(), exc.what()
         );
     } catch (...) {
-        print_failed(ctx, loc, "{} threw unexpectedly", expr);
+        print_check(label_failed, info, "{} threw unexpectedly", expr);
     }
-    print_stacktrace(st, entry_depth);
 }
 
 } // namespace eggs::test::detail
