@@ -12,6 +12,7 @@
 #include <span>
 #include <string_view>
 #include <vector>
+#include <version>
 
 template <typename T, std::size_t N>
 constexpr int countof(T (&)[N]) noexcept

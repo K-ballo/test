@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstddef>
+#include <functional>
 #include <source_location>
 #include <string_view>
 #include <unordered_set>

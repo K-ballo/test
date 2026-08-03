@@ -7,6 +7,8 @@
 
 #include <eggs/test.hpp>
 
+#include <cstddef>
+#include <exception>
 #include <stdexcept>
 #include <string>
 #include <string_view>

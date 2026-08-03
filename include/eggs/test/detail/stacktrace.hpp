@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <cstddef>
 #include <version>
 
 #ifdef __cpp_lib_stacktrace
@@ -18,12 +17,13 @@ namespace eggs::test::detail {
 
 #ifdef __cpp_lib_stacktrace
 using stacktrace = std::stacktrace;
+using stacktrace_entry = std::stacktrace_entry;
 #else
 struct stacktrace
 {
-    static stacktrace current(std::size_t = 0, std::size_t = 0) { return {}; }
+    static stacktrace current(unsigned = 0, unsigned = 0) { return {}; }
 
-    std::size_t size() const noexcept { return 0; }
+    unsigned size() const noexcept { return 0; }
 };
 #endif
 

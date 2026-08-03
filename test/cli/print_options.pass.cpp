@@ -8,7 +8,7 @@
 #include <eggs/test.hpp>
 #include <eggs/test/cli.hpp>
 
-#include <cstdio>
+#include <cstdio> // IWYU pragma: keep (stdout)
 
 TEST_CASE(
     print_options_bare, "print_options without namespace lists bare flags"

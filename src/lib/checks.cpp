@@ -70,7 +70,7 @@ std::filesystem::path library_root()
     );
 
     // frame[0] is always this function's own frame (checks.cpp).
-    auto const& self = std::stacktrace::current();
+    auto const& self = detail::stacktrace::current();
     if (self.empty() || self[0].source_file().empty()) return {};
 
     return std::filesystem::path(self[0].source_file())
@@ -81,7 +81,7 @@ std::filesystem::path library_root()
 }
 
 bool from_library(
-    std::stacktrace_entry const& e, std::filesystem::path const& lib
+    detail::stacktrace_entry const& e, std::filesystem::path const& lib
 )
 {
     auto const normalized =

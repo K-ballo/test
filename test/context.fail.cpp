@@ -6,7 +6,6 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
-#include <eggs/test/detail/noinline.hpp>
 
 #include <stdexcept>
 

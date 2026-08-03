@@ -7,15 +7,15 @@
 
 #pragma once
 
-#include <eggs/test/detail/checks.hpp>
-#include <eggs/test/detail/context.hpp>
-#include <eggs/test/detail/registry.hpp>
-#include <eggs/test/detail/require.hpp>
-#include <eggs/test/detail/warning.hpp>
+#include <eggs/test/detail/checks.hpp>   // IWYU pragma: export
+#include <eggs/test/detail/context.hpp>  // IWYU pragma: export
+#include <eggs/test/detail/registry.hpp> // IWYU pragma: export
+#include <eggs/test/detail/require.hpp>  // IWYU pragma: export
+#include <eggs/test/detail/warning.hpp>  // IWYU pragma: export
 
-#include <exception>
-#include <format>
-#include <source_location>
+#include <exception>       // IWYU pragma: keep
+#include <format>          // IWYU pragma: keep
+#include <source_location> // IWYU pragma: keep
 #include <string_view>
 #include <vector>
 
