@@ -59,8 +59,10 @@ target_sources(
             FILES
                 include/eggs/test.hpp
                 include/eggs/test/cli.hpp
+                include/eggs/test/detail/cartesian_product.hpp
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/context.hpp
+                include/eggs/test/detail/move_only_function.hpp
                 include/eggs/test/detail/noinline.hpp
                 include/eggs/test/detail/registry.hpp
                 include/eggs/test/detail/require.hpp

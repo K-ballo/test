@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test/detail/move_only_function.hpp>
 #include <eggs/test/detail/run_state.hpp>
 
 #include <cassert>
@@ -25,7 +26,7 @@ struct test_entry
 {
     std::string name;
     std::string_view desc;
-    std::move_only_function<void(run_state&) const> run;
+    detail::move_only_function<void(run_state&) const> run;
     std::source_location loc;
 };
 

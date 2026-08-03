@@ -79,6 +79,8 @@ int registry::run(std::vector<test_entry const*> const& run, bool verbose)
         run_state::set_current(&state);
         bool passed = false;
         try {
+            assert(e->run);
+
             e->run(state);
             passed = !state.assertions_failed;
         } catch (detail::unwind const&) {
