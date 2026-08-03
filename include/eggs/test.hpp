@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <eggs/test/detail/cartesian_product.hpp>
 #include <eggs/test/detail/checks.hpp>
 #include <eggs/test/detail/context.hpp>
 #include <eggs/test/detail/registry.hpp>
@@ -14,10 +15,13 @@
 #include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/warning.hpp>
 
+#include <cstddef>
 #include <exception>
 #include <format>
 #include <source_location>
+#include <string>
 #include <string_view>
+#include <tuple>
 #include <vector>
 
 #define EGGS_TEST_PP_CAT_(a, b) a##b
@@ -38,7 +42,8 @@ inline constexpr bool is_parameterized = !requires { T::run(); };
 // Without required parameters the test auto-registers as a single case:
 //   TEST_CASE(my_test, "adds two integers") { CHECK(1 + 1 == 2); }
 //
-// With required parameters no auto-registration happens; use REGISTER_P:
+// With required parameters no auto-registration happens; use REGISTER_P /
+// REGISTER_R:
 //   TEST_CASE(add, "adds two integers", int const& a, int const& b) {
 //       CHECK(a + b == b + a);
 //   }
@@ -97,6 +102,48 @@ inline constexpr bool is_parameterized = !requires { T::run(); };
                 ::std::source_location::current(),                      \
             });                                                         \
         }() EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_POP
+
+// REGISTER_R(name, "instance", range1 [, range2, ...])
+//
+// Registers one instance per element of the Cartesian product of all ranges,
+// naming them "name/instance/_0", "name/instance/_1", etc.  For a single range
+// the element is passed directly; for multiple ranges each tuple is unpacked
+// via std::apply.  Ranges may be braced-init-lists ({1, 4, 9}), std::array,
+// std::vector, or any other range; different ranges may have different types.
+//
+// `name` must be a parameterized TEST_CASE.
+//
+//   REGISTER_R(square, "small",  {1, 4, 9});
+//   REGISTER_R(add,    "grid",   {0, 1, 2}, {0, 1, 2});
+#define REGISTER_R(name_, instance_, ...)                                  \
+    static_assert(                                                         \
+        ::eggs::test::detail::is_parameterized<name_>,                     \
+        "REGISTER_R can only be used with a parameterized TEST_CASE"       \
+    );                                                                     \
+    EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH                          \
+    static bool const EGGS_TEST_PP_CAT(_eggs_test_reg_, __LINE__) = [] {   \
+        std::size_t _i_ = 0;                                               \
+        for (auto const& _v_ :                                            \
+             ::eggs::test::detail::cartesian_product(__VA_ARGS__)) {       \
+            std::apply(                                                    \
+                [&](auto const&... _xs_) {                                 \
+                    ::eggs::test::detail::registry::add({                  \
+                        #name_ "/" instance_ "/_" + std::to_string(_i_),   \
+                        name_::case_desc_,                                  \
+                        [_xs_...](::eggs::test::detail::run_state& state   \
+                        ) {                                                 \
+                            state.mark_entry();                            \
+                            return name_::run(_xs_...);                    \
+                        },                                                  \
+                        ::std::source_location::current(),                 \
+                    });                                                    \
+                },                                                         \
+                _v_                                                        \
+            );                                                            \
+            ++_i_;                                                        \
+        }                                                                  \
+        return true;                                                       \
+    }() EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_POP
 
 // CONTEXT(fmt, args...)
 //

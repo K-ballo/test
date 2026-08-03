@@ -10,6 +10,7 @@
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
 
+#include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -59,15 +60,17 @@ registry::cases_type& registry::cases()
     return v;
 }
 
-int registry::run(std::vector<test_entry> const& run, bool verbose)
+int registry::run(std::vector<test_entry const*> const& run, bool verbose)
 {
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
 
-    for (test_entry const& e : run) {
+    for (test_entry const* e : run) {
+        assert(e != nullptr);
+
         detail::println(
-            stdout, "[ RUN  ] {} -- {}  [{}:{}]", e.name, e.desc,
-            e.loc.file_name(), e.loc.line()
+            stdout, "[ RUN  ] {} -- {}  [{}:{}]", e->name, e->desc,
+            e->loc.file_name(), e->loc.line()
         );
 
         run_state state;
@@ -76,7 +79,7 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
         run_state::set_current(&state);
         bool passed = false;
         try {
-            e.run(state);
+            e->run(state);
             passed = !state.assertions_failed;
         } catch (detail::unwind const&) {
         } catch (std::exception const& ex) {
@@ -91,12 +94,12 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
         if (assertions_total == 0) {
             detail::println(
                 stdout, "[ {} ] {} -- 0 assertions\n", passed ? "PASS" : "FAIL",
-                e.name
+                e->name
             );
         } else {
             detail::println(
                 stdout, "[ {} ] {} -- {} assertions: {}\n",
-                passed ? "PASS" : "FAIL", e.name, assertions_total,
+                passed ? "PASS" : "FAIL", e->name, assertions_total,
                 format_summary(state.assertions_passed, state.assertions_failed)
             );
         }
@@ -104,7 +107,7 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
         if (passed) {
             ++cases_passed;
         } else {
-            cases_failed.push_back(e.name);
+            cases_failed.push_back(e->name);
         }
     }
 
@@ -130,11 +133,13 @@ int run(run_options opts)
 {
     auto const& all_cases = detail::registry::cases();
 
-    std::vector<detail::test_entry> selected_cases;
-    selected_cases.reserve(opts.run.size());
+    std::vector<detail::test_entry const*> selected_cases;
     if (opts.run.empty()) {
-        selected_cases.assign(all_cases.begin(), all_cases.end());
+        selected_cases.reserve(all_cases.size());
+        for (auto const& e : all_cases) selected_cases.push_back(&e);
     } else {
+        selected_cases.reserve(opts.run.size());
+
         bool any_unknown = false;
 
         std::unordered_set<std::string_view> seen;
@@ -149,7 +154,7 @@ int run(run_options opts)
                     stderr, "warning: duplicate test case '{}'", name
                 );
             } else {
-                selected_cases.push_back(*it);
+                selected_cases.push_back(&*it);
             }
         }
 
@@ -158,8 +163,10 @@ int run(run_options opts)
     }
 
     if (opts.list) {
-        for (auto const& e : selected_cases) {
-            detail::println(stdout, "{}", e.name);
+        for (auto const* e : selected_cases) {
+            assert(e != nullptr);
+
+            detail::println(stdout, "{}", e->name);
         }
         return EXIT_SUCCESS;
     }

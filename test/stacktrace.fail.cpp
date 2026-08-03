@@ -36,6 +36,7 @@ TEST_CASE(
 }
 
 REGISTER_P(stacktrace_check_zero_levels_parametric, "p", 0);
+REGISTER_R(stacktrace_check_zero_levels_parametric, "r", {0});
 
 namespace {
 

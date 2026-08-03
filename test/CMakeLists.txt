@@ -290,7 +290,7 @@ add_lib_test(
     EXITS 0
 )
 
-# REGISTER_P base test name isn't registered.
+# REGISTER_P - base name isn't registered.
 add_lib_test(
     register_p.name
     SOURCES register_p.pass.cpp
@@ -334,11 +334,55 @@ add_lib_test(
     COMPILE_FAIL REGISTER_P_WRONG_ARITY_MORE_COMPILE_FAIL
 )
 
-# REGISTER_P rejects arguments that do not satisfy the constrains.
+# REGISTER_P rejects arguments that do not satisfy the constraints.
 add_lib_test(
     register_p.integral_auto.compile_fail
     SOURCES register_p.compile_fail.cpp
     COMPILE_FAIL REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL
+)
+
+# Parameterized test cases registered via REGISTER_R.
+add_lib_test(register_r SOURCES register_r.pass.cpp DISCOVER)
+
+# REGISTER_R - name is base/instance/_N.
+add_lib_test(
+    register_r.name.instance
+    SOURCES register_r.pass.cpp
+    RUN square/small/_0
+    PASS_REGEX "\\[ RUN  \\] square/small/_0 -- "
+    EXITS 0
+)
+
+# REGISTER_R - base name isn't registered.
+add_lib_test(
+    register_r.name
+    SOURCES register_r.pass.cpp
+    RUN square
+    PASS_REGEX "error: unknown test case 'square'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# make_ranges requires every argument to satisfy std::ranges::range.
+add_lib_test(
+    register_r.not_a_range.compile_fail
+    SOURCES register_r.compile_fail.cpp
+    COMPILE_FAIL REGISTER_R_NOT_A_RANGE_COMPILE_FAIL
+)
+
+# A two-parameter run() needs one range per parameter.
+add_lib_test(
+    register_r.wrong_arity.compile_fail
+    SOURCES register_r.compile_fail.cpp
+    COMPILE_FAIL REGISTER_R_WRONG_ARITY_COMPILE_FAIL
+)
+
+# REGISTER_R cannot be used on a TEST_CASE with no params: it already
+# auto-registers under its bare name.
+add_lib_test(
+    register_r.auto_registered.compile_fail
+    SOURCES register_r.compile_fail.cpp
+    COMPILE_FAIL REGISTER_R_AUTO_REGISTERED_COMPILE_FAIL
 )
 
 # --- summary tests ------------------------------------------------------------
@@ -912,6 +956,15 @@ add_lib_test(
     EXITS 0
 )
 
+# --list must print REGISTER_R's "base/instance/_N" names verbatim.
+add_lib_test(
+    cli.list.register_r.pass
+    SOURCES register_r.pass.cpp
+    ARGS "--list"
+    PASS_REGEX "(^|\n)square/small/_0(\n|$)" "(^|\n)square/small/_1(\n|$)"
+    EXITS 0
+)
+
 # --list --run=<name> must list only the matching test case.
 add_lib_test(
     cli.list.run.pass
@@ -957,6 +1010,38 @@ add_lib_test(
     PASS_REGEX "\\[ RUN  \\] square/zero -- "
     FAIL_REGEX "square/positive"
     EXITS 0
+)
+
+# --run=<base/instance/_N> must run only the exact REGISTER_R instance.
+add_lib_test(
+    cli.run.register_r.pass
+    SOURCES register_r.pass.cpp
+    RUN square/small/_1
+    PASS_REGEX "\\[ RUN  \\] square/small/_1 -- "
+    FAIL_REGEX "square/small/_0" "square/small/_2"
+    EXITS 0
+)
+
+# --run=<base/instance/_0> on a REGISTER_R with an empty range must report
+# unknown.
+add_lib_test(
+    cli.run.register_r.empty_range.fail
+    SOURCES register_r.pass.cpp
+    RUN square/none/_0
+    PASS_REGEX "error: unknown test case 'square/none/_0'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<base/instance/_N> one index past the last registered instance must
+# report unknown.
+add_lib_test(
+    cli.run.register_r.out_of_bounds.fail
+    SOURCES register_r.pass.cpp
+    RUN square/small/_4
+    PASS_REGEX "error: unknown test case 'square/small/_4'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
 )
 
 # --run=<name> --run=<name> must warn and run the case only once: a second
@@ -1411,6 +1496,15 @@ if(EGGS_HAS_CXX23_STACKTRACE)
         stacktrace.check.zero_levels.register_p.fail
         SOURCES stacktrace.fail.cpp
         RUN stacktrace_check_zero_levels_parametric/p
+        PASS_REGEX "FAILED:"
+        FAIL_REGEX "#1 "
+        EXITS 1
+    )
+    # CHECK failure directly in a REGISTER_R body: no stacktrace must appear.
+    add_lib_test(
+        stacktrace.check.zero_levels.register_r.fail
+        SOURCES stacktrace.fail.cpp
+        RUN stacktrace_check_zero_levels_parametric/r/_0
         PASS_REGEX "FAILED:"
         FAIL_REGEX "#1 "
         EXITS 1

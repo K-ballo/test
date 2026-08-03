@@ -66,7 +66,7 @@ TEST_CASE(
     CHECK((n | 0) == n);
 }
 
-// REGISTER_P rejects arguments that do not satisfy the constrains.
+// REGISTER_P rejects arguments that do not satisfy the constraints.
 REGISTER_P(integral_auto_reject, "double", 3.14);
 
 #endif

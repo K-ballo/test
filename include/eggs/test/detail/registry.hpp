@@ -11,7 +11,9 @@
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <source_location>
+#include <string>
 #include <string_view>
 #include <unordered_set>
 #include <utility>
@@ -21,9 +23,9 @@ namespace eggs::test::detail {
 
 struct test_entry
 {
-    std::string_view name;
+    std::string name;
     std::string_view desc;
-    void (*run)(run_state&);
+    std::move_only_function<void(run_state&) const> run;
     std::source_location loc;
 };
 
@@ -78,7 +80,7 @@ struct registry
         return &*it;
     }
 
-    static int run(std::vector<test_entry> const& run, bool verbose);
+    static int run(std::vector<test_entry const*> const& run, bool verbose);
 };
 
 } // namespace eggs::test::detail
