@@ -46,6 +46,12 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang   clang   /usr/bin/clang-22   200
           sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-22 200
 
+      - name: Install libstdc++-16
+        run: |
+          sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          sudo apt-get update
+          sudo apt-get install -y g++-16
+
       - name: Fix APT cache permissions
         if: always()
         run: sudo rm -rf ~/.cache/apt/archives/lock ~/.cache/apt/archives/partial
@@ -53,7 +59,7 @@ jobs:
       - name: Configure (coverage)
         run: |
           cmake --preset dev-clang -B build/coverage \
-            -DCMAKE_CXX_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+            -DCMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16 -fprofile-instr-generate -fcoverage-mapping" \
             -DCMAKE_EXE_LINKER_FLAGS="-fprofile-instr-generate"
 
       - name: Build

@@ -87,7 +87,8 @@ jobs:
         run: cmake --preset dev-clang -B build/warn-everything
                -DCMAKE_COMPILE_WARNING_AS_ERROR=OFF
                -DCMAKE_CXX_COMPILER_LAUNCHER="python3;${{ github.workspace }}/.github/scripts/lint/warn-everything-launcher.py"
-               -DCMAKE_CXX_FLAGS_INIT="-Weverything
+               -DCMAKE_CXX_FLAGS_INIT="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16
+                 -Weverything
                  -Wno-c++98-compat -Wno-c++98-compat-pedantic
                  -Wno-c++11-compat
                  -Wno-c++14-compat
@@ -178,6 +179,7 @@ jobs:
 
       - name: Configure
         run: cmake --preset dev-clang -B build/include-cleaner
+               -DCMAKE_CXX_FLAGS_INIT=--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16
 
       - name: Check includes
         run: python3 .github/scripts/lint/check_include_cleaner.py build/include-cleaner
