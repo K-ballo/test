@@ -9,6 +9,7 @@ line changed relative to a base ref (e.g. origin/main).
 """
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -66,10 +67,11 @@ def main() -> int:
         seen.add(key)
         flagged.append((uri, region, result["ruleId"], result["message"]["text"]))
 
-    for uri, region, rule_id, message in flagged:
-        print(
-            f"::error file={uri},line={region['startLine']},col={region['startColumn']}::[{rule_id}] {message}"
-        )
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        for uri, region, rule_id, message in flagged:
+            print(
+                f"::error file={uri},line={region['startLine']},col={region['startColumn']}::[{rule_id}] {message}"
+            )
 
     if flagged:
         print(
