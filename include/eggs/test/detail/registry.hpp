@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <eggs/test/detail/abort.hpp>
 #include <eggs/test/detail/run_state.hpp>
 
 #include <cassert>
 #include <cstddef>
-#include <cstdlib>
 #include <functional>
 #include <source_location>
 #include <string_view>
@@ -76,7 +76,7 @@ struct registry
         auto const [it, inserted] = cases().insert(std::move(e));
         assert(inserted && "duplicate test case name");
         if (!inserted) [[unlikely]]
-            std::abort();
+            EGGS_ABORT;
         return &*it;
     }
 

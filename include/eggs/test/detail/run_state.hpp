@@ -7,11 +7,11 @@
 
 #pragma once
 
+#include <eggs/test/detail/abort.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
 #include <cassert>
 #include <cstddef>
-#include <cstdlib>
 #include <utility>
 
 namespace eggs::test::detail {
@@ -42,7 +42,7 @@ class run_state
         run_state* ptr = _current_ptr();
         assert(ptr && "CHECK/REQUIRE called outside of a test case");
         if (!ptr) [[unlikely]]
-            std::abort();
+            EGGS_ABORT;
 
         return *ptr;
     }
