@@ -27,6 +27,14 @@ TEST_CASE(no_desc)
     CHECK(1 + 1 == 2);
 }
 
+#elif defined(TEST_CASE_NO_DESC_WITH_PARAMS_COMPILE_FAIL)
+
+// TEST_CASE rejects a parameter in place of a description.
+TEST_CASE(no_desc_with_params, int const& a)
+{
+    CHECK(a + 1 == 1 + a);
+}
+
 #elif defined(TEST_CASE_INVALID_NAME_COMPILE_FAIL)
 
 // TEST_CASE name must be an identifier.
@@ -43,6 +51,14 @@ char const* const desc = "test case with an invalid description";
 TEST_CASE(invalid_desc, desc)
 {
     CHECK(1 + 1 == 2);
+}
+
+#elif defined(TEST_CASE_DEFAULTED_PARAM_COMPILE_FAIL)
+
+// TEST_CASE parameters cannot be defaulted.
+TEST_CASE(defaulted_param, "defaulted parameter", int n = 0)
+{
+    CHECK(n >= 0);
 }
 
 #endif
