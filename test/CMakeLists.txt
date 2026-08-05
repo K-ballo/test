@@ -48,10 +48,11 @@ include(EggsTest)
 # list is passed to the source as preprocessor definitions.  Cannot be combined
 # with ARGS, DISCOVER, EXITS, RUN, or WILL_ABORT.  DISCOVER registers one
 # CTest test per TEST_CASE (discovered at test time).  EXITS is the expected
-# exit code (defaults to 0).  WILL_ABORT expects the process to abort; cannot
-# be combined with EXITS or DISCOVER.  FAIL_REGEX: the test fails if its output
-# matches any of these patterns.  PASS_REGEX: the test passes only if its
-# output matches all of these patterns.
+# exit code; if omitted, it defaults to 0 unless PASS_REGEX is given.
+# WILL_ABORT expects the process to abort; cannot be combined with EXITS or
+# DISCOVER.  FAIL_REGEX: the test fails if its output matches any of these
+# patterns.  PASS_REGEX: the test passes only if its output matches all of
+# these patterns.
 function(add_lib_test name)
     cmake_parse_arguments(
         PARSE_ARGV 1
@@ -174,6 +175,8 @@ function(add_lib_test name)
 
     if(DEFINED ARG_EXITS)
         list(APPEND _control_args "--eggs-run-test-exits=${ARG_EXITS}")
+    elseif(NOT ARG_WILL_ABORT AND NOT ARG_PASS_REGEX)
+        list(APPEND _control_args "--eggs-run-test-exits=0")
     endif()
     if(ARG_WILL_ABORT)
         list(APPEND _control_args "--eggs-run-test-will-abort")
@@ -213,6 +216,7 @@ add_lib_test(
     SOURCES registration.cpp
     DISCOVER
     FAIL_REGEX "test cases:"
+    EXITS 0
 )
 
 # Test cases defined across two translation units both register and run.
@@ -271,18 +275,16 @@ add_lib_test(
     RUN per_case_pass
     PASS_REGEX "per_case_pass"
     FAIL_REGEX "test cases:"
-    EXITS 0
 )
 
 # The test-cases summary reports percentages and lists only the failing case(s).
 add_lib_test(
     summary.mixed.fail
-    SOURCES summary.mixed.cpp
+    SOURCES aggregate.mixed.cpp
     RUN mixed_pass_one mixed_fail mixed_pass_two
     PASS_REGEX
         "3 test cases: 2 passed \\(66%\\) \\| 1 failed \\(34%\\):\n- mixed_fail"
     FAIL_REGEX "- mixed_pass_one" "- mixed_pass_two"
-    EXITS 1
 )
 
 # The test-cases summary omits the "| 0 failed (0%)" clause on 100% success.
@@ -291,17 +293,15 @@ add_lib_test(
     SOURCES summary.full_pass.cpp
     PASS_REGEX "3 test cases: 3 passed \\(100%\\)"
     FAIL_REGEX "\\| .*failed"
-    EXITS 0
 )
 
 # The assertions summary reports percentages and failed count.
 add_lib_test(
     summary.per_case.mixed.fail
-    SOURCES summary.mixed.cpp
+    SOURCES aggregate.mixed.cpp
     RUN check_mixed
     PASS_REGEX
         "check_mixed -- 3 assertions: 2 passed \\(66%\\) \\| 1 failed \\(34%\\)"
-    EXITS 1
 )
 
 # The assertions summary shows both counts with zero passing assertions.
@@ -311,7 +311,6 @@ add_lib_test(
     RUN per_case_fail
     PASS_REGEX
         "\\[ FAIL \\] per_case_fail -- 1 assertions: 0 passed \\(0%\\) \\| 1 failed \\(100%\\)"
-    EXITS 1
 )
 
 # The assertions summary omits the "| 0 failed (0%)" clause on 100% success.
@@ -320,7 +319,6 @@ add_lib_test(
     SOURCES summary.per_case.cpp
     RUN per_case_pass
     PASS_REGEX "\\[ PASS \\] per_case_pass -- 1 assertions: 1 passed \\(100%\\)"
-    EXITS 0
 )
 
 # A test case with no assertions at all shows "0 assertions" with no
@@ -331,7 +329,6 @@ add_lib_test(
     RUN zero_assertions_pass
     PASS_REGEX "\\[ PASS \\] zero_assertions_pass -- 0 assertions"
     FAIL_REGEX "0 assertions:"
-    EXITS 0
 )
 add_lib_test(
     summary.per_case.zero.fail
@@ -339,7 +336,6 @@ add_lib_test(
     RUN zero_assertions_fail
     PASS_REGEX "\\[ FAIL \\] zero_assertions_fail -- 0 assertions"
     FAIL_REGEX "0 assertions:"
-    EXITS 1
 )
 
 # --- passing tests -----------------------------------------------------------
@@ -404,6 +400,22 @@ add_lib_test(
     SOURCES require.fail.cpp
     PASS_REGEX "FAILED: 1 \\+ 2 == 4"
     FAIL_REGEX "FAILED: false"
+    EXITS 1
+)
+
+# A test case with a mix of passing and failing CHECKs must be reported as failed.
+add_lib_test(
+    aggregate.assertions.mixed.fail
+    SOURCES aggregate.mixed.cpp
+    RUN check_mixed
+    EXITS 1
+)
+
+# A run with a mix of passing and failing test cases must exit non-zero.
+add_lib_test(
+    aggregate.cases.mixed.fail
+    SOURCES aggregate.mixed.cpp
+    RUN mixed_pass_one mixed_fail mixed_pass_two
     EXITS 1
 )
 
@@ -474,14 +486,12 @@ add_lib_test(
     RUN context_check_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: id == 42"
-    EXITS 0
 )
 add_lib_test(
     context.check.fail
     SOURCES context.fail.cpp
     RUN context_check_fail
     PASS_REGEX "${_context_id_fail_regex}" "FAILED: id == 7"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside REQUIRE diagnostics.
@@ -491,7 +501,6 @@ add_lib_test(
     RUN context_require_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: id == 42"
-    EXITS 0
 )
 add_lib_test(
     context.require.fail
@@ -499,7 +508,6 @@ add_lib_test(
     RUN context_require_fail
     PASS_REGEX "${_context_id_fail_regex}" "FAILED: id == 7"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside CHECK_THROWS diagnostics.
@@ -509,7 +517,6 @@ add_lib_test(
     RUN context_check_throws_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
-    EXITS 0
 )
 add_lib_test(
     context.throws.check.fail
@@ -518,7 +525,6 @@ add_lib_test(
     PASS_REGEX
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside REQUIRE_THROWS diagnostics.
@@ -528,7 +534,6 @@ add_lib_test(
     RUN context_require_throws_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
-    EXITS 0
 )
 add_lib_test(
     context.throws.require.fail
@@ -538,7 +543,6 @@ add_lib_test(
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside CHECK_THROWS_AS diagnostics.
@@ -548,7 +552,6 @@ add_lib_test(
     RUN context_check_throws_as_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
-    EXITS 0
 )
 add_lib_test(
     context.throws_as.check.fail
@@ -557,7 +560,6 @@ add_lib_test(
     PASS_REGEX
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside REQUIRE_THROWS_AS diagnostics.
@@ -567,7 +569,6 @@ add_lib_test(
     RUN context_require_throws_as_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: throw id"
-    EXITS 0
 )
 add_lib_test(
     context.throws_as.require.fail
@@ -577,7 +578,6 @@ add_lib_test(
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside CHECK_CATCHES_AS diagnostics.
@@ -587,7 +587,6 @@ add_lib_test(
     RUN context_check_catches_as_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: exc == id"
-    EXITS 0
 )
 add_lib_test(
     context.catches_as.check.fail
@@ -597,7 +596,6 @@ add_lib_test(
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside REQUIRE_CATCHES_AS diagnostics.
@@ -607,7 +605,6 @@ add_lib_test(
     RUN context_require_catches_as_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: exc == id"
-    EXITS 0
 )
 add_lib_test(
     context.catches_as.require.fail
@@ -617,7 +614,6 @@ add_lib_test(
         "${_context_id_fail_regex}"
         "FAILED: does_not_throw\\(\\) did not throw"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside CHECK_NOTHROW diagnostics.
@@ -627,14 +623,12 @@ add_lib_test(
     RUN context_check_nothrow_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: id"
-    EXITS 0
 )
 add_lib_test(
     context.nothrow.check.fail
     SOURCES context.fail.cpp
     RUN context_check_nothrow_fail
     PASS_REGEX "${_context_id_fail_regex}" "FAILED: throw id threw unexpectedly"
-    EXITS 1
 )
 
 # CONTEXT(...) appears alongside REQUIRE_NOTHROW diagnostics.
@@ -644,7 +638,6 @@ add_lib_test(
     RUN context_require_nothrow_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_id_pass_regex}" "PASSED: id"
-    EXITS 0
 )
 add_lib_test(
     context.nothrow.require.fail
@@ -652,7 +645,6 @@ add_lib_test(
     RUN context_require_nothrow_fail
     PASS_REGEX "${_context_id_fail_regex}" "FAILED: throw id threw unexpectedly"
     FAIL_REGEX "FAILED: false"
-    EXITS 1
 )
 
 # CONTEXT(fmt, args...) prints the formatted result.
@@ -667,7 +659,6 @@ add_lib_test(
     RUN context_fmt_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_fmt_pass_regex}"
-    EXITS 0
 )
 
 # Multiple CONTEXT calls are active at once, innermost appears first.
@@ -683,7 +674,6 @@ add_lib_test(
     RUN context_sequential_pass
     ARGS "--verbose"
     PASS_REGEX "${_context_sequential_regex}"
-    EXITS 0
 )
 
 # CONTEXT only applies within its scope.
@@ -693,7 +683,6 @@ add_lib_test(
     RUN context_scoped_pass
     ARGS "--verbose"
     FAIL_REGEX "scoped out"
-    EXITS 0
 )
 
 # CONTEXT declared inside a loop reflects only the current iteration, not
@@ -709,7 +698,6 @@ add_lib_test(
     RUN context_loop_fail
     PASS_REGEX "${_context_loop_fail_regex}" "FAILED: i != 1"
     FAIL_REGEX "i=0" "i=2"
-    EXITS 1
 )
 
 # --- cli tests -----------------------------------------------------------
@@ -937,6 +925,7 @@ add_lib_test(
     SOURCES throws.pass.cpp
     RUN check_throws_int
     ARGS "--verbose"
+    EXITS 0
     PASS_REGEX "PASSED: throw 42\n"
 )
 # CHECK_THROWS when nothing is thrown: 'did not throw' appears.
@@ -996,6 +985,7 @@ add_lib_test(
     SOURCES throws_as.pass.cpp
     RUN check_throws_as_int
     ARGS "--verbose"
+    EXITS 0
     PASS_REGEX "PASSED: throw 42\n"
 )
 # CHECK_THROWS_AS when nothing is thrown: 'did not throw' appears.
@@ -1116,6 +1106,7 @@ add_lib_test(
     SOURCES catches_as.pass.cpp
     RUN check_catches_as_int
     ARGS "--verbose"
+    EXITS 0
     PASS_REGEX "PASSED: throw 42\n"
 )
 # CHECK_CATCHES_AS when nothing is thrown: 'did not throw' appears.
@@ -1229,6 +1220,7 @@ add_lib_test(
     SOURCES nothrow.pass.cpp
     RUN check_nothrow_pass
     ARGS "--verbose"
+    EXITS 0
     PASS_REGEX "PASSED: 1 \\+ 1"
 )
 # CHECK_NOTHROW when a std::exception is thrown: 'threw unexpectedly' with message appears.

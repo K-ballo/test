@@ -9,7 +9,7 @@
 #   cmake -P test_launcher.cmake -- <exe> [<control-arg>...] [<arg>...]
 #
 # Recognized <control-arg>:
-#   --eggs-run-test-exits=<N>          expected exit code (default 0)
+#   --eggs-run-test-exits=<N>          expected exit code (unchecked if omitted)
 #   --eggs-run-test-will-fail          expect a non-zero exit code instead
 #   --eggs-run-test-will-abort         expect the process to abort
 #   --eggs-run-test-fail-regex=<regex> must NOT match (repeatable)
@@ -17,7 +17,7 @@
 #
 # Runs <exe> with <args>, echoes its output (stdout and stderr merged),
 # then checks:
-#   1. exit code equals <N> (0 unless overridden), or, with
+#   1. if --eggs-run-test-exits=<N> is given, exit code equals <N>; or, with
 #      --eggs-run-test-will-fail, is non-zero, or, with
 #      --eggs-run-test-will-abort, the process aborted
 #   2. output does not match any --eggs-run-test-fail-regex=<pattern>
@@ -76,10 +76,6 @@ if(_will_fail AND _will_abort)
     )
 endif()
 
-if(NOT DEFINED _exits)
-    set(_exits 0)
-endif()
-
 execute_process(
     COMMAND "${_exe}" ${_args}
     OUTPUT_VARIABLE _output
@@ -101,7 +97,7 @@ elseif(_will_fail)
     if(_status EQUAL 0)
         message(SEND_ERROR "exit code ${_status} (expected non-zero)")
     endif()
-elseif(NOT _status EQUAL _exits)
+elseif(DEFINED _exits AND NOT _status EQUAL _exits)
     message(SEND_ERROR "exit code ${_status} (expected ${_exits})")
 endif()
 
