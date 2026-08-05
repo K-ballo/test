@@ -25,7 +25,7 @@
 #endif
 
 namespace eggs::test {
-namespace detail {
+namespace {
 
 void suppress_debug_dialogs() noexcept
 {
@@ -42,10 +42,6 @@ void suppress_debug_dialogs() noexcept
     }
 #endif
 }
-
-} // namespace detail
-
-namespace {
 
 void print_help(std::FILE* out, std::string_view const usage)
 {
@@ -98,7 +94,7 @@ int main(int argc, char const* argv[])
             continue;
         }
         if (arg == "--non-interactive") {
-            detail::suppress_debug_dialogs();
+            test::suppress_debug_dialogs();
             continue;
         }
 

@@ -7,12 +7,6 @@
 
 #include <eggs/test.hpp>
 
-namespace eggs::test::detail {
-void suppress_debug_dialogs() noexcept;
-
-int const g_suppress_debug_dialogs = (suppress_debug_dialogs(), 0);
-} // namespace eggs::test::detail
-
 TEST_CASE(duplicate_case, "desc", int const& a)
 {
     (void)a;

@@ -306,9 +306,11 @@ add_lib_test(
 
 # REGISTER_P rejects a duplicate instance name for the same test case.
 add_lib_test(
-    register_p.duplicate.will_abort
-    SOURCES register_p.will_abort.cpp
-    WILL_ABORT
+    register_p.duplicate.will_fail
+    SOURCES register_p.duplicate.cpp
+    PASS_REGEX "error: duplicate test case 'duplicate_case/same'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
 )
 
 # REGISTER_P instance must be a string literal.

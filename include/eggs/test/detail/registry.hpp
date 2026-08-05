@@ -9,9 +9,7 @@
 
 #include <eggs/test/detail/run_state.hpp>
 
-#include <cassert>
 #include <cstddef>
-#include <cstdlib>
 #include <functional>
 #include <source_location>
 #include <string_view>
@@ -27,6 +25,7 @@ struct test_entry
     std::string_view desc;
     void (*run)(run_state&);
     std::source_location loc;
+    mutable bool duplicate = false;
 };
 
 struct test_entry_hash
@@ -74,9 +73,8 @@ struct registry
     static test_entry const* add(test_entry e)
     {
         auto const [it, inserted] = cases().insert(std::move(e));
-        assert(inserted && "duplicate test case name");
         if (!inserted) [[unlikely]]
-            std::abort();
+            it->duplicate = true;
         return &*it;
     }
 

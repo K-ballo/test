@@ -130,6 +130,15 @@ int run(run_options opts)
 {
     auto const& all_cases = detail::registry::cases();
 
+    bool any_duplicate = false;
+    for (auto const& e : all_cases) {
+        if (e.duplicate) {
+            detail::println(stderr, "error: duplicate test case '{}'", e.name);
+            any_duplicate = true;
+        }
+    }
+    if (any_duplicate) return EXIT_FAILURE;
+
     std::vector<detail::test_entry> selected_cases;
     selected_cases.reserve(opts.run.size());
     if (opts.run.empty()) {
