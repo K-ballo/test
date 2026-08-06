@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include <cassert>
+#include <eggs/test/detail/assert.hpp>
+
 #include <cstddef>
-#include <cstdlib>
 #include <utility>
 
 namespace eggs::test::detail {
@@ -36,9 +36,7 @@ class run_state
     [[nodiscard]] static run_state& current()
     {
         run_state* ptr = _current_ptr();
-        assert(ptr && "CHECK/REQUIRE called outside of a test case");
-        if (!ptr) [[unlikely]]
-            std::abort();
+        EGGS_TEST_ASSERT(ptr, "CHECK/REQUIRE called outside of a test case");
 
         return *ptr;
     }
