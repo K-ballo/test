@@ -31,6 +31,15 @@ set_tests_properties(
 
 include(EggsTest)
 
+# Coverage builds (see .github/workflows/coverage.yml) define
+# EGGS_TEST_COVERAGE via CMAKE_CXX_FLAGS_INIT: EGGS_TEST_ASSERT then exits
+# cleanly instead of aborting, so WILL_ABORT tests must expect that instead.
+if(CMAKE_CXX_FLAGS MATCHES "(^| )-DEGGS_TEST_COVERAGE([ =]|$)")
+    set(_eggs_test_coverage TRUE)
+else()
+    set(_eggs_test_coverage FALSE)
+endif()
+
 # add_lib_test(<name> SOURCES <file>...
 #               [ARGS <arg>...] [RUN <name>...] [DISCOVER]
 #               [EXITS <code>] [WILL_ABORT]
@@ -179,7 +188,11 @@ function(add_lib_test name)
         list(APPEND _control_args "--eggs-run-test-exits=0")
     endif()
     if(ARG_WILL_ABORT)
-        list(APPEND _control_args "--eggs-run-test-will-abort")
+        if(_eggs_test_coverage)
+            list(APPEND _control_args "--eggs-run-test-exits=1")
+        else()
+            list(APPEND _control_args "--eggs-run-test-will-abort")
+        endif()
     endif()
 
     if(ARG_DISCOVER)

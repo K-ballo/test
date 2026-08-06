@@ -11,11 +11,18 @@
 #include <cstdlib> // IWYU pragma: keep
 
 // EGGS_TEST_ASSERT(condition, message)
-//
-//   EGGS_TEST_ASSERT(ptr != nullptr, "CHECK/REQUIRE called outside of a test case");
-#define EGGS_TEST_ASSERT(condition, message) \
-    do {                                     \
-        assert((condition) && message);      \
-        if (!(condition)) [[unlikely]]       \
-            std::abort();                    \
-    } while (false)
+#ifdef EGGS_TEST_COVERAGE
+// exit cleanly so atexit handlers run
+#    define EGGS_TEST_ASSERT(condition, message) \
+        do {                                     \
+            if (!(condition)) [[unlikely]]       \
+                std::exit(EXIT_FAILURE);         \
+        } while (false)
+#else
+#    define EGGS_TEST_ASSERT(condition, message) \
+        do {                                     \
+            assert((condition) && message);      \
+            if (!(condition)) [[unlikely]]       \
+                std::abort();                    \
+        } while (false)
+#endif
