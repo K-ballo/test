@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <eggs/test/detail/stacktrace.hpp>
+
 #include <cassert>
 #include <cstddef>
 #include <cstdlib>
@@ -24,6 +26,8 @@ class run_state
     context_frame const* context_top = nullptr;
     std::size_t assertions_passed = 0;
     std::size_t assertions_failed = 0;
+
+    void mark_entry() { entry_depth = stacktrace::current().size(); }
 
     // Installs `frame` as the current context, returning the previous one.
     context_frame const* exchange_context(context_frame const* frame) noexcept

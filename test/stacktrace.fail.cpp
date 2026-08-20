@@ -26,6 +26,17 @@ TEST_CASE(
     CHECK(false);
 }
 
+TEST_CASE(
+    stacktrace_check_zero_levels_parametric,
+    "failed CHECK directly in parametric TEST_CASE body prints no stacktrace",
+    int
+)
+{
+    CHECK(false);
+}
+
+REGISTER_P(stacktrace_check_zero_levels_parametric, "p", 0);
+
 namespace {
 
 EGGS_TEST_NOINLINE void failing_check_helper()

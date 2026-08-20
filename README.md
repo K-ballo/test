@@ -31,6 +31,28 @@ Every `CHECK_*` macro has a `REQUIRE_*` variant that stops the test case on fail
 
 `CONTEXT(fmt, args...)` - records a scoped diagnostic message shown alongside every `CHECK`/`REQUIRE` diagnostic produced while still in scope.
 
+### Parameterized tests
+
+```cpp
+TEST_CASE(add, "adds two integers", int a, int b) {
+    CHECK(a + b == b + a);
+}
+
+REGISTER_P(add, "one_two", 1, 2);
+REGISTER_P(add, "zero_five", 0, 5);
+```
+
+Parameter types can also be deduced:
+
+```cpp
+TEST_CASE(add, "adds two numbers", auto a, auto b) {
+    CHECK(a + b == b + a);
+}
+
+REGISTER_P(add, "ints", 1, 2);
+REGISTER_P(add, "doubles", 1.5, 2.5);
+```
+
 ## Build
 
 ```bash
