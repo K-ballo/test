@@ -144,6 +144,13 @@ int run(run_options opts)
             if (it == all_cases.end()) {
                 detail::println(stderr, "error: unknown test case '{}'", name);
                 any_unknown = true;
+
+                if (!detail::is_valid_instance_name(name)) {
+                    detail::println(
+                        stderr, "warning: '{}' is not a valid test case name",
+                        name
+                    );
+                }
             } else if (!seen.insert(name).second) {
                 detail::println(
                     stderr, "warning: duplicate test case '{}'", name

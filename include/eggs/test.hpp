@@ -23,14 +23,6 @@
 #define EGGS_TEST_PP_CAT_(a, b) a##b
 #define EGGS_TEST_PP_CAT(a, b) EGGS_TEST_PP_CAT_(a, b)
 
-namespace eggs::test::detail {
-
-// A parameterized TEST_CASE requires arguments to run.
-template <typename T>
-inline constexpr bool is_parameterized = !requires { T::run(); };
-
-} // namespace eggs::test::detail
-
 // TEST_CASE(name, "description" [, params...])
 //
 // Defines a struct named `name` with a static run() member.
@@ -83,6 +75,12 @@ inline constexpr bool is_parameterized = !requires { T::run(); };
     static_assert(                                                     \
         ::eggs::test::detail::is_parameterized<name_>,                 \
         "REGISTER_P can only be used with a parameterized TEST_CASE"   \
+    );                                                                 \
+    static_assert(                                                     \
+        ::eggs::test::detail::is_valid_instance_name(instance_),       \
+        "REGISTER_P(" #name_ ", " #instance_ ", " #__VA_ARGS__         \
+        "): instance name must be a non-empty string of letters, "     \
+        "digits, '_', '.', '/', '-', starting with a letter"           \
     );                                                                 \
     EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH                      \
     static auto const* EGGS_TEST_PP_CAT(eggs_test_reg_, __LINE__) = [] \

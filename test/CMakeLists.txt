@@ -338,6 +338,38 @@ add_lib_test(
     COMPILE_FAIL REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL
 )
 
+# instance names must be non-empty.
+add_lib_test(
+    register_p.empty_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_EMPTY_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be"
+)
+
+# instance names must start with a letter or '_'.
+add_lib_test(
+    register_p.leading_digit_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_LEADING_DIGIT_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be"
+)
+
+# instance names must start with a letter or '_'; '-', '.', '/' don't count.
+add_lib_test(
+    register_p.leading_symbol_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_LEADING_SYMBOL_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be"
+)
+
+# instance names may only contain letters, digits, '_', '.', '/', '-'.
+add_lib_test(
+    register_p.invalid_char_instance.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_INVALID_CHAR_INSTANCE_COMPILE_FAIL
+    PASS_REGEX "instance name must be"
+)
+
 # --- summary tests ------------------------------------------------------------
 
 # A single-case run must not print the test-cases summary.
@@ -994,6 +1026,45 @@ add_lib_test(
     SOURCES registration.cpp
     RUN unknown_a unknown_b
     PASS_REGEX "${_run_unknown_multi_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<name> starting with a digit is invalid, also warned after reporting
+# the name as unknown.
+add_lib_test(
+    cli.run.invalid_name.leading_digit.fail
+    SOURCES registration.cpp
+    RUN 1st
+    PASS_REGEX
+        "error: unknown test case '1st'"
+        "warning: '1st' is not a valid test case name"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<name> starting with a symbol is invalid, also warned after reporting
+# the name as unknown.
+add_lib_test(
+    cli.run.invalid_name.leading_symbol.fail
+    SOURCES registration.cpp
+    RUN "-first"
+    PASS_REGEX
+        "error: unknown test case '-first'"
+        "warning: '-first' is not a valid test case name"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<name> containing invalid characters, also  warns after reporting the
+# name as unknown.
+add_lib_test(
+    cli.run.invalid_name.invalid_char.fail
+    SOURCES registration.cpp
+    RUN "registration one"
+    PASS_REGEX
+        "error: unknown test case 'registration one'"
+        "warning: 'registration one' is not a valid test case name"
     FAIL_REGEX "\\[ RUN  \\]"
     EXITS 1
 )

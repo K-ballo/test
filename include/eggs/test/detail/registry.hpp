@@ -78,4 +78,28 @@ struct registry
     static int run(std::vector<test_entry> const& run, bool verbose);
 };
 
+// A parameterized TEST_CASE requires arguments to run.
+template <typename T>
+inline constexpr bool is_parameterized = !requires { T::run(); };
+
+// Must start with a letter; followed by letters, digits, '_', '.', '/', '-'.
+constexpr bool is_valid_instance_name(std::string_view name)
+{
+    if (name.empty()) return false;
+
+    char const first = name.front();
+    bool const first_is_letter =
+        (first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z');
+    if (!first_is_letter) return false;
+
+    for (char const c : name) {
+        bool const is_letter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+        bool const is_digit = c >= '0' && c <= '9';
+        bool const is_symbol = c == '_' || c == '.' || c == '/' || c == '-';
+        if (!is_letter && !is_digit && !is_symbol) return false;
+    }
+
+    return true;
+}
+
 } // namespace eggs::test::detail

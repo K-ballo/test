@@ -69,4 +69,46 @@ TEST_CASE(
 // REGISTER_P rejects arguments that do not satisfy the constrains.
 REGISTER_P(integral_auto_reject, "double", 3.14);
 
+#elif defined(REGISTER_P_EMPTY_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(empty_instance, "parameterized test", int const& n)
+{
+    CHECK(n == n);
+}
+
+// instance names must be non-empty.
+REGISTER_P(empty_instance, "", 0);
+
+#elif defined(REGISTER_P_LEADING_DIGIT_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(leading_digit_instance, "parameterized test", int const& n)
+{
+    CHECK(n == n);
+}
+
+// instance names must start with a letter or '_'.
+REGISTER_P(leading_digit_instance, "1st", 0);
+
+#elif defined(REGISTER_P_LEADING_SYMBOL_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(leading_symbol_instance, "parameterized test", int const& n)
+{
+    CHECK(n == n);
+}
+
+// instance names must start with a letter or '_'; '-', '.', and '/' are
+// allowed elsewhere in the name but not as the first character.
+REGISTER_P(leading_symbol_instance, "-first", 0);
+
+#elif defined(REGISTER_P_INVALID_CHAR_INSTANCE_COMPILE_FAIL)
+
+TEST_CASE(invalid_char_instance, "parameterized test", int const& n)
+{
+    CHECK(n == n);
+}
+
+// instance names may only contain letters, digits, '_', '.', '/', '-'; a
+// space is not among them.
+REGISTER_P(invalid_char_instance, "two words", 0);
+
 #endif
