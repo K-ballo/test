@@ -34,9 +34,33 @@ eggs::test::detail::registry::cases_type& eggs::test::detail::registry::cases()
     return cases_;
 }
 
+eggs::test::detail::registry::duplicates_type&
+eggs::test::detail::registry::duplicates()
+{
+    static registry::duplicates_type duplicates_;
+    return duplicates_;
+}
+
 namespace eggs::test {
 namespace detail {
 namespace {
+
+// Reports every duplicate test case registration to `out`.
+// Returns whether any duplicates were found.
+bool check_duplicates(std::FILE* out)
+{
+    auto const& dups = registry::duplicates();
+    for (auto const& [orig, dup_loc] : dups) {
+        detail::println(
+            out,
+            "error: duplicate test case '{}'  [{}:{}] (first registered  "
+            "[{}:{}])",
+            orig->name, dup_loc.file_name(), dup_loc.line(),
+            orig->loc.file_name(), orig->loc.line()
+        );
+    }
+    return !dups.empty();
+}
 
 // "<passed> passed (<percent>%)", plus " | <failed> failed (<percent>%)"
 // when failed != 0. The two percentages always add up to 100.
@@ -127,6 +151,8 @@ int run(std::vector<test_entry> const& run, bool verbose)
 
 int run(run_options opts)
 {
+    if (detail::check_duplicates(stderr)) return EXIT_FAILURE;
+
     auto const& all_cases = detail::registry::cases();
 
     std::vector<detail::test_entry> selected_cases;

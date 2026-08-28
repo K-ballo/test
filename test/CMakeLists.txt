@@ -341,6 +341,41 @@ add_lib_test(
     EXITS 1
 )
 
+# REGISTER_P rejects a duplicate instance name for the same test case,
+# reporting both where it was first registered and the duplicate's location.
+string(
+    CONCAT _register_p_duplicate_pass_regex
+    "error: duplicate test case 'duplicate_case/same'  "
+    "\\[.*register_p\\.duplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.duplicate\\.cpp:[0-9]+\\]\\)"
+)
+add_lib_test(
+    register_p.duplicate.will_fail
+    SOURCES register_p.duplicate.cpp
+    PASS_REGEX "${_register_p_duplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# REGISTER_P reports every duplicate instance, not just the first, each
+# paired with the original registration's location.
+string(
+    CONCAT _register_p_triplicate_pass_regex
+    "error: duplicate test case 'triplicate_case/same'  "
+    "\\[.*register_p\\.triplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.triplicate\\.cpp:[0-9]+\\]\\)\n"
+    "error: duplicate test case 'triplicate_case/same'  "
+    "\\[.*register_p\\.triplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.triplicate\\.cpp:[0-9]+\\]\\)"
+)
+add_lib_test(
+    register_p.triplicate.will_fail
+    SOURCES register_p.triplicate.cpp
+    PASS_REGEX "${_register_p_triplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
 # REGISTER_P requires an identifier as a name.
 add_lib_test(
     register_p.invalid_name.compile_fail

@@ -15,6 +15,7 @@
 #include <string_view>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace eggs::test::detail {
 
@@ -65,12 +66,17 @@ struct registry
 {
     using cases_type =
         std::unordered_set<test_entry, test_entry_hash, test_entry_equal>;
+    using duplicates_type =
+        std::vector<std::pair<test_entry const*, std::source_location>>;
 
     static cases_type& cases();
+    static duplicates_type& duplicates();
 
     static test_entry const* add(test_entry e)
     {
         auto const [it, inserted] = cases().insert(std::move(e));
+        if (!inserted) [[unlikely]]
+            duplicates().emplace_back(&*it, e.loc);
         return &*it;
     }
 };
