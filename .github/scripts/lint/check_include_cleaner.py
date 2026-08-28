@@ -201,16 +201,26 @@ def main() -> int:
     if findings:
         print("error: clang-include-cleaner findings:")
         in_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+        summary_lines = []
         for path in sorted(findings):
             print(f"  {path}")
             for line in findings[path]:
                 print(f"    {line}")
+            summary_lines.append(f"{path}")
+            summary_lines.extend(f"  {line}" for line in findings[path])
             if in_ci:
                 summary = "; ".join(findings[path])
                 print(
                     f"::error file={gh_escape_property(path)}::"
                     f"clang-include-cleaner: {gh_escape_property(summary)}"
                 )
+
+        step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+        if step_summary:
+            with open(step_summary, "a", encoding="utf-8") as f:
+                f.write("## clang-include-cleaner findings\n\n```\n")
+                f.write("\n".join(summary_lines))
+                f.write("\n```\n")
         return 1
 
     print(
