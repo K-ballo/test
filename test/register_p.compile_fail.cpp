@@ -9,14 +9,24 @@
 
 #include <concepts>
 
-#if defined(REGISTER_P_NONLITERAL_INSTANCE_COMPILE_FAIL)
+#if defined(REGISTER_P_INVALID_NAME_COMPILE_FAIL)
+
+TEST_CASE(invalid_name, "parameterized test", int const& n)
+{
+    CHECK(n == n);
+}
+
+// REGISTER_P requires an identifier as a name.
+REGISTER_P(invalid name, "small", 0);
+
+#elif defined(REGISTER_P_NONLITERAL_INSTANCE_COMPILE_FAIL)
 
 TEST_CASE(nonliteral_instance, "parameterized test", int const& n)
 {
     CHECK(n == n);
 }
 
-// REGISTER_P instance must be a string literal.
+// REGISTER_P instance name must be a string literal.
 char const* const instance = "first";
 
 REGISTER_P(nonliteral_instance, instance, 0);
@@ -76,7 +86,7 @@ TEST_CASE(empty_instance, "parameterized test", int const& n)
     CHECK(n == n);
 }
 
-// instance names must be non-empty.
+// REGISTER_P rejects an empty instance name.
 REGISTER_P(empty_instance, "", 0);
 
 #elif defined(REGISTER_P_LEADING_DIGIT_INSTANCE_COMPILE_FAIL)
@@ -86,7 +96,7 @@ TEST_CASE(leading_digit_instance, "parameterized test", int const& n)
     CHECK(n == n);
 }
 
-// instance names must start with a letter or '_'.
+// REGISTER_P rejects an instance name starting with a digit.
 REGISTER_P(leading_digit_instance, "1st", 0);
 
 #elif defined(REGISTER_P_LEADING_SYMBOL_INSTANCE_COMPILE_FAIL)
@@ -96,8 +106,7 @@ TEST_CASE(leading_symbol_instance, "parameterized test", int const& n)
     CHECK(n == n);
 }
 
-// instance names must start with a letter or '_'; '-', '.', and '/' are
-// allowed elsewhere in the name but not as the first character.
+// REGISTER_P rejects an instance name starting with a symbol.
 REGISTER_P(leading_symbol_instance, "-first", 0);
 
 #elif defined(REGISTER_P_INVALID_CHAR_INSTANCE_COMPILE_FAIL)
@@ -107,8 +116,7 @@ TEST_CASE(invalid_char_instance, "parameterized test", int const& n)
     CHECK(n == n);
 }
 
-// instance names may only contain letters, digits, '_', '.', '/', '-'; a
-// space is not among them.
+// REGISTER_P rejects an instance name containing an invalid character.
 REGISTER_P(invalid_char_instance, "two words", 0);
 
 #endif

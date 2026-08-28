@@ -37,6 +37,10 @@
 //   }
 //   REGISTER_P(add, "one-two", 1, 2);
 #define TEST_CASE(name_, desc_, ...)                                    \
+    static_assert(                                                      \
+        ::eggs::test::detail::is_valid_instance_name(#name_),           \
+        "TEST_CASE(" #name_ ", ...): name must be a valid identifier"   \
+    );                                                                  \
     struct name_;                                                       \
     static_assert(                                                      \
         ::std::is_same_v<name_, ::name_>,                               \
@@ -77,6 +81,10 @@
 //   REGISTER_P(add, "small", 1, 2);
 //   REGISTER_P(add, "negative", -3, 5);
 #define REGISTER_P(name_, instance_, ...)                              \
+    static_assert(                                                     \
+        ::eggs::test::detail::is_valid_instance_name(#name_),          \
+        "REGISTER_P(" #name_ ", ...): name must be a valid identifier" \
+    );                                                                 \
     static_assert(                                                     \
         ::eggs::test::detail::is_parameterized<name_>,                 \
         "REGISTER_P can only be used with a parameterized TEST_CASE"   \

@@ -43,6 +43,37 @@ TEST_CASE(invalid name, "test case with an invalid name")
     CHECK(1 + 1 == 2);
 }
 
+#elif defined(TEST_CASE_QUALIFIED_NAME_COMPILE_FAIL)
+
+namespace test_case_qualified_name_compile_fail {
+struct qualified_name;
+} // namespace test_case_qualified_name_compile_fail
+
+// TEST_CASE requires an identifier as a name, not a qualified name.
+TEST_CASE(
+    test_case_qualified_name_compile_fail::qualified_name,
+    "test case with a qualified name"
+)
+{
+    CHECK(1 + 1 == 2);
+}
+
+#elif defined(TEST_CASE_STRING_NAME_COMPILE_FAIL)
+
+// TEST_CASE requires an identifier as a name, not a string literal.
+TEST_CASE("string_name", "test case rejects a string literal as name")
+{
+    CHECK(1 + 1 == 2);
+}
+
+#elif defined(TEST_CASE_LEADING_DIGIT_NAME_COMPILE_FAIL)
+
+// TEST_CASE names must start with a letter.
+TEST_CASE(1abc, "test case rejects a name starting with a digit")
+{
+    CHECK(1 + 1 == 2);
+}
+
 #elif defined(TEST_CASE_INVALID_DESC_COMPILE_FAIL)
 
 // TEST_CASE description must be a string literal.

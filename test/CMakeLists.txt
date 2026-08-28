@@ -264,6 +264,31 @@ add_lib_test(
     test_case.invalid_name.compile_fail
     SOURCES test_case.compile_fail.cpp
     COMPILE_FAIL TEST_CASE_INVALID_NAME_COMPILE_FAIL
+    PASS_REGEX "name must be a valid identifier"
+)
+
+# TEST_CASE requires an identifier as a name, not a qualified name.
+add_lib_test(
+    test_case.qualified_name.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_QUALIFIED_NAME_COMPILE_FAIL
+    PASS_REGEX "name must be a valid identifier"
+)
+
+# TEST_CASE requires an identifier as a name, not a string literal.
+add_lib_test(
+    test_case.string_name.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_STRING_NAME_COMPILE_FAIL
+    PASS_REGEX "name must be a valid identifier"
+)
+
+# TEST_CASE names must start with a letter.
+add_lib_test(
+    test_case.leading_digit_name.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_LEADING_DIGIT_NAME_COMPILE_FAIL
+    PASS_REGEX "name must be a valid identifier"
 )
 
 # TEST_CASE requires a string literal as a description.
@@ -316,7 +341,15 @@ add_lib_test(
     EXITS 1
 )
 
-# REGISTER_P instance must be a string literal.
+# REGISTER_P requires an identifier as a name.
+add_lib_test(
+    register_p.invalid_name.compile_fail
+    SOURCES register_p.compile_fail.cpp
+    COMPILE_FAIL REGISTER_P_INVALID_NAME_COMPILE_FAIL
+    PASS_REGEX "name must be a valid identifier"
+)
+
+# REGISTER_P instance name must be a string literal.
 add_lib_test(
     register_p.nonliteral_instance.compile_fail
     SOURCES register_p.compile_fail.cpp
@@ -350,7 +383,7 @@ add_lib_test(
     COMPILE_FAIL REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL
 )
 
-# instance names must be non-empty.
+# REGISTER_P rejects an empty instance name.
 add_lib_test(
     register_p.empty_instance.compile_fail
     SOURCES register_p.compile_fail.cpp
@@ -358,7 +391,7 @@ add_lib_test(
     PASS_REGEX "instance name must be"
 )
 
-# instance names must start with a letter or '_'.
+# REGISTER_P rejects an instance name starting with a digit.
 add_lib_test(
     register_p.leading_digit_instance.compile_fail
     SOURCES register_p.compile_fail.cpp
@@ -366,7 +399,7 @@ add_lib_test(
     PASS_REGEX "instance name must be"
 )
 
-# instance names must start with a letter or '_'; '-', '.', '/' don't count.
+# REGISTER_P rejects an instance name starting with a symbol.
 add_lib_test(
     register_p.leading_symbol_instance.compile_fail
     SOURCES register_p.compile_fail.cpp
@@ -374,7 +407,7 @@ add_lib_test(
     PASS_REGEX "instance name must be"
 )
 
-# instance names may only contain letters, digits, '_', '.', '/', '-'.
+# REGISTER_P rejects an instance name containing an invalid character.
 add_lib_test(
     register_p.invalid_char_instance.compile_fail
     SOURCES register_p.compile_fail.cpp
