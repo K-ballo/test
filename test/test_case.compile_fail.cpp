@@ -61,4 +61,33 @@ TEST_CASE(defaulted_param, "defaulted parameter", int n = 0)
     CHECK(n >= 0);
 }
 
+#elif defined(TEST_CASE_NAMESPACE_SCOPE_COMPILE_FAIL)
+
+// TEST_CASE must be defined at global scope.
+namespace test_case_namespace_scope_compile_fail {
+
+TEST_CASE(namespace_scope, "test case nested in a namespace")
+{
+    CHECK(1 + 1 == 2);
+}
+
+} // namespace test_case_namespace_scope_compile_fail
+
+#elif defined(TEST_CASE_NAMESPACE_SCOPE_SHADOW_COMPILE_FAIL)
+
+// TEST_CASE must be defined at global scope (shadow case).
+TEST_CASE(same_name, "test case defined at global scope")
+{
+    CHECK(1 + 1 == 2);
+}
+
+namespace test_case_namespace_scope_shadow_compile_fail {
+
+TEST_CASE(same_name, "test case nested in a namespace, same name as above")
+{
+    CHECK(1 + 1 == 2);
+}
+
+} // namespace test_case_namespace_scope_shadow_compile_fail
+
 #endif

@@ -280,6 +280,18 @@ add_lib_test(
     COMPILE_FAIL TEST_CASE_DEFAULTED_PARAM_COMPILE_FAIL
 )
 
+# TEST_CASE must be defined at global scope.
+add_lib_test(
+    test_case.namespace_scope.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_NAMESPACE_SCOPE_COMPILE_FAIL
+)
+add_lib_test(
+    test_case.namespace_scope.shadow.compile_fail
+    SOURCES test_case.compile_fail.cpp
+    COMPILE_FAIL TEST_CASE_NAMESPACE_SCOPE_SHADOW_COMPILE_FAIL
+)
+
 # --- parameterized tests -----------------------------------------------------
 
 # Parameterized test cases registered via REGISTER_P.

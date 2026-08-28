@@ -18,6 +18,7 @@
 #include <format>          // IWYU pragma: keep
 #include <source_location> // IWYU pragma: keep
 #include <string_view>
+#include <type_traits> // IWYU pragma: keep
 #include <vector>
 
 #define EGGS_TEST_PP_CAT_(a, b) a##b
@@ -37,6 +38,10 @@
 //   REGISTER_P(add, "one-two", 1, 2);
 #define TEST_CASE(name_, desc_, ...)                                    \
     struct name_;                                                       \
+    static_assert(                                                      \
+        ::std::is_same_v<name_, ::name_>,                               \
+        "TEST_CASE(" #name_ ", ...) must be defined at global scope"    \
+    );                                                                  \
     struct name_                                                        \
     {                                                                   \
         static constexpr const char* case_desc_ = desc_;                \
