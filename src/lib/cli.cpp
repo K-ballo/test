@@ -33,19 +33,20 @@ void print_option(
     // FIXME(C++26): !desc.empty()
     assert(desc.size() != 0);
 
-    auto it = desc.begin();
+    std::span<std::string_view const> const lines{desc};
+    std::size_t i = 0;
 
     // First line: print display alongside description if it fits, else wrap.
-    if (2 + disp.size() <= desc_col && it != desc.end()) {
-        detail::println(out, "  {:<{}} {}", disp, desc_col - 2, *it);
-        ++it;
+    if (2 + disp.size() <= desc_col && i != lines.size()) {
+        detail::println(out, "  {:<{}} {}", disp, desc_col - 2, lines[i]);
+        ++i;
     } else {
         detail::println(out, "  {}", disp);
     }
 
     // Remaining lines: indent to description column.
-    for (; it != desc.end(); ++it) {
-        detail::println(out, "{:>{}} {}", "", desc_col, *it);
+    for (; i != lines.size(); ++i) {
+        detail::println(out, "{:>{}} {}", "", desc_col, lines[i]);
     }
 }
 
