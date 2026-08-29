@@ -14,7 +14,10 @@
 #include <cstdio>
 #include <format>
 #include <initializer_list>
+#include <span>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "opts.hpp"
 
@@ -82,27 +85,45 @@ std::string_view extract_stem(std::string_view arg, std::string_view const ns)
 
 } // namespace
 
-run_options parse_cli(int& argc, char const* argv[], std::string_view ns)
+parse_result
+parse_cli(std::span<char const* const> const args, std::string_view ns)
 {
-    int outc = 1;
     run_options opts;
 
-    for (int i = 1; i < argc; ++i) {
-        auto const stem = extract_stem(argv[i], ns);
+    std::vector<char const*> unknown;
+    unknown.reserve(args.size());
+
+    for (char const* const arg : args) {
+        auto const stem = extract_stem(arg, ns);
 
         if (stem == "list") {
             opts.list = true;
-        } else if (stem.starts_with("run=")) {
-            opts.run.push_back(stem.substr(4));
+        } else if (stem.starts_with("run")) {
+            auto const value =
+                stem == "run" ? std::string_view{} : stem.substr(4);
+            if (!value.empty()) {
+                opts.run.push_back(value);
+            } else {
+                return parse_result{
+                    .options = {},
+                    .unknown = {},
+                    .error = std::format(
+                        "missing value for --{}{}run", ns, ns.empty() ? "" : ":"
+                    ),
+                };
+            }
         } else if (stem == "verbose") {
             opts.verbose = true;
         } else {
-            argv[outc++] = argv[i];
+            unknown.push_back(arg);
         }
     }
 
-    argc = outc;
-    return opts;
+    return parse_result{
+        .options = std::move(opts),
+        .unknown = std::move(unknown),
+        .error = {},
+    };
 }
 
 } // namespace eggs::test

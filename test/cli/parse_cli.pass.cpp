@@ -8,124 +8,185 @@
 #include <eggs/test.hpp>
 #include <eggs/test/cli.hpp>
 
-#include <cstddef>
 #include <span>
 #include <string_view>
 #include <vector>
 #include <version>
 
-template <typename T, std::size_t N>
-constexpr int countof(T (&)[N]) noexcept
+TEST_CASE(parse_cli_list, "--list is consumed and sets run_options.list")
 {
-    return static_cast<int>(N);
+    char const* argv[] = {"--list"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == true);
+    CHECK(result.unknown.empty());
 }
 
-TEST_CASE(parse_cli_list, "--list is consumed and sets opts.list")
+TEST_CASE(parse_cli_ns_list, "--ns:list is consumed and sets run_options.list")
 {
-    char const* argv[] = {"prog", "--list"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.list == true);
-    CHECK(argc == 1);
-}
+    char const* argv[] = {"--ns:list"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
 
-TEST_CASE(parse_cli_ns_list, "--ns:list is consumed and sets opts.list")
-{
-    char const* argv[] = {"prog", "--ns:list"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == true);
-    CHECK(argc == 1);
-}
-
-TEST_CASE(parse_cli_verbose, "--verbose is consumed and sets opts.verbose")
-{
-    char const* argv[] = {"prog", "--verbose"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.verbose == true);
-    CHECK(argc == 1);
+    CHECK(result.options.list == true);
+    CHECK(result.unknown.empty());
 }
 
 TEST_CASE(
-    parse_cli_ns_verbose, "--ns:verbose is consumed and sets opts.verbose"
+    parse_cli_verbose, "--verbose is consumed and sets run_options.verbose"
 )
 {
-    char const* argv[] = {"prog", "--ns:verbose"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.verbose == true);
-    CHECK(argc == 1);
+    char const* argv[] = {"--verbose"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.verbose == true);
+    CHECK(result.unknown.empty());
 }
 
-TEST_CASE(parse_cli_run, "--run=foo is consumed and populates opts.run")
+TEST_CASE(
+    parse_cli_ns_verbose,
+    "--ns:verbose is consumed and sets run_options.verbose"
+)
 {
-    char const* argv[] = {"prog", "--run=foo"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.run == std::vector<std::string_view>{"foo"});
-    CHECK(argc == 1);
+    char const* argv[] = {"--ns:verbose"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.verbose == true);
+    CHECK(result.unknown.empty());
 }
 
-TEST_CASE(parse_cli_ns_run, "--ns:run=foo is consumed and populates opts.run")
+TEST_CASE(parse_cli_run, "--run=foo is consumed and populates run_options.run")
 {
-    char const* argv[] = {"prog", "--ns:run=foo"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.run == std::vector<std::string_view>{"foo"});
-    CHECK(argc == 1);
+    char const* argv[] = {"--run=foo"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.run == std::vector<std::string_view>{"foo"});
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(parse_cli_run_bare, "--run (no '=') reports an error")
+{
+    char const* argv[] = {"--run"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(!result.error.empty());
+
+    CHECK(result.error == "missing value for --run");
+}
+
+TEST_CASE(parse_cli_run_missing_value, "--run= (empty value) reports an error")
+{
+    char const* argv[] = {"--run="};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(!result.error.empty());
+
+    CHECK(result.error == "missing value for --run");
+}
+
+TEST_CASE(
+    parse_cli_ns_run, "--ns:run=foo is consumed and populates run_options.run"
+)
+{
+    char const* argv[] = {"--ns:run=foo"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.run == std::vector<std::string_view>{"foo"});
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(parse_cli_ns_run_bare, "--ns:run (no '=') reports an error")
+{
+    char const* argv[] = {"--ns:run"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(!result.error.empty());
+
+    CHECK(result.error == "missing value for --ns:run");
+}
+
+TEST_CASE(
+    parse_cli_ns_run_missing_value, "--ns:run= (empty value) reports an error"
+)
+{
+    char const* argv[] = {"--ns:run="};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(!result.error.empty());
+
+    CHECK(result.error == "missing value for --ns:run");
 }
 
 TEST_CASE(parse_cli_run_multiple, "--run=a --run=b are both consumed in order")
 {
-    char const* argv[] = {"prog", "--run=a", "--run=b"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.run == std::vector<std::string_view>{"a", "b"});
-    CHECK(argc == 1);
+    char const* argv[] = {"--run=a", "--run=b"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.run == std::vector<std::string_view>{"a", "b"});
+    CHECK(result.unknown.empty());
 }
 
-TEST_CASE(parse_cli_unknown, "unknown arg is left in argv")
+TEST_CASE(
+    parse_cli_run_error_returns_defaults,
+    "an error returns default options and an empty unknown list"
+)
 {
-    char const* argv[] = {"prog", "--unknown"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.list == false);
-    CHECK(opts.run.empty());
-    CHECK(opts.verbose == false);
+    char const* argv[] = {"--unknown", "--run"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(!result.error.empty());
+
+    CHECK(result.error == "missing value for --run");
+
+    CHECK(result.options.list == false);
+    CHECK(result.options.run.empty());
+    CHECK(result.options.verbose == false);
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(parse_cli_unknown, "unknown arg is returned in .unknown")
+{
+    char const* argv[] = {"--unknown"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    CHECK(result.options.run.empty());
+    CHECK(result.options.verbose == false);
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
-    CONTEXT("argv={}", std::span(argv, argc));
+    CONTEXT("unknown={}", result.unknown);
 #endif
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--unknown");
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--unknown");
 }
 
 TEST_CASE(parse_cli_help, "--help is not consumed by parse_cli")
 {
-    char const* argv[] = {"prog", "--help"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--help");
+    char const* argv[] = {"--help"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--help");
 }
 
 TEST_CASE(parse_cli_mixed, "known flags consumed, unknowns preserved in order")
 {
-    char const* argv[] = {
-        "prog", "--list", "--unknown-a", "--run=foo", "--unknown-b"
-    };
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.list == true);
-    CHECK(opts.run == std::vector<std::string_view>{"foo"});
+    char const* argv[] = {"--list", "--unknown-a", "--run=foo", "--unknown-b"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == true);
+    CHECK(result.options.run == std::vector<std::string_view>{"foo"});
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
-    CONTEXT("argv={}", std::span(argv, argc));
+    CONTEXT("unknown={}", result.unknown);
 #endif
-    CHECK(argc == 3);
-    CHECK(std::string_view{argv[1]} == "--unknown-a");
-    CHECK(std::string_view{argv[2]} == "--unknown-b");
+    REQUIRE(result.unknown.size() == 2);
+    CHECK(std::string_view{result.unknown[0]} == "--unknown-a");
+    CHECK(std::string_view{result.unknown[1]} == "--unknown-b");
 }
 
 TEST_CASE(
@@ -133,19 +194,20 @@ TEST_CASE(
 )
 {
     char const* argv[] = {
-        "prog", "--eggs:list", "--unknown", "--eggs:run=foo", "--list"
+        "--eggs:list", "--unknown", "--eggs:run=foo", "--list"
     };
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "eggs");
-    CHECK(opts.list == true);
-    CHECK(opts.run == std::vector<std::string_view>{"foo"});
+    auto const result = eggs::test::parse_cli(argv, "eggs");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == true);
+    CHECK(result.options.run == std::vector<std::string_view>{"foo"});
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
-    CONTEXT("argv={}", std::span(argv, argc));
+    CONTEXT("unknown={}", result.unknown);
 #endif
-    CHECK(argc == 3);
-    CHECK(std::string_view{argv[1]} == "--unknown");
-    CHECK(std::string_view{argv[2]} == "--list");
+    REQUIRE(result.unknown.size() == 2);
+    CHECK(std::string_view{result.unknown[0]} == "--unknown");
+    CHECK(std::string_view{result.unknown[1]} == "--list");
 }
 
 TEST_CASE(
@@ -153,25 +215,27 @@ TEST_CASE(
     "--ns:unknown (unrecognized stem) is left in argv"
 )
 {
-    char const* argv[] = {"prog", "--ns:unknown"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(opts.run.empty());
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--ns:unknown");
+    char const* argv[] = {"--ns:unknown"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    CHECK(result.options.run.empty());
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--ns:unknown");
 }
 
 TEST_CASE(
     parse_cli_ns_empty_stem, "--ns: (empty stem after colon) is left in argv"
 )
 {
-    char const* argv[] = {"prog", "--ns:"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--ns:");
+    char const* argv[] = {"--ns:"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--ns:");
 }
 
 TEST_CASE(
@@ -179,30 +243,32 @@ TEST_CASE(
     "--list and --run=foo without namespace prefix are left in argv"
 )
 {
-    char const* argv[] = {"prog", "--list", "--run=foo"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(opts.run.empty());
+    char const* argv[] = {"--list", "--run=foo"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    CHECK(result.options.run.empty());
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
-    CONTEXT("argv={}", std::span(argv, argc));
+    CONTEXT("unknown={}", result.unknown);
 #endif
-    CHECK(argc == 3);
-    CHECK(std::string_view{argv[1]} == "--list");
-    CHECK(std::string_view{argv[2]} == "--run=foo");
+    REQUIRE(result.unknown.size() == 2);
+    CHECK(std::string_view{result.unknown[0]} == "--list");
+    CHECK(std::string_view{result.unknown[1]} == "--run=foo");
 }
 
 TEST_CASE(
     parse_cli_ns_no_colon, "--nslist (no colon separator) is left in argv"
 )
 {
-    char const* argv[] = {"prog", "--nslist"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--nslist");
+    char const* argv[] = {"--nslist"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--nslist");
 }
 
 TEST_CASE(
@@ -210,12 +276,13 @@ TEST_CASE(
                                "colon or stem) is left in argv"
 )
 {
-    char const* argv[] = {"prog", "--ns"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(argc == 2);
-    CHECK(std::string_view{argv[1]} == "--ns");
+    char const* argv[] = {"--ns"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--ns");
 }
 
 TEST_CASE(
@@ -223,27 +290,31 @@ TEST_CASE(
     "--xyz:list and --xyz:run=foo with a different namespace are left in argv"
 )
 {
-    char const* argv[] = {"prog", "--xyz:list", "--xyz:run=foo"};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv, "ns");
-    CHECK(opts.list == false);
-    CHECK(opts.run.empty());
+    char const* argv[] = {"--xyz:list", "--xyz:run=foo"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == false);
+    CHECK(result.options.run.empty());
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L
-    CONTEXT("argv={}", std::span(argv, argc));
+    CONTEXT("unknown={}", result.unknown);
 #endif
-    CHECK(argc == 3);
-    CHECK(std::string_view{argv[1]} == "--xyz:list");
-    CHECK(std::string_view{argv[2]} == "--xyz:run=foo");
+    REQUIRE(result.unknown.size() == 2);
+    CHECK(std::string_view{result.unknown[0]} == "--xyz:list");
+    CHECK(std::string_view{result.unknown[1]} == "--xyz:run=foo");
 }
 
-TEST_CASE(parse_cli_mutable_argv, "non-const char* overload forwards correctly")
+TEST_CASE(
+    parse_cli_mutable_argv, "char*[] argv converts implicitly to "
+                            "span<char const* const>"
+)
 {
-    char prog[] = "prog";
     char flag[] = "--list";
-    char* argv[] = {prog, flag};
-    int argc = countof(argv);
-    auto opts = eggs::test::parse_cli(argc, argv);
-    CHECK(opts.list == true);
-    CHECK(argc == 1);
+    char* argv[] = {flag};
+    auto const result = eggs::test::parse_cli(std::span(argv));
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.list == true);
+    CHECK(result.unknown.empty());
 }
