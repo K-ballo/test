@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <optional>
+#include <span>
 #include <string_view>
 #include <system_error>
 
@@ -69,13 +70,17 @@ std::optional<int> parse_int(std::string_view sv) noexcept
 
 int main(int argc, char const* argv[])
 {
-    run_options const opts = parse_cli(argc, argv);
+    auto const parsed = test::parse_cli(
+        std::span(argv, static_cast<std::size_t>(argc)).subspan(1)
+    );
+    if (!parsed.error.empty()) {
+        detail::println(stderr, "error: {}", parsed.error);
+        return EXIT_FAILURE;
+    }
 
     std::optional<int> exit_code;
 
-    for (int i = 1; i < argc; ++i) {
-        std::string_view const arg = argv[i];
-
+    for (std::string_view const arg : parsed.unknown) {
         if (arg == "--help" || arg == "-h") {
             std::filesystem::path const path{argv[0] ? argv[0] : ""};
             auto const& usage = path.filename().string();
@@ -102,7 +107,7 @@ int main(int argc, char const* argv[])
         return EXIT_FAILURE;
     }
 
-    int const result = test::run(opts);
+    int const result = test::run(parsed.options);
     return exit_code.value_or(result);
 }
 

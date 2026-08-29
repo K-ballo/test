@@ -1075,6 +1075,16 @@ add_lib_test(
     EXITS 1
 )
 
+# --run (no '=') must print an error and not run any test case.
+add_lib_test(
+    cli.run.missing_value.fail
+    SOURCES registration.cpp
+    ARGS "--run"
+    PASS_REGEX "error: missing value for --run"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
 # --run=<name> starting with a digit is invalid, also warned after reporting
 # the name as unknown.
 add_lib_test(
