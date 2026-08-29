@@ -8,6 +8,7 @@
 ctest log into GitHub Actions error annotations.
 """
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -29,6 +30,19 @@ def relativize(path: str, repo_root: Path) -> str | None:
         return str(Path(path).resolve().relative_to(repo_root))
     except ValueError:
         return None
+
+
+def md_escape(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("|", "\\|")
+
+
+def blob_url(rel: str, line: int) -> str | None:
+    server = os.environ.get("GITHUB_SERVER_URL")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    sha = os.environ.get("GITHUB_SHA")
+    if not (server and repo and sha):
+        return None
+    return f"{server}/{repo}/blob/{sha}/{Path(rel).as_posix()}#L{line}"
 
 
 def main() -> int:
@@ -79,6 +93,7 @@ def main() -> int:
                 )
 
     annotated = 0
+    summary_rows = []
     for file, line, col, sanitizer, message in findings:
         rel = relativize(file, repo_root)
         if rel is None:
@@ -86,11 +101,32 @@ def main() -> int:
         annotated += 1
         print(f"::error file={rel},line={line},col={col},title={sanitizer}::{message}")
 
+        url = blob_url(rel, line)
+        location = f"{rel}:{line}:{col}"
+        location = f"[{location}]({url})" if url else location
+        summary_rows.append((sanitizer, location, message))
+
     if findings:
         print(
             f"{len(findings)} sanitizer diagnostic(s) found, {annotated} annotated.",
             file=sys.stderr,
         )
+
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_rows and step_summary:
+        summary_lines = [
+            "## Sanitizer diagnostics",
+            "",
+            "| Sanitizer | Location | Message |",
+            "| --- | --- | --- |",
+        ]
+        summary_lines.extend(
+            f"| {md_escape(sanitizer)} | {location} | {md_escape(message)} |"
+            for sanitizer, location, message in summary_rows
+        )
+        with open(step_summary, "a", encoding="utf-8") as f:
+            f.write("\n".join(summary_lines))
+            f.write("\n")
 
     return 0
 
