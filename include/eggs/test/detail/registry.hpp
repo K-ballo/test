@@ -15,7 +15,6 @@
 #include <string_view>
 #include <unordered_set>
 #include <utility>
-#include <vector>
 
 namespace eggs::test::detail {
 
@@ -74,8 +73,6 @@ struct registry
         auto const [it, inserted] = cases().insert(std::move(e));
         return &*it;
     }
-
-    static int run(std::vector<test_entry> const& run, bool verbose);
 };
 
 // A parameterized TEST_CASE requires arguments to run.

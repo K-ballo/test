@@ -8,9 +8,9 @@
 #pragma once
 
 #include <eggs/test/detail/noinline.hpp>
-#include <eggs/test/detail/require.hpp>
 #include <eggs/test/detail/run_state.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
+#include <eggs/test/detail/unwind.hpp>
 
 #include <cstddef>
 #include <exception>

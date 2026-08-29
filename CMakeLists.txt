@@ -49,7 +49,7 @@ add_library(
     src/lib/checks.cpp
     src/lib/cli.cpp
     src/lib/main.cpp
-    src/lib/runner.cpp
+    src/lib/run.cpp
 )
 target_sources(
     _eggs_test
@@ -62,11 +62,14 @@ target_sources(
                 include/eggs/test/detail/checks.hpp
                 include/eggs/test/detail/context.hpp
                 include/eggs/test/detail/noinline.hpp
+                include/eggs/test/detail/pp.hpp
                 include/eggs/test/detail/registry.hpp
-                include/eggs/test/detail/require.hpp
                 include/eggs/test/detail/run_state.hpp
                 include/eggs/test/detail/stacktrace.hpp
+                include/eggs/test/detail/unwind.hpp
                 include/eggs/test/detail/warning.hpp
+                include/eggs/test/main.hpp
+                include/eggs/test/run.hpp
     PRIVATE
         FILE_SET private_headers
             TYPE HEADERS

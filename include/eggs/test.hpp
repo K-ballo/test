@@ -9,20 +9,26 @@
 
 #include <eggs/test/detail/checks.hpp>    // IWYU pragma: export
 #include <eggs/test/detail/context.hpp>   // IWYU pragma: export
+#include <eggs/test/detail/pp.hpp>        // IWYU pragma: export
 #include <eggs/test/detail/registry.hpp>  // IWYU pragma: export
-#include <eggs/test/detail/require.hpp>   // IWYU pragma: export
 #include <eggs/test/detail/run_state.hpp> // IWYU pragma: export
+#include <eggs/test/detail/unwind.hpp>    // IWYU pragma: export
 #include <eggs/test/detail/warning.hpp>   // IWYU pragma: export
 
 #include <exception>       // IWYU pragma: keep
 #include <format>          // IWYU pragma: keep
 #include <source_location> // IWYU pragma: keep
-#include <string_view>
-#include <type_traits> // IWYU pragma: keep
-#include <vector>
+#include <type_traits>     // IWYU pragma: keep
 
-#define EGGS_TEST_PP_CAT_(a, b) a##b
-#define EGGS_TEST_PP_CAT(a, b) EGGS_TEST_PP_CAT_(a, b)
+namespace eggs::test::detail {
+
+template <typename T>
+inline T require(T value)
+{
+    return static_cast<bool>(value) ? value : throw detail::unwind{};
+}
+
+} // namespace eggs::test::detail
 
 // TEST_CASE(name, "description" [, params...])
 //
@@ -241,31 +247,3 @@
 // failure.  Returns bool.
 #define REQUIRE_NOTHROW(...) \
     ::eggs::test::detail::require(CHECK_NOTHROW(__VA_ARGS__))
-
-namespace eggs::test {
-
-// Options passed to run()
-struct run_options
-{
-    // ordered test case names; empty = run all
-    std::vector<std::string_view> run;
-    // list matching test case names instead of running them
-    bool list = false;
-    // report successful assertions
-    bool verbose = false;
-};
-
-// Public entry point - call this from main().
-int run(run_options opts = {});
-
-// Full default main: parse_cli + --help handling + run.
-// Link Eggs::TestMain to get this wired up automatically, or
-// call it from your own main() to add setup before tests run.
-int main(int argc, char const* argv[]);
-
-inline int main(int argc, char* argv[])
-{
-    return main(argc, const_cast<char const**>(argv));
-}
-
-} // namespace eggs::test

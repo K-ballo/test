@@ -5,10 +5,11 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <eggs/test.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
+#include <eggs/test/detail/unwind.hpp>
+#include <eggs/test/run.hpp>
 
 #include <cstddef>
 #include <cstdio>
@@ -20,9 +21,21 @@
 #include <unordered_set>
 #include <vector>
 
+eggs::test::detail::run_state*&
+eggs::test::detail::run_state::_current_ptr() noexcept
+{
+    static thread_local run_state* tl_current_state = nullptr;
+    return tl_current_state;
+}
+
+eggs::test::detail::registry::cases_type& eggs::test::detail::registry::cases()
+{
+    static registry::cases_type cases_;
+    return cases_;
+}
+
 namespace eggs::test {
 namespace detail {
-
 namespace {
 
 // "<passed> passed (<percent>%)", plus " | <failed> failed (<percent>%)"
@@ -42,24 +55,7 @@ std::string format_summary(std::size_t passed, std::size_t failed)
     );
 }
 
-} // namespace
-
-run_state*& run_state::_current_ptr() noexcept
-{
-    static thread_local run_state* tl_current_state = nullptr;
-    return tl_current_state;
-}
-
-registry::cases_type& registry::cases()
-{
-    // Meyers singleton - guaranteed to be constructed before first use,
-    // which avoids the static-initialisation-order fiasco when test_entry
-    // instances in different translation units register before main().
-    static registry::cases_type v;
-    return v;
-}
-
-int registry::run(std::vector<test_entry> const& run, bool verbose)
+int run(std::vector<test_entry> const& run, bool verbose)
 {
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
@@ -97,7 +93,9 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
             detail::println(
                 stdout, "[ {} ] {} -- {} assertions: {}\n",
                 passed ? "PASS" : "FAIL", e.name, assertions_total,
-                format_summary(state.assertions_passed, state.assertions_failed)
+                detail::format_summary(
+                    state.assertions_passed, state.assertions_failed
+                )
             );
         }
 
@@ -113,7 +111,7 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
     if (cases_total != 1) {
         detail::println(
             stdout, "{} test cases: {}{}", cases_total,
-            format_summary(cases_passed, cases_failed.size()),
+            detail::format_summary(cases_passed, cases_failed.size()),
             cases_failed.empty() ? "" : ":"
         );
         for (auto const& e : cases_failed) {
@@ -124,6 +122,7 @@ int registry::run(std::vector<test_entry> const& run, bool verbose)
     return cases_failed.empty() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+} // namespace
 } // namespace detail
 
 int run(run_options opts)
@@ -171,7 +170,7 @@ int run(run_options opts)
         return EXIT_SUCCESS;
     }
 
-    return detail::registry::run(selected_cases, opts.verbose);
+    return detail::run(selected_cases, opts.verbose);
 }
 
 } // namespace eggs::test

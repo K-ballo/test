@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <eggs/test.hpp>
+#include <eggs/test/run.hpp>
 
 #include <cstddef>
 #include <cstdio>

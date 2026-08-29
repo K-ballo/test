@@ -13,10 +13,4 @@ namespace eggs::test::detail {
 struct unwind final
 {};
 
-template <typename T>
-inline T require(T value)
-{
-    return static_cast<bool>(value) ? value : throw unwind{};
-}
-
 } // namespace eggs::test::detail
