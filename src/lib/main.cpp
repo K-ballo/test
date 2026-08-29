@@ -82,7 +82,7 @@ void print_help(std::FILE* out, std::string_view const usage)
         out, "Usage: {} [options]\n\nOptions:",
         usage.empty() ? "<test-executable>" : usage
     );
-    detail::print_option(
+    test::print_option(
         out, "-h, --help", {"print this help message and exit"}, k_desc_col
     );
     test::print_options(out, /*ns:*/ {}, k_desc_col);

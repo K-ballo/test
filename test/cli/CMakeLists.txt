@@ -8,6 +8,33 @@
 # parse_cli compaction: known flags consumed, unknowns preserved in argv.
 add_lib_test(cli/parse_cli.pass SOURCES parse_cli.pass.cpp DISCOVER EXITS 0)
 
+# print_option: disp and its first desc line share a row when disp fits.
+add_lib_test(
+    cli/print_option.fits.pass
+    SOURCES print_option.pass.cpp
+    RUN print_option_fits
+    PASS_REGEX "-h, --help[ ]+print this help message and exit"
+)
+
+# print_option: disp wider than desc_col wraps desc to the next line, indented
+# rather than appended to the disp line.
+add_lib_test(
+    cli/print_option.wraps.pass
+    SOURCES print_option.pass.cpp
+    RUN print_option_wraps
+    PASS_REGEX "--very-long-flag-name\n" "[ ]+description text"
+    FAIL_REGEX "--very-long-flag-name "
+)
+
+# print_option: desc lines past the first are indented, not appended to the
+# previous line.
+add_lib_test(
+    cli/print_option.multi_desc.pass
+    SOURCES print_option.pass.cpp
+    RUN print_option_multi_desc
+    PASS_REGEX "flag[ ]+first line\n" "[ ]+second line"
+)
+
 # print_options: bare form lists --list and --run=<test_case> with descriptions.
 add_lib_test(
     cli/print_options.bare.pass

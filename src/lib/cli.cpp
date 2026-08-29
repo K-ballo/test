@@ -22,7 +22,6 @@
 #include "opts.hpp"
 
 namespace eggs::test {
-namespace detail {
 
 void print_option(
     std::FILE* out, std::string_view const disp,
@@ -49,8 +48,6 @@ void print_option(
     }
 }
 
-} // namespace detail
-
 void print_options(
     std::FILE* out, std::string_view const ns, std::size_t const desc_col
 )
@@ -61,7 +58,7 @@ void print_options(
             "--{}{}{}{}", ns, ns.empty() ? "" : ":", opt.flag, opt.value
         );
 
-        detail::print_option(out, disp, opt.desc, desc_col);
+        print_option(out, disp, opt.desc, desc_col);
     }
 }
 
