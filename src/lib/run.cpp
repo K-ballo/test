@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <exception>
 #include <format>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -53,6 +54,41 @@ std::string format_summary(std::size_t passed, std::size_t failed)
         "{} passed ({}%) | {} failed ({}%)", passed, percent_passed, failed,
         100 - percent_passed
     );
+}
+
+// A --run pattern of the form "<prefix>/*" selects every case whose name
+// starts with "<prefix>/". Returns the prefix, or nullopt if `pattern` isn't
+// exactly that form (no other '*', and prefix is a valid instance name).
+std::optional<std::string_view> wildcard_prefix(std::string_view const pattern)
+{
+    if (!pattern.ends_with("/*")) return std::nullopt;
+
+    auto const prefix = pattern.substr(0, pattern.size() - 2);
+    if (prefix.contains('*') || !is_valid_instance_name(prefix)) {
+        return std::nullopt;
+    }
+
+    return prefix;
+}
+
+// If `pattern` is a "<prefix>/*" wildcard, returns every case in `cases`
+// whose name starts with "<prefix>/" (possibly none), in `cases`'s iteration
+// order. Returns nullopt if `pattern` is not a wildcard.
+std::optional<std::vector<test_entry const*>> select_wildcard(
+    registry::cases_type const& cases, std::string_view const pattern
+)
+{
+    auto const prefix = wildcard_prefix(pattern);
+    if (!prefix) return std::nullopt;
+
+    std::string const dir_prefix = std::format("{}/", *prefix);
+
+    std::vector<test_entry const*> matches;
+    for (auto const& e : cases) {
+        if (e.name.starts_with(dir_prefix)) matches.push_back(&e);
+    }
+
+    return matches;
 }
 
 int run(std::vector<test_entry> const& run, bool verbose)
@@ -138,24 +174,45 @@ int run(run_options opts)
 
         std::unordered_set<std::string_view> seen;
         seen.reserve(opts.run.size());
+
+        auto const select = [&](detail::test_entry const& e) {
+            if (!seen.insert(e.name).second) {
+                detail::println(
+                    stderr, "warning: duplicate test case '{}'", e.name
+                );
+            } else {
+                selected_cases.push_back(e);
+            }
+        };
+
         for (auto const& name : opts.run) {
+            if (auto const matches = detail::select_wildcard(all_cases, name)) {
+                if (matches->empty()) {
+                    detail::println(
+                        stderr, "error: no test cases match '{}'", name
+                    );
+                    any_unknown = true;
+                } else {
+                    for (auto const* e : *matches) select(*e);
+                }
+                continue;
+            }
+
+            if (!detail::is_valid_instance_name(name) || name.contains('*')) {
+                detail::println(
+                    stderr,
+                    "warning: '{}' is not a valid test case name or "
+                    "wildcard pattern; it will not match any test case",
+                    name
+                );
+            }
+
             auto const it = all_cases.find(name);
             if (it == all_cases.end()) {
                 detail::println(stderr, "error: unknown test case '{}'", name);
                 any_unknown = true;
-
-                if (!detail::is_valid_instance_name(name)) {
-                    detail::println(
-                        stderr, "warning: '{}' is not a valid test case name",
-                        name
-                    );
-                }
-            } else if (!seen.insert(name).second) {
-                detail::println(
-                    stderr, "warning: duplicate test case '{}'", name
-                );
             } else {
-                selected_cases.push_back(*it);
+                select(*it);
             }
         }
 

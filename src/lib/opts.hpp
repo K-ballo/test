@@ -42,6 +42,7 @@ constexpr
          .desc =
              {
                  "run only the specified test cases (repeatable).",
+                 "a trailing \"/*\" matches every case under that prefix",
                  "all test cases will run if omitted",
              }},
         {.flag = "verbose",

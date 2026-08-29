@@ -1126,17 +1126,149 @@ add_lib_test(
     EXITS 1
 )
 
-# --run=<name> containing invalid characters, also  warns after reporting the
-# name as unknown.
+# --run=<prefix>/* matches every REGISTER_P instance under that prefix.
 add_lib_test(
-    cli.run.invalid_name.invalid_char.fail
+    cli.run.wildcard.pass
+    SOURCES register_p.pass.cpp
+    RUN square/*
+    PASS_REGEX
+        "\\[ RUN  \\] square/zero -- "
+        "\\[ RUN  \\] square/positive -- "
+        "\\[ RUN  \\] square/negative -- "
+    FAIL_REGEX "add/one-two" "auto_single/int"
+    EXITS 0
+)
+
+# A case matched by both a literal --run and a --run=<prefix>/* wildcard runs
+# only once, with the usual duplicate warning.
+string(
+    CONCAT _run_wildcard_dedup_fail_regex
+    "\\[ RUN  \\] square/zero[^\n]*"
+    "(\n[^\n]*)*\n"
+    "\\[ RUN  \\] square/zero"
+)
+add_lib_test(
+    cli.run.wildcard.dedup.pass
+    SOURCES register_p.pass.cpp
+    RUN square/zero square/*
+    PASS_REGEX
+        "warning: duplicate test case 'square/zero'"
+        "\\[ RUN  \\] square/positive -- "
+    FAIL_REGEX "${_run_wildcard_dedup_fail_regex}"
+    EXITS 0
+)
+
+# --run=<prefix>/* that matches nothing reports an error, same as an unknown
+# literal name.
+add_lib_test(
+    cli.run.wildcard.no_match.fail
+    SOURCES register_p.pass.cpp
+    RUN nonexistent/*
+    PASS_REGEX "error: no test cases match 'nonexistent/\\*'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# '*' anywhere other than a trailing "/*" is not a supported wildcard: it
+# warns and then reports the pattern as an unknown test case.
+add_lib_test(
+    cli.run.wildcard.mid_position.fail
+    SOURCES registration.cpp
+    RUN registration_*_one
+    PASS_REGEX
+        "warning: 'registration_\\*_one' is not a valid test case name or wildcard pattern"
+        "error: unknown test case 'registration_\\*_one'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# A doubled trailing '*' is not a supported wildcard either.
+add_lib_test(
+    cli.run.wildcard.double_star.fail
+    SOURCES register_p.pass.cpp
+    RUN square/**
+    PASS_REGEX
+        "warning: 'square/\\*\\*' is not a valid test case name or wildcard pattern"
+        "error: unknown test case 'square/\\*\\*'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# A bare '*' has no leading "<prefix>/" component, so it is not a supported
+# wildcard.
+add_lib_test(
+    cli.run.wildcard.no_prefix.fail
+    SOURCES registration.cpp
+    RUN *
+    PASS_REGEX
+        "warning: '\\*' is not a valid test case name or wildcard pattern"
+        "error: unknown test case '\\*'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# A trailing "/*" whose prefix is itself not a valid instance name (e.g.
+# starts with a digit) is not a supported wildcard either.
+add_lib_test(
+    cli.run.wildcard.invalid_prefix.fail
+    SOURCES registration.cpp
+    RUN 1abc/*
+    PASS_REGEX
+        "warning: '1abc/\\*' is not a valid test case name or wildcard pattern"
+        "error: unknown test case '1abc/\\*'"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# --run=<name> containing characters no test case name can ever contain (and
+# unrelated to wildcards) also warns before reporting the name as unknown.
+add_lib_test(
+    cli.run.invalid_chars.fail
     SOURCES registration.cpp
     RUN "registration one"
     PASS_REGEX
+        "warning: 'registration one' is not a valid test case name or wildcard pattern"
         "error: unknown test case 'registration one'"
-        "warning: 'registration one' is not a valid test case name"
     FAIL_REGEX "\\[ RUN  \\]"
     EXITS 1
+)
+
+# --list --run=<prefix>/* lists only the matching instances.
+string(
+    CONCAT _list_wildcard_regex
+    "^"
+    "square/(zero|positive|negative)\n"
+    "square/(zero|positive|negative)\n"
+    "square/(zero|positive|negative)\n?$"
+)
+add_lib_test(
+    cli.list.run.wildcard.pass
+    SOURCES register_p.pass.cpp
+    RUN square/*
+    ARGS "--list"
+    PASS_REGEX "${_list_wildcard_regex}"
+    FAIL_REGEX "add/" "auto_single/" "auto_multi/" "integral_auto/"
+    EXITS 0
+)
+
+# --list --run=<literal> --run=<prefix>/* lists names in the given order: the
+# literal match first, then the wildcard's matches.
+string(
+    CONCAT _list_wildcard_mixed_regex
+    "^"
+    "add/one-two\n"
+    "square/(zero|positive|negative)\n"
+    "square/(zero|positive|negative)\n"
+    "square/(zero|positive|negative)\n?$"
+)
+add_lib_test(
+    cli.list.run.wildcard.mixed.pass
+    SOURCES register_p.pass.cpp
+    RUN add/one-two square/*
+    ARGS "--list"
+    PASS_REGEX "${_list_wildcard_mixed_regex}"
+    FAIL_REGEX "add/neg-pos"
+    EXITS 0
 )
 
 # --- exception tests ---------------------------------------------------------
