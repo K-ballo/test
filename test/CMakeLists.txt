@@ -895,6 +895,21 @@ add_lib_test(
     EXITS 1
 )
 
+# --unknown-a --unknown-b must report both unknown arguments.
+string(
+    CONCAT _unknown_multi_regex
+    "^"
+    "error: unknown argument '--unknown-a'\n"
+    "error: unknown argument '--unknown-b'\n?$"
+)
+add_lib_test(
+    cli.unknown_multi.fail
+    SOURCES check.pass.cpp
+    ARGS "--unknown-a" "--unknown-b"
+    PASS_REGEX "${_unknown_multi_regex}"
+    EXITS 1
+)
+
 # --exit-code=0 on a failing suite must override the exit code to 0.
 add_lib_test(
     cli.exit_code.pass
