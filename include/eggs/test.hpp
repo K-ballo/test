@@ -57,7 +57,7 @@ inline T require(T const& value)
         static constexpr const char* case_desc_ = desc_;                \
         static void run(__VA_ARGS__);                                   \
         EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH                   \
-        inline static auto const* reg_ = []<typename T = name_>()       \
+        inline static auto const* const reg_ = []<typename T = name_>() \
             -> ::eggs::test::detail::test_entry const* {                \
             if constexpr (!::eggs::test::detail::is_parameterized<T>) { \
                 return ::eggs::test::detail::registry::add({            \
@@ -86,33 +86,33 @@ inline T require(T const& value)
 //
 //   REGISTER_P(add, "small", 1, 2);
 //   REGISTER_P(add, "negative", -3, 5);
-#define REGISTER_P(name_, instance_, ...)                              \
-    static_assert(                                                     \
-        ::eggs::test::detail::is_valid_instance_name(#name_),          \
-        "REGISTER_P(" #name_ ", ...): name must be a valid identifier" \
-    );                                                                 \
-    static_assert(                                                     \
-        ::eggs::test::detail::is_parameterized<name_>,                 \
-        "REGISTER_P can only be used with a parameterized TEST_CASE"   \
-    );                                                                 \
-    static_assert(                                                     \
-        ::eggs::test::detail::is_valid_instance_name(instance_),       \
-        "REGISTER_P(" #name_ ", " #instance_ ", " #__VA_ARGS__         \
-        "): instance name must be a non-empty string of letters, "     \
-        "digits, '_', '.', '/', '-', starting with a letter"           \
-    );                                                                 \
-    EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH                      \
-    static auto const* EGGS_TEST_PP_CAT(eggs_test_reg_, __LINE__) = [] \
-        -> ::eggs::test::detail::test_entry const* {                   \
-            return ::eggs::test::detail::registry::add({               \
-                #name_ "/" instance_,                                  \
-                name_::case_desc_,                                     \
-                [](::eggs::test::detail::run_state& state) {           \
-                    state.mark_entry();                                \
-                    return name_::run(__VA_ARGS__);                    \
-                },                                                     \
-                ::std::source_location::current(),                     \
-            });                                                        \
+#define REGISTER_P(name_, instance_, ...)                                    \
+    static_assert(                                                           \
+        ::eggs::test::detail::is_valid_instance_name(#name_),                \
+        "REGISTER_P(" #name_ ", ...): name must be a valid identifier"       \
+    );                                                                       \
+    static_assert(                                                           \
+        ::eggs::test::detail::is_parameterized<name_>,                       \
+        "REGISTER_P can only be used with a parameterized TEST_CASE"         \
+    );                                                                       \
+    static_assert(                                                           \
+        ::eggs::test::detail::is_valid_instance_name(instance_),             \
+        "REGISTER_P(" #name_ ", " #instance_ ", " #__VA_ARGS__               \
+        "): instance name must be a non-empty string of letters, "           \
+        "digits, '_', '.', '/', '-', starting with a letter"                 \
+    );                                                                       \
+    EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH                            \
+    static auto const* const EGGS_TEST_PP_CAT(eggs_test_reg_, __LINE__) = [] \
+        -> ::eggs::test::detail::test_entry const* {                         \
+            return ::eggs::test::detail::registry::add({                     \
+                #name_ "/" instance_,                                        \
+                name_::case_desc_,                                           \
+                [](::eggs::test::detail::run_state& state) {                 \
+                    state.mark_entry();                                      \
+                    return name_::run(__VA_ARGS__);                          \
+                },                                                           \
+                ::std::source_location::current(),                           \
+            });                                                              \
         }() EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_POP
 
 // CONTEXT(fmt, args...)
