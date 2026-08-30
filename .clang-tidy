@@ -50,3 +50,6 @@ Checks: >
 
 HeaderFilterRegex: '.*'
 WarningsAsErrors: ''
+
+CheckOptions:
+  misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: true
