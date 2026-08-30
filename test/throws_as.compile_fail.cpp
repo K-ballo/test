@@ -6,9 +6,9 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
-#include <eggs/test/detail/require.hpp>
+#include <eggs/test/detail/unwind.hpp>
 
-#include <stdexcept>
+#include <stdexcept> // IWYU pragma: keep (std::runtime_error, other branches)
 
 #ifdef CHECK_THROWS_AS_NOEXCEPT_COMPILE_FAIL
 TEST_CASE(

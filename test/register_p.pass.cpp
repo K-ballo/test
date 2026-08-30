@@ -75,4 +75,4 @@ TEST_CASE(
 // Registers integral_auto/int, integral_auto/long, integral_auto/unsigned.
 REGISTER_P(integral_auto, "int", 42);
 REGISTER_P(integral_auto, "long", 42L);
-REGISTER_P(integral_auto, "unsigned", 42u);
+REGISTER_P(integral_auto, "unsigned", 42U);

@@ -9,10 +9,14 @@
 
 #include <stdexcept>
 
-static int does_not_throw()
+namespace {
+
+int does_not_throw()
 {
     return 0;
 }
+
+} // namespace
 
 TEST_CASE(
     check_throws_as_no_throw,

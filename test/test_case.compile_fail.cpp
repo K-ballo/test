@@ -84,7 +84,7 @@ TEST_CASE(invalid_desc, desc)
     CHECK(1 + 1 == 2);
 }
 
-#elif defined(TEST_CASE_DEFAULTED_PARAM_COMPILE_FAIL)
+#elifdef TEST_CASE_DEFAULTED_PARAM_COMPILE_FAIL
 
 // TEST_CASE parameters cannot be defaulted.
 TEST_CASE(defaulted_param, "defaulted parameter", int n = 0)
@@ -92,7 +92,7 @@ TEST_CASE(defaulted_param, "defaulted parameter", int n = 0)
     CHECK(n >= 0);
 }
 
-#elif defined(TEST_CASE_NAMESPACE_SCOPE_COMPILE_FAIL)
+#elifdef TEST_CASE_NAMESPACE_SCOPE_COMPILE_FAIL
 
 // TEST_CASE must be defined at global scope.
 namespace test_case_namespace_scope_compile_fail {
@@ -104,7 +104,7 @@ TEST_CASE(namespace_scope, "test case nested in a namespace")
 
 } // namespace test_case_namespace_scope_compile_fail
 
-#elif defined(TEST_CASE_NAMESPACE_SCOPE_SHADOW_COMPILE_FAIL)
+#elifdef TEST_CASE_NAMESPACE_SCOPE_SHADOW_COMPILE_FAIL
 
 // TEST_CASE must be defined at global scope (shadow case).
 TEST_CASE(same_name, "test case defined at global scope")
