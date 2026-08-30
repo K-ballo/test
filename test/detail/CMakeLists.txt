@@ -12,3 +12,11 @@ add_lib_test(
     SOURCES registry.test_entry.pass.cpp
     DISCOVER
 )
+
+# is_parameterized<T> is true only when T::run() is not callable with no
+# arguments.
+add_lib_test(
+    detail/registry.is_parameterized.pass
+    SOURCES registry.is_parameterized.pass.cpp
+    DISCOVER
+)
