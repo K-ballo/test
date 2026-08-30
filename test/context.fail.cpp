@@ -11,10 +11,14 @@
 
 // Exercises CONTEXT alongside a FAILED diagnostic.
 
-static int does_not_throw()
+namespace {
+
+int does_not_throw()
 {
     return 0;
 }
+
+} // namespace
 
 TEST_CASE(context_check_fail, "CONTEXT appears in a FAILED diagnostic")
 {

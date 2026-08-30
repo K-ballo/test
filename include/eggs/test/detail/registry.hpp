@@ -9,6 +9,7 @@
 
 #include <eggs/test/detail/run_state.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <source_location>
@@ -70,7 +71,7 @@ struct registry
 
     static test_entry const* add(test_entry e)
     {
-        auto const [it, inserted] = cases().insert(std::move(e));
+        auto const [it, inserted] = cases().insert(e);
         return &*it;
     }
 };
@@ -89,14 +90,12 @@ constexpr bool is_valid_instance_name(std::string_view name)
         (first >= 'A' && first <= 'Z') || (first >= 'a' && first <= 'z');
     if (!first_is_letter) return false;
 
-    for (char const c : name) {
+    return std::ranges::all_of(name, [](char const c) {
         bool const is_letter = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
         bool const is_digit = c >= '0' && c <= '9';
         bool const is_symbol = c == '_' || c == '.' || c == '/' || c == '-';
-        if (!is_letter && !is_digit && !is_symbol) return false;
-    }
-
-    return true;
+        return is_letter || is_digit || is_symbol;
+    });
 }
 
 } // namespace eggs::test::detail

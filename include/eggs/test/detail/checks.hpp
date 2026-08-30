@@ -40,13 +40,23 @@ EGGS_TEST_NOINLINE inline bool check(
     if (c) {
         ++s.assertions_passed;
         if (s.verbose)
-            check_passed(expr, {s.context_top, loc, detail::stacktrace{}, 0});
+            check_passed(
+                expr, {.ctx = s.context_top,
+                       .loc = loc,
+                       .st = detail::stacktrace{},
+                       .entry_depth = 0}
+            );
         return true;
     }
 
     ++s.assertions_failed;
     auto const& st = detail::stacktrace::current(1);
-    check_failed(expr, {s.context_top, loc, st, s.entry_depth});
+    check_failed(
+        expr, {.ctx = s.context_top,
+               .loc = loc,
+               .st = st,
+               .entry_depth = s.entry_depth}
+    );
     return false;
 }
 
@@ -66,13 +76,23 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws(
     } catch (...) {
         ++s.assertions_passed;
         if (s.verbose)
-            check_passed(expr, {s.context_top, loc, detail::stacktrace{}, 0});
+            check_passed(
+                expr, {.ctx = s.context_top,
+                       .loc = loc,
+                       .st = detail::stacktrace{},
+                       .entry_depth = 0}
+            );
         return std::current_exception();
     }
 
     ++s.assertions_failed;
     auto const& st = detail::stacktrace::current(1);
-    check_throws_failed(expr, {s.context_top, loc, st, s.entry_depth});
+    check_throws_failed(
+        expr, {.ctx = s.context_top,
+               .loc = loc,
+               .st = st,
+               .entry_depth = s.entry_depth}
+    );
     return nullptr;
 }
 
@@ -101,7 +121,12 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
     } catch (ExcType const&) {
         ++s.assertions_passed;
         if (s.verbose)
-            check_passed(expr, {s.context_top, loc, detail::stacktrace{}, 0});
+            check_passed(
+                expr, {.ctx = s.context_top,
+                       .loc = loc,
+                       .st = detail::stacktrace{},
+                       .entry_depth = 0}
+            );
         return std::current_exception();
     } catch (...) {
         threw = std::current_exception();
@@ -111,10 +136,19 @@ EGGS_TEST_NOINLINE inline std::exception_ptr check_throws_as(
     auto const& st = detail::stacktrace::current(1);
     if (threw)
         check_throws_as_failed(
-            expr, exc_type, threw, {s.context_top, loc, st, s.entry_depth}
+            expr, exc_type, threw,
+            {.ctx = s.context_top,
+             .loc = loc,
+             .st = st,
+             .entry_depth = s.entry_depth}
         );
     else
-        check_throws_failed(expr, {s.context_top, loc, st, s.entry_depth});
+        check_throws_failed(
+            expr, {.ctx = s.context_top,
+                   .loc = loc,
+                   .st = st,
+                   .entry_depth = s.entry_depth}
+        );
     return nullptr;
 }
 
@@ -136,7 +170,12 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
 
         ++s.assertions_passed;
         if (s.verbose)
-            check_passed(expr, {s.context_top, loc, detail::stacktrace{}, 0});
+            check_passed(
+                expr, {.ctx = s.context_top,
+                       .loc = loc,
+                       .st = detail::stacktrace{},
+                       .entry_depth = 0}
+            );
         return true;
     } catch (detail::unwind const&) {
         throw;
@@ -146,7 +185,13 @@ EGGS_TEST_NOINLINE inline bool check_nothrow(
 
     ++s.assertions_failed;
     auto const& st = detail::stacktrace::current(1);
-    check_nothrow_failed(expr, threw, {s.context_top, loc, st, s.entry_depth});
+    check_nothrow_failed(
+        expr, threw,
+        {.ctx = s.context_top,
+         .loc = loc,
+         .st = st,
+         .entry_depth = s.entry_depth}
+    );
     return false;
 }
 

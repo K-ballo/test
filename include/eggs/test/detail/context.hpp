@@ -16,14 +16,13 @@
 namespace eggs::test::detail {
 
 // RAII frame for a single CONTEXT(...) call.
-class context_frame
+struct context_frame
 {
-  public:
     explicit context_frame(
         std::string message_, std::source_location loc_
     ) noexcept
         : message(std::move(message_)),
-          loc(std::move(loc_)),
+          loc(loc_),
           prev(run_state::current().exchange_context(this))
     {
     }
@@ -32,6 +31,8 @@ class context_frame
 
     context_frame(context_frame const&) = delete;
     context_frame& operator=(context_frame const&) = delete;
+    context_frame(context_frame&&) = delete;
+    context_frame& operator=(context_frame&&) = delete;
 
     std::string const message;
     std::source_location const loc;

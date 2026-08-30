@@ -7,7 +7,7 @@
 
 #pragma once
 
-#if defined(__clang__)
+#ifdef __clang__
 
 #    define EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH \
         _Pragma("clang diagnostic push")                  \

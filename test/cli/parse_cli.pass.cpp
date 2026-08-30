@@ -11,11 +11,11 @@
 #include <span>
 #include <string_view>
 #include <vector>
-#include <version>
+#include <version> // IWYU pragma: keep (__cpp_lib_format_ranges)
 
 TEST_CASE(parse_cli_list, "--list is consumed and sets run_options.list")
 {
-    char const* argv[] = {"--list"};
+    char const* const argv[] = {"--list"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -25,7 +25,7 @@ TEST_CASE(parse_cli_list, "--list is consumed and sets run_options.list")
 
 TEST_CASE(parse_cli_ns_list, "--ns:list is consumed and sets run_options.list")
 {
-    char const* argv[] = {"--ns:list"};
+    char const* const argv[] = {"--ns:list"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -37,7 +37,7 @@ TEST_CASE(
     parse_cli_verbose, "--verbose is consumed and sets run_options.verbose"
 )
 {
-    char const* argv[] = {"--verbose"};
+    char const* const argv[] = {"--verbose"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -50,7 +50,7 @@ TEST_CASE(
     "--ns:verbose is consumed and sets run_options.verbose"
 )
 {
-    char const* argv[] = {"--ns:verbose"};
+    char const* const argv[] = {"--ns:verbose"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -60,7 +60,7 @@ TEST_CASE(
 
 TEST_CASE(parse_cli_run, "--run=foo is consumed and populates run_options.run")
 {
-    char const* argv[] = {"--run=foo"};
+    char const* const argv[] = {"--run=foo"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -70,7 +70,7 @@ TEST_CASE(parse_cli_run, "--run=foo is consumed and populates run_options.run")
 
 TEST_CASE(parse_cli_run_bare, "--run (no '=') reports an error")
 {
-    char const* argv[] = {"--run"};
+    char const* const argv[] = {"--run"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(!result.error.empty());
 
@@ -79,7 +79,7 @@ TEST_CASE(parse_cli_run_bare, "--run (no '=') reports an error")
 
 TEST_CASE(parse_cli_run_missing_value, "--run= (empty value) reports an error")
 {
-    char const* argv[] = {"--run="};
+    char const* const argv[] = {"--run="};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(!result.error.empty());
 
@@ -90,7 +90,7 @@ TEST_CASE(
     parse_cli_ns_run, "--ns:run=foo is consumed and populates run_options.run"
 )
 {
-    char const* argv[] = {"--ns:run=foo"};
+    char const* const argv[] = {"--ns:run=foo"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -100,7 +100,7 @@ TEST_CASE(
 
 TEST_CASE(parse_cli_ns_run_bare, "--ns:run (no '=') reports an error")
 {
-    char const* argv[] = {"--ns:run"};
+    char const* const argv[] = {"--ns:run"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(!result.error.empty());
 
@@ -111,7 +111,7 @@ TEST_CASE(
     parse_cli_ns_run_missing_value, "--ns:run= (empty value) reports an error"
 )
 {
-    char const* argv[] = {"--ns:run="};
+    char const* const argv[] = {"--ns:run="};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(!result.error.empty());
 
@@ -120,7 +120,7 @@ TEST_CASE(
 
 TEST_CASE(parse_cli_run_multiple, "--run=a --run=b are both consumed in order")
 {
-    char const* argv[] = {"--run=a", "--run=b"};
+    char const* const argv[] = {"--run=a", "--run=b"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -133,7 +133,7 @@ TEST_CASE(
     "an error returns default options and an empty unknown list"
 )
 {
-    char const* argv[] = {"--unknown", "--run"};
+    char const* const argv[] = {"--unknown", "--run"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(!result.error.empty());
 
@@ -147,7 +147,7 @@ TEST_CASE(
 
 TEST_CASE(parse_cli_unknown, "unknown arg is returned in .unknown")
 {
-    char const* argv[] = {"--unknown"};
+    char const* const argv[] = {"--unknown"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -164,7 +164,7 @@ TEST_CASE(parse_cli_unknown, "unknown arg is returned in .unknown")
 
 TEST_CASE(parse_cli_help, "--help is not consumed by parse_cli")
 {
-    char const* argv[] = {"--help"};
+    char const* const argv[] = {"--help"};
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -174,7 +174,9 @@ TEST_CASE(parse_cli_help, "--help is not consumed by parse_cli")
 
 TEST_CASE(parse_cli_mixed, "known flags consumed, unknowns preserved in order")
 {
-    char const* argv[] = {"--list", "--unknown-a", "--run=foo", "--unknown-b"};
+    char const* const argv[] = {
+        "--list", "--unknown-a", "--run=foo", "--unknown-b"
+    };
     auto const result = eggs::test::parse_cli(argv);
     REQUIRE(result.error.empty());
 
@@ -193,7 +195,7 @@ TEST_CASE(
     parse_cli_ns, "namespace prefix: known flags consumed, bare flags left"
 )
 {
-    char const* argv[] = {
+    char const* const argv[] = {
         "--eggs:list", "--unknown", "--eggs:run=foo", "--list"
     };
     auto const result = eggs::test::parse_cli(argv, "eggs");
@@ -215,7 +217,7 @@ TEST_CASE(
     "--ns:unknown (unrecognized stem) is left in argv"
 )
 {
-    char const* argv[] = {"--ns:unknown"};
+    char const* const argv[] = {"--ns:unknown"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -229,7 +231,7 @@ TEST_CASE(
     parse_cli_ns_empty_stem, "--ns: (empty stem after colon) is left in argv"
 )
 {
-    char const* argv[] = {"--ns:"};
+    char const* const argv[] = {"--ns:"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -243,7 +245,7 @@ TEST_CASE(
     "--list and --run=foo without namespace prefix are left in argv"
 )
 {
-    char const* argv[] = {"--list", "--run=foo"};
+    char const* const argv[] = {"--list", "--run=foo"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -262,7 +264,7 @@ TEST_CASE(
     parse_cli_ns_no_colon, "--nslist (no colon separator) is left in argv"
 )
 {
-    char const* argv[] = {"--nslist"};
+    char const* const argv[] = {"--nslist"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -276,7 +278,7 @@ TEST_CASE(
                                "colon or stem) is left in argv"
 )
 {
-    char const* argv[] = {"--ns"};
+    char const* const argv[] = {"--ns"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 
@@ -290,7 +292,7 @@ TEST_CASE(
     "--xyz:list and --xyz:run=foo with a different namespace are left in argv"
 )
 {
-    char const* argv[] = {"--xyz:list", "--xyz:run=foo"};
+    char const* const argv[] = {"--xyz:list", "--xyz:run=foo"};
     auto const result = eggs::test::parse_cli(argv, "ns");
     REQUIRE(result.error.empty());
 

@@ -16,11 +16,10 @@
 
 namespace eggs::test::detail {
 
-class context_frame;
+struct context_frame;
 
-class run_state
+struct run_state
 {
-  public:
     bool verbose = false;
     std::size_t entry_depth = 0;
     context_frame const* context_top = nullptr;

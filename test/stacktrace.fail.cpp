@@ -10,10 +10,14 @@
 
 #include <stdexcept>
 
-static int does_not_throw()
+namespace {
+
+int does_not_throw()
 {
     return 0;
 }
+
+} // namespace
 
 // Verify that assertion macros fired from helper functions produce a stacktrace
 // in their diagnostic.

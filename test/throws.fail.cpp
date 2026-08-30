@@ -7,10 +7,14 @@
 
 #include <eggs/test.hpp>
 
-static int does_not_throw()
+namespace {
+
+int does_not_throw()
 {
     return 0;
 }
+
+} // namespace
 
 TEST_CASE(
     check_throws_no_throw, "CHECK_THROWS fails when expression does not throw"
