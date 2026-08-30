@@ -6,11 +6,10 @@
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 #include <eggs/test.hpp>
-#include <eggs/test/detail/unwind.hpp>
-
-#include <stdexcept> // IWYU pragma: keep (std::runtime_error, other branches)
 
 #ifdef CHECK_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
+#    include <stdexcept>
+
 TEST_CASE(
     check_catches_as_noexcept_compile_fail,
     "CHECK_CATCHES_AS rejects noexcept expressions"
@@ -19,6 +18,8 @@ TEST_CASE(
     CHECK_CATCHES_AS(std::runtime_error, 1 + 1) {}
 }
 #elifdef REQUIRE_CATCHES_AS_NOEXCEPT_COMPILE_FAIL
+#    include <stdexcept>
+
 TEST_CASE(
     require_catches_as_noexcept_compile_fail,
     "REQUIRE_CATCHES_AS rejects noexcept expressions"
@@ -27,6 +28,8 @@ TEST_CASE(
     REQUIRE_CATCHES_AS(std::runtime_error, 1 + 1) {}
 }
 #elifdef CHECK_CATCHES_AS_UNWIND
+#    include <eggs/test/detail/unwind.hpp>
+
 TEST_CASE(
     check_catches_as_unwind, "CHECK_CATCHES_AS(unwind, ...) fails to compile"
 )
@@ -37,6 +40,8 @@ TEST_CASE(
     }
 }
 #elifdef REQUIRE_CATCHES_AS_UNWIND
+#    include <eggs/test/detail/unwind.hpp>
+
 TEST_CASE(
     require_catches_as_unwind,
     "REQUIRE_CATCHES_AS(unwind, ...) fails to compile"
