@@ -120,11 +120,19 @@ def main() -> int:
     counts: dict[str, int] = {}
     for result in results:
         counts[result["ruleId"]] = counts.get(result["ruleId"], 0) + 1
-    for rule_id, count in sorted(counts.items(), key=lambda kv: -kv[1]):
-        print(f"{count:4d}  {rule_id}")
-    print(
-        f"{len(results)} warning(s) across {len(files)} translation unit(s) -> {output}"
-    )
+    by_rule = sorted(counts.items(), key=lambda kv: -kv[1])
+    rule_lines = [f"{count:4d}  {rule_id}" for rule_id, count in by_rule]
+    for line in rule_lines:
+        print(line)
+    total = f"{len(results)} warning(s) across {len(files)} translation unit(s) -> {output}"
+    print(total)
+
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if results and step_summary:
+        with open(step_summary, "a", encoding="utf-8") as f:
+            f.write("## clang-tidy summary\n\n```\n")
+            f.write("\n".join([*rule_lines, total]))
+            f.write("\n```\n")
 
     return 0
 
