@@ -200,6 +200,42 @@ function(add_lib_test name)
     endif()
 endfunction()
 
+# add_basic_test(<name> SOURCES <file>)
+#
+# Creates a test executable linked against Eggs::Test (not Eggs::TestMain)
+# and registers it with CTest as a single pass/fail test: the source must
+# define its own main() and exit 0 to pass.
+#
+# Intended for tests of eggs/test/detail headers that must not depend on
+# eggs::test's own TEST_CASE/CHECK/registry machinery, since that is exactly
+# what they are testing.
+function(add_basic_test name)
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "SOURCES")
+    if(ARG_KEYWORDS_MISSING_VALUES)
+        message(
+            SEND_ERROR
+            "add_basic_test(${name}): missing values for keyword(s): ${ARG_KEYWORDS_MISSING_VALUES}"
+        )
+        return()
+    endif()
+    if(ARG_UNPARSED_ARGUMENTS)
+        message(
+            SEND_ERROR
+            "add_basic_test(${name}): unrecognized arguments: ${ARG_UNPARSED_ARGUMENTS}"
+        )
+        return()
+    endif()
+
+    cmake_path(GET ARG_SOURCES STEM LAST_ONLY _stem)
+
+    add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
+    target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::Test)
+    set_target_properties(_eggs_test.${_stem} PROPERTIES FOLDER "test")
+
+    add_test(NAME eggs.test.${name} COMMAND _eggs_test.${_stem})
+    set_tests_properties(eggs.test.${name} PROPERTIES LABELS "unit")
+endfunction()
+
 # --- detail tests ------------------------------------------------------------
 
 add_subdirectory(detail)
