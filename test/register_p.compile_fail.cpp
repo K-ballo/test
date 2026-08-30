@@ -7,8 +7,6 @@
 
 #include <eggs/test.hpp>
 
-#include <concepts> // IWYU pragma: keep (std::integral, other branches)
-
 #ifdef REGISTER_P_INVALID_NAME_COMPILE_FAIL
 
 TEST_CASE(invalid_name, "parameterized test", int const& n)
@@ -66,6 +64,7 @@ TEST_CASE(
 REGISTER_P(wrong_arity_more, "too_many", 1, 2, 3);
 
 #elifdef REGISTER_P_INTEGRAL_AUTO_COMPILE_FAIL
+#    include <concepts>
 
 TEST_CASE(
     integral_auto_reject,
