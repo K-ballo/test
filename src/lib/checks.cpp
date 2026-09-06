@@ -10,7 +10,6 @@
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
@@ -18,7 +17,6 @@
 #include <filesystem>
 #include <format>
 #include <source_location>
-#include <string_view>
 #include <typeinfo>
 #include <utility>
 
@@ -61,37 +59,30 @@ void print_outcome(
 }
 
 #ifdef __cpp_lib_stacktrace
-std::filesystem::path library_root()
-{
-    static_assert(
-        std::string_view(__FILE__).ends_with("src/lib/checks.cpp") ||
-            std::string_view(__FILE__).ends_with("src\\lib\\checks.cpp"),
-        "checks.cpp must live at src/lib/checks.cpp"
-    );
-
-    // frame[0] is always this function's own frame (checks.cpp).
-    auto const& self = detail::stacktrace::current();
-    if (self.empty() || self[0].source_file().empty()) return {};
-
-    return std::filesystem::path(self[0].source_file())
-        .lexically_normal()
-        .parent_path()  // lib/
-        .parent_path()  // src/
-        .parent_path(); // <library_root>/
-}
-
-bool from_library(
-    detail::stacktrace_entry const& e, std::filesystem::path const& lib
-)
+// A frame belongs to this library if it comes from a header under
+// include/eggs/. Frames that need hiding here are always header-defined
+// templates/inlines (check_throws<Fn> and friends) rather than anything
+// compiled into the precompiled library itself: those are the only library
+// frames that can end up interspersed with the caller's own frames instead
+// of sitting above them in the call chain (already excluded via
+// entry_depth). Header-defined code is recompiled fresh in whatever
+// translation unit instantiates it - the dev test suite, or an installed
+// find_package consumer's own test file - so there is no single absolute
+// path to anchor against; matching the fixed include/eggs/ layout works
+// regardless of where the library was built or installed.
+bool from_library(detail::stacktrace_entry const& e)
 {
     auto const normalized =
         std::filesystem::path(e.source_file()).lexically_normal();
 
-    auto const [lib_end, file_end] = std::mismatch(
-        lib.begin(), lib.end(), normalized.begin(), normalized.end()
-    );
-    return lib_end == lib.end() && file_end != normalized.end() &&
-           (*file_end == "src" || *file_end == "include");
+    for (auto it = normalized.begin(); it != normalized.end(); ++it) {
+        if (*it != "include") continue;
+
+        auto next = it;
+        ++next;
+        if (next != normalized.end() && *next == "eggs") return true;
+    }
+    return false;
 }
 
 // Prints "Stacktrace:" followed by one or more "<description>  [<file>:<line>]".
@@ -103,14 +94,12 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     std::size_t const limit = st.size() - entry_depth;
     if (limit <= 1) return;
 
-    static auto const lib = library_root();
-
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
     // start from the next frame.
     for (detail::stacktrace::size_type i = 1; i < limit; ++i) {
         auto const& e = st[i];
-        if (from_library(e, lib)) continue;
+        if (from_library(e)) continue;
 
         if (auto const& file = e.source_file(); !file.empty()) {
             detail::println(
