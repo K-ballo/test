@@ -1146,6 +1146,42 @@ add_lib_test(
     EXITS 1
 )
 
+# --- capture-output tests ------------------------------------------------
+
+# --capture-output: a passing case's stdout/stderr must survive the
+# capture+replay round-trip unchanged.
+add_lib_test(
+    capture_output.pass_roundtrip
+    SOURCES capture_output.cpp
+    RUN capture_output_pass
+    ARGS "--capture-output"
+    EXITS 0
+    PASS_REGEX "MARKER_STDOUT_PASS_CASE" "MARKER_STDERR_PASS_CASE"
+)
+
+# --capture-output: a failing case's stdout/stderr, as well as the
+# framework's own CHECK FAILED diagnostic, must survive the round-trip.
+add_lib_test(
+    capture_output.fail_roundtrip
+    SOURCES capture_output.cpp
+    RUN capture_output_fail
+    ARGS "--capture-output"
+    EXITS 1
+    PASS_REGEX
+        "MARKER_STDOUT_FAIL_CASE"
+        "MARKER_STDERR_FAIL_CASE"
+        "FAILED: 1 \\+ 1 == 3"
+)
+
+# Regression guard: without --capture-output, output is unaffected.
+add_lib_test(
+    capture_output.disabled_by_default
+    SOURCES capture_output.cpp
+    RUN capture_output_pass
+    EXITS 0
+    PASS_REGEX "MARKER_STDOUT_PASS_CASE" "MARKER_STDERR_PASS_CASE"
+)
+
 # --- exception tests ---------------------------------------------------------
 
 # CHECK_THROWS / REQUIRE_THROWS pass for any thrown type (int, std::exception, custom).

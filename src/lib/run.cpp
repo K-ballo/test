@@ -21,6 +21,14 @@
 #include <unordered_set>
 #include <vector>
 
+#include <stdio.h> // ::fileno / ::_fileno, ::tmpfile_s (not guaranteed via <cstdio>)
+
+#if defined(_WIN32)
+#    include <io.h>
+#else
+#    include <unistd.h>
+#endif
+
 eggs::test::detail::run_state*&
 eggs::test::detail::run_state::_current_ptr() noexcept
 {
@@ -37,6 +45,155 @@ eggs::test::detail::registry::cases_type& eggs::test::detail::registry::cases()
 namespace eggs::test {
 namespace detail {
 namespace {
+
+#if defined(_WIN32)
+int dup_fd(int fd) noexcept
+{
+    return ::_dup(fd);
+}
+
+int dup2_fd(int src, int dst) noexcept
+{
+    return ::_dup2(src, dst);
+}
+
+int close_fd(int fd) noexcept
+{
+    return ::_close(fd);
+}
+
+int fileno_of(std::FILE* f) noexcept
+{
+    return ::_fileno(f);
+}
+#else
+int dup_fd(int fd) noexcept
+{
+    return ::dup(fd);
+}
+
+int dup2_fd(int src, int dst) noexcept
+{
+    return ::dup2(src, dst);
+}
+
+int close_fd(int fd) noexcept
+{
+    return ::close(fd);
+}
+
+int fileno_of(std::FILE* f) noexcept
+{
+    return ::fileno(f);
+}
+#endif
+
+// std::tmpfile() is flagged deprecated (C4996) by MSVC's CRT in favor of the
+// bounds-checked tmpfile_s(); use it under the MSVC CRT (also targeted by
+// clang-cl), std::tmpfile() everywhere else.
+#if defined(_MSC_VER)
+std::FILE* open_tmpfile() noexcept
+{
+    std::FILE* f = nullptr;
+    return ::tmpfile_s(&f) == 0 ? f : nullptr;
+}
+#else
+std::FILE* open_tmpfile() noexcept
+{
+    return std::tmpfile();
+}
+#endif
+
+// Redirects stdout+stderr into a single temp file for the duration of the
+// capture. `enabled=false`, or any setup failure (open_tmpfile()/dup()/dup2()
+// failing, e.g. a sandboxed environment with no writable temp directory),
+// both leave the capture inactive: stdout/stderr are left untouched, exactly
+// as if the feature were off. Never throws, never aborts the run.
+class output_capture
+{
+  public:
+    explicit output_capture(bool enabled)
+    {
+        if (!enabled) return;
+
+        std::fflush(stdout);
+        std::fflush(stderr);
+
+        tmp_ = open_tmpfile();
+        if (!tmp_) return;
+
+        stdout_ = dup_fd(fileno_of(stdout));
+        if (stdout_ == -1) {
+            std::fclose(tmp_);
+            tmp_ = nullptr;
+            return;
+        }
+
+        stderr_ = dup_fd(fileno_of(stderr));
+        if (stderr_ == -1) {
+            close_fd(stdout_);
+            stdout_ = -1;
+            std::fclose(tmp_);
+            tmp_ = nullptr;
+            return;
+        }
+
+        int const tmp_fd = fileno_of(tmp_);
+        if (dup2_fd(tmp_fd, fileno_of(stdout)) == -1 ||
+            dup2_fd(tmp_fd, fileno_of(stderr)) == -1) {
+            dup2_fd(stdout_, fileno_of(stdout));
+            dup2_fd(stderr_, fileno_of(stderr));
+            close_fd(stdout_);
+            close_fd(stderr_);
+            stdout_ = stderr_ = -1;
+            std::fclose(tmp_);
+            tmp_ = nullptr;
+        }
+    }
+
+    output_capture(output_capture const&) = delete;
+    output_capture& operator=(output_capture const&) = delete;
+
+    ~output_capture() { stop(/*replay:*/ false); }
+
+    // Restores the real stdout/stderr. If `replay` is true and the capture
+    // was active, copies the captured bytes to the (now-restored) stdout
+    // first. No-op if the capture was never active. Safe to call more than
+    // once.
+    void stop(bool replay)
+    {
+        if (!tmp_) return;
+
+        std::fflush(stdout);
+        std::fflush(stderr);
+
+        dup2_fd(stdout_, fileno_of(stdout));
+        dup2_fd(stderr_, fileno_of(stderr));
+        close_fd(stdout_);
+        close_fd(stderr_);
+        stdout_ = stderr_ = -1;
+
+        if (replay) {
+            std::fflush(tmp_);
+            std::rewind(tmp_);
+
+            char buf[4096];
+            std::size_t n;
+            while ((n = std::fread(buf, 1, sizeof buf, tmp_)) > 0) {
+                std::fwrite(buf, 1, n, stdout);
+            }
+            std::fflush(stdout);
+        }
+
+        std::fclose(tmp_); // tmpfile() content is removed on close
+        tmp_ = nullptr;
+    }
+
+  private:
+    std::FILE* tmp_ = nullptr;
+    int stdout_ = -1;
+    int stderr_ = -1;
+};
 
 // "<passed> passed (<percent>%)", plus " | <failed> failed (<percent>%)"
 // when failed != 0. The two percentages always add up to 100.
@@ -55,7 +212,9 @@ std::string format_summary(std::size_t passed, std::size_t failed)
     );
 }
 
-int run(std::vector<test_entry const*> const& run, bool verbose)
+int run(
+    std::vector<test_entry const*> const& run, bool verbose, bool capture_output
+)
 {
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
@@ -69,6 +228,8 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
         run_state state;
         state.verbose = verbose;
 
+        output_capture capture{capture_output};
+
         run_state::set_current(&state);
         bool passed = false;
         try {
@@ -81,6 +242,8 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
             detail::println(stdout, "  UNKNOWN EXCEPTION");
         }
         run_state::set_current(nullptr);
+
+        capture.stop(/*replay:*/ true);
 
         auto const assertions_total =
             state.assertions_passed + state.assertions_failed;
@@ -175,7 +338,7 @@ int run(run_options opts)
         return EXIT_SUCCESS;
     }
 
-    return detail::run(selected_cases, opts.verbose);
+    return detail::run(selected_cases, opts.verbose, opts.capture_output);
 }
 
 } // namespace eggs::test

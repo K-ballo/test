@@ -58,6 +58,32 @@ TEST_CASE(
     CHECK(result.unknown.empty());
 }
 
+TEST_CASE(
+    parse_cli_capture_output,
+    "--capture-output is consumed and sets run_options.capture_output"
+)
+{
+    char const* argv[] = {"--capture-output"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.capture_output == true);
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(
+    parse_cli_ns_capture_output,
+    "--ns:capture-output is consumed and sets run_options.capture_output"
+)
+{
+    char const* argv[] = {"--ns:capture-output"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.capture_output == true);
+    CHECK(result.unknown.empty());
+}
+
 TEST_CASE(parse_cli_run, "--run=foo is consumed and populates run_options.run")
 {
     char const* argv[] = {"--run=foo"};
@@ -141,6 +167,7 @@ TEST_CASE(
 
     CHECK(result.options.list == false);
     CHECK(result.options.run.empty());
+    CHECK(result.options.capture_output == false);
     CHECK(result.options.verbose == false);
     CHECK(result.unknown.empty());
 }
@@ -153,6 +180,7 @@ TEST_CASE(parse_cli_unknown, "unknown arg is returned in .unknown")
 
     CHECK(result.options.list == false);
     CHECK(result.options.run.empty());
+    CHECK(result.options.capture_output == false);
     CHECK(result.options.verbose == false);
 
 #if defined(__cpp_lib_format_ranges) && __cpp_lib_format_ranges >= 202207L

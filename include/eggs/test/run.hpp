@@ -19,6 +19,8 @@ struct run_options
     std::vector<std::string_view> run;
     // list matching test case names instead of running them
     bool list = false;
+    // internal: capture+replay each test case's stdout/stderr
+    bool capture_output = false;
     // report successful assertions
     bool verbose = false;
 };
