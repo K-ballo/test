@@ -1182,6 +1182,49 @@ add_lib_test(
     PASS_REGEX "MARKER_STDOUT_PASS_CASE" "MARKER_STDERR_PASS_CASE"
 )
 
+# --- output-on-failure tests ---------------------------------------------
+
+# --output-on-failure: a passing case's stdout/stderr is suppressed.
+add_lib_test(
+    output_on_failure.pass_suppressed
+    SOURCES output_on_failure.cpp
+    RUN output_on_failure_pass
+    ARGS "--output-on-failure"
+    EXITS 0
+    FAIL_REGEX "MARKER_STDOUT_PASS_CASE" "MARKER_STDERR_PASS_CASE"
+)
+
+# --output-on-failure: a failing case's raw stdout/stderr writes are shown.
+add_lib_test(
+    output_on_failure.fail_shown
+    SOURCES output_on_failure.cpp
+    RUN output_on_failure_fail
+    ARGS "--output-on-failure"
+    EXITS 1
+    PASS_REGEX "MARKER_STDOUT_FAIL_CASE" "MARKER_STDERR_FAIL_CASE"
+)
+
+# Regression guard: without --output-on-failure, output is always live, even
+# for a passing case.
+add_lib_test(
+    output_on_failure.disabled_by_default
+    SOURCES output_on_failure.cpp
+    RUN output_on_failure_pass
+    EXITS 0
+    PASS_REGEX "MARKER_STDOUT_PASS_CASE" "MARKER_STDERR_PASS_CASE"
+)
+
+# --output-on-failure: the framework's own CHECK FAILED diagnostic (not just
+# the test body's raw prints) is captured-and-replayed on failure too.
+add_lib_test(
+    output_on_failure.check_diagnostic_shown
+    SOURCES output_on_failure.cpp
+    RUN output_on_failure_fail
+    ARGS "--output-on-failure"
+    EXITS 1
+    PASS_REGEX "FAILED: 1 \\+ 1 == 3"
+)
+
 # --- exception tests ---------------------------------------------------------
 
 # CHECK_THROWS / REQUIRE_THROWS pass for any thrown type (int, std::exception, custom).

@@ -213,7 +213,8 @@ std::string format_summary(std::size_t passed, std::size_t failed)
 }
 
 int run(
-    std::vector<test_entry const*> const& run, bool verbose, bool capture_output
+    std::vector<test_entry const*> const& run, bool verbose,
+    bool output_on_failure, bool capture_output
 )
 {
     std::size_t cases_passed = 0;
@@ -228,7 +229,7 @@ int run(
         run_state state;
         state.verbose = verbose;
 
-        output_capture capture{capture_output};
+        output_capture capture{output_on_failure || capture_output};
 
         run_state::set_current(&state);
         bool passed = false;
@@ -243,7 +244,12 @@ int run(
         }
         run_state::set_current(nullptr);
 
-        capture.stop(/*replay:*/ true);
+        // capture_output always replays (it exists to prove the capture
+        // round-trip is transparent); output_on_failure only replays when
+        // the test case failed.
+        capture.stop(
+            /*replay:*/ capture_output || (output_on_failure && !passed)
+        );
 
         auto const assertions_total =
             state.assertions_passed + state.assertions_failed;
@@ -338,7 +344,10 @@ int run(run_options opts)
         return EXIT_SUCCESS;
     }
 
-    return detail::run(selected_cases, opts.verbose, opts.capture_output);
+    return detail::run(
+        selected_cases, opts.verbose, opts.output_on_failure,
+        opts.capture_output
+    );
 }
 
 } // namespace eggs::test

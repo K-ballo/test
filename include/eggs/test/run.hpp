@@ -21,6 +21,8 @@ struct run_options
     bool list = false;
     // internal: capture+replay each test case's stdout/stderr
     bool capture_output = false;
+    // capture each test case's stdout/stderr, replay it only if it fails
+    bool output_on_failure = false;
     // report successful assertions
     bool verbose = false;
 };

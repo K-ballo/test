@@ -37,6 +37,13 @@ constexpr
                  "list selected test case names and exit;",
                  "respects --run filters",
              }},
+        {.flag = "output-on-failure",
+         .value = {},
+         .desc =
+             {
+                 "capture each test case's stdout/stderr and only",
+                 "print it when that test case fails",
+             }},
         {.flag = "run=",
          .value = "<test_case>",
          .desc =

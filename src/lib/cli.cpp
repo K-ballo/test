@@ -98,6 +98,8 @@ parse_cli(std::span<char const* const> const args, std::string_view ns)
 
         if (stem == "list") {
             opts.list = true;
+        } else if (stem == "output-on-failure") {
+            opts.output_on_failure = true;
         } else if (stem == "capture-output") {
             opts.capture_output = true;
         } else if (stem.starts_with("run")) {

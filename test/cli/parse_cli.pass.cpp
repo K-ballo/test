@@ -59,6 +59,32 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    parse_cli_output_on_failure,
+    "--output-on-failure is consumed and sets run_options.output_on_failure"
+)
+{
+    char const* argv[] = {"--output-on-failure"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.output_on_failure == true);
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(
+    parse_cli_ns_output_on_failure,
+    "--ns:output-on-failure is consumed and sets run_options.output_on_failure"
+)
+{
+    char const* argv[] = {"--ns:output-on-failure"};
+    auto const result = eggs::test::parse_cli(argv, "ns");
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.output_on_failure == true);
+    CHECK(result.unknown.empty());
+}
+
+TEST_CASE(
     parse_cli_capture_output,
     "--capture-output is consumed and sets run_options.capture_output"
 )
@@ -167,6 +193,7 @@ TEST_CASE(
 
     CHECK(result.options.list == false);
     CHECK(result.options.run.empty());
+    CHECK(result.options.output_on_failure == false);
     CHECK(result.options.capture_output == false);
     CHECK(result.options.verbose == false);
     CHECK(result.unknown.empty());
@@ -180,6 +207,7 @@ TEST_CASE(parse_cli_unknown, "unknown arg is returned in .unknown")
 
     CHECK(result.options.list == false);
     CHECK(result.options.run.empty());
+    CHECK(result.options.output_on_failure == false);
     CHECK(result.options.capture_output == false);
     CHECK(result.options.verbose == false);
 
