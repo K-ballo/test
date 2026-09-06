@@ -21,11 +21,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # PROBE: matrix trimmed to gcc-16 + clang-22 only; not meant to be merged.
           # -- Linux / GCC 13 --
-          # - os: ubuntu-24.04
-          #   compiler: gcc-13
-          #   preset: dev-gcc
+          - os: ubuntu-24.04
+            compiler: gcc-13
+            preset: dev-gcc
 
           # -- Linux / GCC 16 --
           - os: ubuntu-24.04
@@ -33,15 +32,15 @@ jobs:
             preset: dev-gcc
 
           # -- Linux / Clang 18 (+ libstdc++ 13) --
-          # - os: ubuntu-24.04
-          #   compiler: clang-18
-          #   preset: dev-clang
-          #   gcc_toolchain: "13"
+          - os: ubuntu-24.04
+            compiler: clang-18
+            preset: dev-clang
+            gcc_toolchain: "13"
 
           # -- Linux / Clang 18 + libc++ --
-          # - os: ubuntu-24.04
-          #   compiler: clang-18+libc++
-          #   preset: dev-clang-libcxx
+          - os: ubuntu-24.04
+            compiler: clang-18+libc++
+            preset: dev-clang-libcxx
 
           # -- Linux / Clang 22 (+ libstdc++ 16) --
           - os: ubuntu-24.04
@@ -50,24 +49,24 @@ jobs:
             gcc_toolchain: "16"
 
           # -- Linux / Clang 22 + libc++ --
-          # - os: ubuntu-24.04
-          #   compiler: clang-22+libc++
-          #   preset: dev-clang-libcxx
+          - os: ubuntu-24.04
+            compiler: clang-22+libc++
+            preset: dev-clang-libcxx
 
           # -- Windows 2022 / MSVC 2022 --
-          # - os: windows-2022
-          #   compiler: msvc-2022
-          #   preset: dev-msvc
+          - os: windows-2022
+            compiler: msvc-2022
+            preset: dev-msvc
 
           # -- Windows 2025 / MSVC 2026 --
-          # - os: windows-2025-vs2026
-          #   compiler: msvc-2026
-          #   preset: dev-msvc
+          - os: windows-2025-vs2026
+            compiler: msvc-2026
+            preset: dev-msvc
 
           # -- Windows 2025 / Clang-CL 20 --
-          # - os: windows-2025-vs2026
-          #   compiler: clang-cl-20
-          #   preset: dev-clang-cl
+          - os: windows-2025-vs2026
+            compiler: clang-cl-20
+            preset: dev-clang-cl
 
     steps:
       - uses: actions/checkout@v5

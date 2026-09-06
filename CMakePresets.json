@@ -42,7 +42,7 @@
         "CMAKE_CXX_COMPILER": "g++"
       },
       "environment": {
-        "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=."
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic"
       }
     },
     {
@@ -53,7 +53,7 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CXXFLAGS": "-Wall -Wextra -Wpedantic -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=."
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic"
       }
     },
     {
@@ -64,7 +64,7 @@
         "CMAKE_CXX_COMPILER": "clang++"
       },
       "environment": {
-        "CXXFLAGS": "-Wall -Wextra -Wpedantic -stdlib=libc++ -ffile-prefix-map=\"${sourceDir}\"=. -ffile-compilation-dir=.",
+        "CXXFLAGS": "-Wall -Wextra -Wpedantic -stdlib=libc++",
         "LDFLAGS": "-stdlib=libc++"
       }
     },
@@ -78,7 +78,7 @@
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT": "/wd4702"
       },
       "environment": {
-        "CXXFLAGS": "/W4 /d1trimfile:\"${sourceDir}\""
+        "CXXFLAGS": "/W4"
       }
     },
     {
@@ -89,7 +89,7 @@
         "CMAKE_CXX_COMPILER": "clang-cl"
       },
       "environment": {
-        "CXXFLAGS": "/W4 /clang:-ffile-prefix-map=${sourceDir}=."
+        "CXXFLAGS": "/W4"
       }
     },
     {
