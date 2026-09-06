@@ -341,6 +341,74 @@ add_lib_test(
     EXITS 1
 )
 
+# REGISTER_P rejects a duplicate instance name for the same test case,
+# reporting both where it was first registered and the duplicate's location.
+string(
+    CONCAT _register_p_duplicate_pass_regex
+    "error: duplicate test case 'duplicate_case/same'  "
+    "\\[.*register_p\\.duplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.duplicate\\.cpp:[0-9]+\\]\\)"
+)
+add_lib_test(
+    register_p.duplicate.fail
+    SOURCES register_p.duplicate.cpp
+    PASS_REGEX "${_register_p_duplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# A duplicate registration elsewhere in the binary does not block running an
+# unrelated, explicitly selected test case; the diagnostic is still reported.
+add_lib_test(
+    register_p.duplicate.unselected
+    SOURCES register_p.duplicate.cpp
+    RUN unrelated_case
+    PASS_REGEX
+        "${_register_p_duplicate_pass_regex}"
+        "\\[ RUN  \\] unrelated_case -- "
+    EXITS 0
+)
+
+# Explicitly selecting the duplicated name still blocks the run.
+add_lib_test(
+    register_p.duplicate.selected.fail
+    SOURCES register_p.duplicate.cpp
+    RUN duplicate_case/same
+    PASS_REGEX "${_register_p_duplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# Selecting both the duplicated name and an unrelated case still blocks the
+# run.
+add_lib_test(
+    register_p.duplicate.mixed.fail
+    SOURCES register_p.duplicate.cpp
+    RUN unrelated_case duplicate_case/same
+    PASS_REGEX "${_register_p_duplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
+# REGISTER_P reports every duplicate instance, not just the first, each
+# paired with the original registration's location.
+string(
+    CONCAT _register_p_triplicate_pass_regex
+    "error: duplicate test case 'triplicate_case/same'  "
+    "\\[.*register_p\\.triplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.triplicate\\.cpp:[0-9]+\\]\\)\n"
+    "error: duplicate test case 'triplicate_case/same'  "
+    "\\[.*register_p\\.triplicate\\.cpp:[0-9]+\\] "
+    "\\(first registered  \\[.*register_p\\.triplicate\\.cpp:[0-9]+\\]\\)"
+)
+add_lib_test(
+    register_p.triplicate.fail
+    SOURCES register_p.triplicate.cpp
+    PASS_REGEX "${_register_p_triplicate_pass_regex}"
+    FAIL_REGEX "\\[ RUN  \\]"
+    EXITS 1
+)
+
 # REGISTER_P requires an identifier as a name.
 add_lib_test(
     register_p.invalid_name.compile_fail
