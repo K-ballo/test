@@ -11,6 +11,7 @@
 #include <eggs/test/detail/unwind.hpp>
 #include <eggs/test/run.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -34,9 +35,32 @@ eggs::test::detail::registry::cases_type& eggs::test::detail::registry::cases()
     return cases_;
 }
 
+eggs::test::detail::registry::duplicates_type&
+eggs::test::detail::registry::duplicates()
+{
+    static registry::duplicates_type duplicates_;
+    return duplicates_;
+}
+
 namespace eggs::test {
 namespace detail {
 namespace {
+
+// Reports every duplicate test case registration to `out`.
+// Returns whether any duplicates were found.
+void report_duplicates(std::FILE* out)
+{
+    auto const& duplicates = registry::duplicates();
+    for (auto const& [orig, loc] : duplicates) {
+        detail::println(
+            out,
+            "error: duplicate test case '{}'  [{}:{}] (first registered  "
+            "[{}:{}])",
+            orig->name, loc.file_name(), loc.line(), orig->loc.file_name(),
+            orig->loc.line()
+        );
+    }
+}
 
 // "<passed> passed (<percent>%)", plus " | <failed> failed (<percent>%)"
 // when failed != 0. The two percentages always add up to 100.
@@ -127,6 +151,8 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
 
 int run(run_options opts)
 {
+    detail::report_duplicates(stderr);
+
     auto const& all_cases = detail::registry::cases();
 
     std::vector<detail::test_entry const*> selected_cases;
@@ -167,6 +193,13 @@ int run(run_options opts)
         // TODO: consider executing known test cases instead of failing
         if (any_unknown) return EXIT_FAILURE;
     }
+
+    bool const duplicate_selected = std::ranges::any_of(
+        detail::registry::duplicates(), [&](auto const& dup) {
+            return std::ranges::contains(selected_cases, dup.first);
+        }
+    );
+    if (duplicate_selected) return EXIT_FAILURE;
 
     if (opts.list) {
         for (auto const* e : selected_cases) {
