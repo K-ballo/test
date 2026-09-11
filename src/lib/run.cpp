@@ -11,11 +11,13 @@
 #include <eggs/test/detail/unwind.hpp>
 #include <eggs/test/run.hpp>
 
+#include <chrono>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <exception>
 #include <format>
+#include <ratio>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -55,10 +57,26 @@ std::string format_summary(std::size_t passed, std::size_t failed)
     );
 }
 
+// "<value>ms" below 1 second, else "<value>s".
+std::string format_duration(std::chrono::steady_clock::duration d)
+{
+    if (d < std::chrono::seconds{1}) {
+        // FIXME(C++20): std::format("{:.2}", duration<double, milli>(d))
+        return std::format(
+            "{:.2f}ms", std::chrono::duration<double, std::milli>(d).count()
+        );
+    }
+
+    // FIXME(C++20): std::format("{:.2}", duration<double>(d))
+    return std::format("{:.2f}s", std::chrono::duration<double>(d).count());
+}
+
 int run(std::vector<test_entry const*> const& run, bool verbose)
 {
     std::size_t cases_passed = 0;
     std::vector<std::string_view> cases_failed;
+
+    auto const run_start = std::chrono::steady_clock::now();
 
     for (test_entry const* e : run) {
         detail::println(
@@ -71,6 +89,8 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
 
         run_state::set_current(&state);
         bool passed = false;
+
+        auto const case_start = std::chrono::steady_clock::now();
         try {
             e->run(state);
             passed = !state.assertions_failed;
@@ -80,22 +100,26 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
         } catch (...) {
             detail::println(stdout, "  UNKNOWN EXCEPTION");
         }
+        auto const case_duration =
+            std::chrono::steady_clock::now() - case_start;
         run_state::set_current(nullptr);
 
         auto const assertions_total =
             state.assertions_passed + state.assertions_failed;
         if (assertions_total == 0) {
             detail::println(
-                stdout, "[ {} ] {} -- 0 assertions\n", passed ? "PASS" : "FAIL",
-                e->name
+                stdout, "[ {} ] {} -- 0 assertions ({})\n",
+                passed ? "PASS" : "FAIL", e->name,
+                detail::format_duration(case_duration)
             );
         } else {
             detail::println(
-                stdout, "[ {} ] {} -- {} assertions: {}\n",
+                stdout, "[ {} ] {} -- {} assertions: {} ({})\n",
                 passed ? "PASS" : "FAIL", e->name, assertions_total,
                 detail::format_summary(
                     state.assertions_passed, state.assertions_failed
-                )
+                ),
+                detail::format_duration(case_duration)
             );
         }
 
@@ -106,12 +130,15 @@ int run(std::vector<test_entry const*> const& run, bool verbose)
         }
     }
 
+    auto const run_duration = std::chrono::steady_clock::now() - run_start;
+
     // Omit summary if only one test-case.
     auto const cases_total = cases_passed + cases_failed.size();
     if (cases_total != 1) {
         detail::println(
-            stdout, "{} test cases: {}{}", cases_total,
+            stdout, "{} test cases: {} ({}){}", cases_total,
             detail::format_summary(cases_passed, cases_failed.size()),
+            detail::format_duration(run_duration),
             cases_failed.empty() ? "" : ":"
         );
         for (auto const& e : cases_failed) {

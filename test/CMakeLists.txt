@@ -432,7 +432,7 @@ add_lib_test(
     SOURCES aggregate.mixed.cpp
     RUN mixed_pass_one mixed_fail mixed_pass_two
     PASS_REGEX
-        "3 test cases: 2 passed \\(66%\\) \\| 1 failed \\(34%\\):\n- mixed_fail"
+        "3 test cases: 2 passed \\(66%\\) \\| 1 failed \\(34%\\) \\([0-9.]+(ms|s)\\):\n- mixed_fail"
     FAIL_REGEX "- mixed_pass_one" "- mixed_pass_two"
 )
 
@@ -449,6 +449,13 @@ add_lib_test(
     summary.no_cases.pass
     SOURCES summary.no_cases.cpp
     PASS_REGEX "0 test cases: 0 passed \\(100%\\)"
+)
+
+# The test-cases summary reports the total execution duration.
+add_lib_test(
+    summary.duration.pass
+    SOURCES summary.full_pass.cpp
+    PASS_REGEX "3 test cases: 3 passed \\(100%\\) \\([0-9.]+(ms|s)\\)"
 )
 
 # The assertions summary reports percentages and failed count.
@@ -492,6 +499,33 @@ add_lib_test(
     RUN zero_assertions_fail
     PASS_REGEX "\\[ FAIL \\] zero_assertions_fail -- 0 assertions"
     FAIL_REGEX "0 assertions:"
+)
+
+# Each test case reports its own duration, with or without assertions.
+add_lib_test(
+    summary.per_case.duration.pass
+    SOURCES summary.per_case.cpp
+    RUN per_case_pass
+    PASS_REGEX
+        "\\[ PASS \\] per_case_pass -- 1 assertions: 1 passed \\(100%\\) \\([0-9.]+(ms|s)\\)"
+)
+add_lib_test(
+    summary.per_case.zero.duration.pass
+    SOURCES summary.zero_assertions.cpp
+    RUN zero_assertions_pass
+    PASS_REGEX
+        "\\[ PASS \\] zero_assertions_pass -- 0 assertions \\([0-9.]+(ms|s)\\)"
+)
+
+# A test case running past 1 second reports its duration in seconds, not
+# milliseconds.
+add_lib_test(
+    summary.per_case.duration.seconds.pass
+    SOURCES summary.duration_seconds.cpp
+    RUN duration_seconds
+    PASS_REGEX
+        "\\[ PASS \\] duration_seconds -- 1 assertions: 1 passed \\(100%\\) \\([0-9.]+s\\)"
+    FAIL_REGEX "\\([0-9.]+ms\\)"
 )
 
 # --- passing tests -----------------------------------------------------------
