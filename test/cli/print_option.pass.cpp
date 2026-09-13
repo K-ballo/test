@@ -8,14 +8,23 @@
 #include <eggs/test.hpp>
 #include <eggs/test/cli.hpp>
 
-#include <cstdio> // IWYU pragma: keep (stdout)
+#include <cstdio>
+
+#include "../support.hpp"
 
 TEST_CASE(
     print_option_fits, "disp and first desc line share a row when disp fits"
 )
 {
-    eggs::test::print_option(
-        stdout, "-h, --help", {"print this help message and exit"}
+    auto const out = eggs::test_support::capture([](std::FILE* f) {
+        eggs::test::print_option(
+            f, "-h, --help", {"print this help message and exit"}
+        );
+    });
+
+    CHECK(
+        out ==
+        "  -h, --help                  print this help message and exit\n"
     );
 }
 
@@ -23,8 +32,15 @@ TEST_CASE(
     print_option_wraps, "disp wider than desc_col wraps desc to the next line"
 )
 {
-    eggs::test::print_option(
-        stdout, "--very-long-flag-name", {"description text"}, 10U
+    auto const out = eggs::test_support::capture([](std::FILE* f) {
+        eggs::test::print_option(
+            f, "--very-long-flag-name", {"description text"}, 10U
+        );
+    });
+
+    CHECK(
+        out == "  --very-long-flag-name\n"
+               "           description text\n"
     );
 }
 
@@ -33,12 +49,21 @@ TEST_CASE(
     "desc lines past the first are indented to desc_col"
 )
 {
-    eggs::test::print_option(
-        stdout, "flag", {"first line", "second line"}, 20U
+    auto const out = eggs::test_support::capture([](std::FILE* f) {
+        eggs::test::print_option(f, "flag", {"first line", "second line"}, 20U);
+    });
+
+    CHECK(
+        out == "  flag               first line\n"
+               "                     second line\n"
     );
 }
 
 TEST_CASE(print_option_empty_desc, "empty desc prints only disp")
 {
-    eggs::test::print_option(stdout, "--flag", {});
+    auto const out = eggs::test_support::capture([](std::FILE* f) {
+        eggs::test::print_option(f, "--flag", {});
+    });
+
+    CHECK(out == "  --flag\n");
 }
