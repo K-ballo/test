@@ -132,7 +132,17 @@ function(add_lib_test name)
     )
 
     if(NOT TARGET _eggs_test.${_stem})
-        add_executable(_eggs_test.${_stem} ${ARG_SOURCES})
+        add_executable(
+            _eggs_test.${_stem}
+            ${ARG_SOURCES}
+            ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/support.hpp
+        )
+        if(MSVC)
+            target_compile_definitions(
+                _eggs_test.${_stem}
+                PRIVATE _CRT_SECURE_NO_WARNINGS
+            )
+        endif()
         target_link_libraries(_eggs_test.${_stem} PRIVATE Eggs::TestMain)
         set_target_properties(
             _eggs_test.${_stem}
