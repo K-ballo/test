@@ -118,6 +118,20 @@ TEST_CASE(
     CHECK(result.error == "missing value for --ns:run");
 }
 
+TEST_CASE(
+    parse_cli_run_prefix_collision,
+    "--runner (stem merely prefixed with 'run') is left in argv"
+)
+{
+    char const* argv[] = {"--runner"};
+    auto const result = eggs::test::parse_cli(argv);
+    REQUIRE(result.error.empty());
+
+    CHECK(result.options.run.empty());
+    REQUIRE(result.unknown.size() == 1);
+    CHECK(std::string_view{result.unknown[0]} == "--runner");
+}
+
 TEST_CASE(parse_cli_run_multiple, "--run=a --run=b are both consumed in order")
 {
     char const* argv[] = {"--run=a", "--run=b"};

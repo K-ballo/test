@@ -98,12 +98,10 @@ parse_cli(std::span<char const* const> const args, std::string_view ns)
 
         if (stem == "list") {
             opts.list = true;
-        } else if (stem.starts_with("run")) {
+        } else if (stem == "run" || stem.starts_with("run=")) {
             auto const value =
                 stem == "run" ? std::string_view{} : stem.substr(4);
-            if (!value.empty()) {
-                opts.run.push_back(value);
-            } else {
+            if (value.empty()) {
                 return parse_result{
                     .options = {},
                     .unknown = {},
@@ -112,6 +110,7 @@ parse_cli(std::span<char const* const> const args, std::string_view ns)
                     ),
                 };
             }
+            opts.run.push_back(value);
         } else if (stem == "verbose") {
             opts.verbose = true;
         } else {
