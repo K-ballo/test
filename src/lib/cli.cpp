@@ -9,7 +9,6 @@
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/run.hpp>
 
-#include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <format>
@@ -22,7 +21,6 @@
 #include "opts.hpp"
 
 namespace eggs::test {
-namespace detail {
 
 void print_option(
     std::FILE* out, std::string_view const disp,
@@ -30,9 +28,6 @@ void print_option(
     std::size_t const desc_col
 )
 {
-    // FIXME(C++26): !desc.empty()
-    assert(desc.size() != 0);
-
     auto it = desc.begin();
 
     // First line: print display alongside description if it fits, else wrap.
@@ -49,8 +44,6 @@ void print_option(
     }
 }
 
-} // namespace detail
-
 void print_options(
     std::FILE* out, std::string_view const ns, std::size_t const desc_col
 )
@@ -61,7 +54,7 @@ void print_options(
             "--{}{}{}{}", ns, ns.empty() ? "" : ":", opt.flag, opt.value
         );
 
-        detail::print_option(out, disp, opt.desc, desc_col);
+        test::print_option(out, disp, opt.desc, desc_col);
     }
 }
 

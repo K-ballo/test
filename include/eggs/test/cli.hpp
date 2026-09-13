@@ -18,20 +18,22 @@
 #include <vector>
 
 namespace eggs::test {
-namespace detail {
 
+// Default column at which option descriptions are aligned.
+inline constexpr std::size_t k_desc_col = 29U;
+
+// Print a single "<disp>  <desc...>" help entry to out, wrapping desc lines
+// past the first to align under desc_col.
 void print_option(
-    std::FILE* out, std::string_view const disp,
-    std::initializer_list<std::string_view> const desc,
-    std::size_t const desc_col
+    std::FILE* out, std::string_view disp,
+    std::initializer_list<std::string_view> desc,
+    std::size_t desc_col = k_desc_col
 );
 
-} // namespace detail
-
-// Print the built-in options table to stdout, aligning descriptions at desc_col.
+// Print the built-in options table to out, aligning descriptions at desc_col.
 // If ns is non-empty, flags are shown in --<ns>:<flag> form.
 void print_options(
-    std::FILE* out, std::string_view ns = {}, std::size_t desc_col = 29u
+    std::FILE* out, std::string_view ns = {}, std::size_t desc_col = k_desc_col
 );
 
 // The parsed options and unknown arguments, or an error message.
