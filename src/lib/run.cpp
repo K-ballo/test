@@ -5,6 +5,7 @@
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <eggs/test/detail/no_destroy.hpp>
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/registry.hpp>
 #include <eggs/test/detail/run_state.hpp>
@@ -32,8 +33,8 @@ eggs::test::detail::run_state::_current_ptr() noexcept
 
 eggs::test::detail::registry::cases_type& eggs::test::detail::registry::cases()
 {
-    static registry::cases_type cases_;
-    return cases_;
+    static detail::no_destroy<registry::cases_type> holder;
+    return holder.get();
 }
 
 namespace eggs::test {
