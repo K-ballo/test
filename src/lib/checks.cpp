@@ -10,12 +10,10 @@
 #include <eggs/test/detail/print.hpp>
 #include <eggs/test/detail/stacktrace.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <cstdio>
 #include <exception>
-#include <filesystem>
 #include <format>
 #include <source_location>
 #include <string_view>
@@ -61,37 +59,23 @@ void print_outcome(
 }
 
 #ifdef __cpp_lib_stacktrace
-std::filesystem::path library_root()
+// A frame belongs to this library if it comes from include/eggs/.
+bool from_library(std::string_view file)
 {
-    static_assert(
-        std::string_view(__FILE__).ends_with("src/lib/checks.cpp") ||
-            std::string_view(__FILE__).ends_with("src\\lib\\checks.cpp"),
-        "checks.cpp must live at src/lib/checks.cpp"
-    );
+    auto const next_token = [](std::string_view s) {
+        if (auto const sep = s.find_first_of("/\\");
+            sep != std::string_view::npos) {
+            return std::pair{s.substr(0, sep), s.substr(sep + 1)};
+        }
+        return std::pair{s, std::string_view{}};
+    };
 
-    // frame[0] is always this function's own frame (checks.cpp).
-    auto const& self = detail::stacktrace::current();
-    if (self.empty() || self[0].source_file().empty()) return {};
-
-    return std::filesystem::path(self[0].source_file())
-        .lexically_normal()
-        .parent_path()  // lib/
-        .parent_path()  // src/
-        .parent_path(); // <library_root>/
-}
-
-bool from_library(
-    detail::stacktrace_entry const& e, std::filesystem::path const& lib
-)
-{
-    auto const normalized =
-        std::filesystem::path(e.source_file()).lexically_normal();
-
-    auto const [lib_end, file_end] = std::mismatch(
-        lib.begin(), lib.end(), normalized.begin(), normalized.end()
-    );
-    return lib_end == lib.end() && file_end != normalized.end() &&
-           (*file_end == "src" || *file_end == "include");
+    while (!file.empty()) {
+        auto const [token, rest] = next_token(file);
+        if (token == "include" && next_token(rest).first == "eggs") return true;
+        file = rest;
+    }
+    return false;
 }
 
 // Prints "Stacktrace:" followed by one or more "<description>  [<file>:<line>]".
@@ -103,18 +87,18 @@ void print_stacktrace(detail::stacktrace const& st, std::size_t entry_depth)
     std::size_t const limit = st.size() - entry_depth;
     if (limit <= 1) return;
 
-    static auto const lib = library_root();
-
     // st[0] is always the CHECK/REQUIRE call site itself. Its location is
     // already printed above via source_location, so numbering and printing
     // start from the next frame.
     for (detail::stacktrace::size_type i = 1; i < limit; ++i) {
         auto const& e = st[i];
-        if (from_library(e, lib)) continue;
 
-        if (auto const& file = e.source_file(); !file.empty()) {
+        auto const source_file = e.source_file();
+        if (from_library(source_file)) continue;
+
+        if (!source_file.empty()) {
             detail::println(
-                stdout, "    #{} {}  [{}:{}]", i, e.description(), file,
+                stdout, "    #{} {}  [{}:{}]", i, e.description(), source_file,
                 e.source_line()
             );
         } else {
