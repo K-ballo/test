@@ -7,10 +7,14 @@
 
 #pragma once
 
+#include <eggs/test/detail/warning.hpp>
+
 #include <string_view>
 #include <vector>
 
 namespace eggs::test {
+
+EGGS_TEST_WARNING_NO_PADDED_PUSH
 
 // Options passed to run()
 struct run_options
@@ -22,6 +26,8 @@ struct run_options
     // report successful assertions
     bool verbose = false;
 };
+
+EGGS_TEST_WARNING_NO_PADDED_POP
 
 // Public entry point - call this from main().
 int run(run_options opts = {});

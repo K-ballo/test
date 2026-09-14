@@ -8,6 +8,7 @@
 #pragma once
 
 #include <eggs/test/detail/stacktrace.hpp>
+#include <eggs/test/detail/warning.hpp>
 
 #include <cassert>
 #include <cstddef>
@@ -17,6 +18,8 @@
 namespace eggs::test::detail {
 
 class context_frame;
+
+EGGS_TEST_WARNING_NO_PADDED_PUSH
 
 class run_state
 {
@@ -55,5 +58,7 @@ class run_state
   private:
     [[nodiscard]] static run_state*& _current_ptr() noexcept;
 };
+
+EGGS_TEST_WARNING_NO_PADDED_POP
 
 } // namespace eggs::test::detail

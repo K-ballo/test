@@ -7,6 +7,8 @@
 
 #pragma once
 
+// -Wglobal-constructors -------------------------------------------------------
+
 #if defined(__clang__)
 
 #    define EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH \
@@ -19,5 +21,21 @@
 
 #    define EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_PUSH
 #    define EGGS_TEST_WARNING_NO_GLOBAL_CONSTRUCTORS_POP
+
+#endif
+
+// -Wpadded --------------------------------------------------------------------
+
+#if defined(__clang__)
+
+#    define EGGS_TEST_WARNING_NO_PADDED_PUSH \
+        _Pragma("clang diagnostic push")     \
+            _Pragma("clang diagnostic ignored \"-Wpadded\"")
+#    define EGGS_TEST_WARNING_NO_PADDED_POP _Pragma("clang diagnostic pop")
+
+#else
+
+#    define EGGS_TEST_WARNING_NO_PADDED_PUSH
+#    define EGGS_TEST_WARNING_NO_PADDED_POP
 
 #endif
