@@ -41,6 +41,17 @@ jobs:
 
     env:
       EGGS_TEST_SOURCE_DIR: ${{ github.workspace }}
+      EGGS_WEVERYTHING_FLAGS: >-
+        -Weverything
+        -Wno-c++98-compat -Wno-c++98-compat-pedantic
+        -Wno-c++11-compat
+        -Wno-c++14-compat
+        -Wno-pre-c++14-compat -Wno-pre-c++14-compat-pedantic
+        -Wno-c++17-compat -Wno-c++17-compat-mangling
+        -Wno-pre-c++17-compat -Wno-pre-c++17-compat-pedantic
+        -Wno-c++20-compat
+        -Wno-pre-c++20-compat -Wno-pre-c++20-compat-pedantic
+        -Wno-pre-c++23-compat -Wno-pre-c++23-compat-pedantic
 
     steps:
       - uses: actions/checkout@v5
@@ -87,17 +98,7 @@ jobs:
         run: cmake --preset dev-clang -B build/warn-everything
                -DCMAKE_COMPILE_WARNING_AS_ERROR=OFF
                -DCMAKE_CXX_COMPILER_LAUNCHER="python3;${{ github.workspace }}/.github/scripts/lint/warn-everything-launcher.py"
-               -DCMAKE_CXX_FLAGS_INIT="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16
-                 -Weverything
-                 -Wno-c++98-compat -Wno-c++98-compat-pedantic
-                 -Wno-c++11-compat
-                 -Wno-c++14-compat
-                 -Wno-pre-c++14-compat -Wno-pre-c++14-compat-pedantic
-                 -Wno-c++17-compat -Wno-c++17-compat-mangling
-                 -Wno-pre-c++17-compat -Wno-pre-c++17-compat-pedantic
-                 -Wno-c++20-compat
-                 -Wno-pre-c++20-compat -Wno-pre-c++20-compat-pedantic
-                 -Wno-pre-c++23-compat -Wno-pre-c++23-compat-pedantic"
+               -DCMAKE_CXX_FLAGS_INIT="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/16 ${{ env.EGGS_WEVERYTHING_FLAGS }}"
 
       - name: Build (Debug)
         run: cmake --build build/warn-everything --config Debug -- -k 0
@@ -129,6 +130,10 @@ jobs:
         if: steps.diff-base.outputs.ref != ''
         run: python3 .github/scripts/lint/warn-everything-check-changed.py
                build/warn-everything/warn-everything.sarif ${{ steps.diff-base.outputs.ref }}
+
+      - name: Check warnings from headers
+        run: python3 .github/scripts/lint/warn-everything-check-headers.py
+               build/warn-everything/warn-everything.sarif
 
   include-cleaner:
     name: clang-include-cleaner (clang-22)
