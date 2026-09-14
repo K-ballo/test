@@ -175,11 +175,22 @@ jobs:
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-debug-header.xml
 
+      - name: Run basic tests (Debug)
+        id: test_basic_debug
+        if: >-
+          always()
+          && steps.build_debug.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
+               --label-regex basic
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-debug-basic.xml
+
       - name: Run unit tests (Debug)
         id: test_unit_debug
         if: >-
           always()
-          && steps.build_debug.outcome == 'success'
+          && steps.test_basic_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex unit
                --output-on-failure
@@ -223,11 +234,22 @@ jobs:
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-release-header.xml
 
+      - name: Run basic tests (Release)
+        id: test_basic_release
+        if: >-
+          always()
+          && steps.build_release.outcome == 'success'
+        run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
+               --label-regex basic
+               --output-on-failure
+               --no-compress-output
+               --output-junit test-results-${{ matrix.compiler }}-release-basic.xml
+
       - name: Run unit tests (Release)
         id: test_unit_release
         if: >-
           always()
-          && steps.build_release.outcome == 'success'
+          && steps.test_basic_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex unit
                --output-on-failure

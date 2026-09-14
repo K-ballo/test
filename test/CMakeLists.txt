@@ -200,6 +200,10 @@ function(add_lib_test name)
     endif()
 endfunction()
 
+# --- detail tests ------------------------------------------------------------
+
+add_subdirectory(detail)
+
 # --- registration tests ------------------------------------------------------
 
 # Multiple TEST_CASEs in one TU all run.
