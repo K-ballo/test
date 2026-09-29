@@ -182,6 +182,7 @@ jobs:
           && steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex unit
+               --parallel
                --output-on-failure
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-debug-unit.xml
@@ -193,6 +194,7 @@ jobs:
           && steps.build_debug.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Debug
                --label-regex example
+               --parallel
                --output-on-failure
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-debug-example.xml
@@ -230,6 +232,7 @@ jobs:
           && steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex unit
+               --parallel
                --output-on-failure
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-release-unit.xml
@@ -241,6 +244,7 @@ jobs:
           && steps.build_release.outcome == 'success'
         run: ctest --test-dir build/${{ matrix.preset }} --build-config Release
                --label-regex example
+               --parallel
                --output-on-failure
                --no-compress-output
                --output-junit test-results-${{ matrix.compiler }}-release-example.xml
